@@ -185,3 +185,26 @@ def test_player_focus_and_metric_override_persona() -> None:
     assert for_viewer(other, metric) is not None
     assert for_viewer(_ov("pass_difficulty"), metric) is None
     assert for_viewer(goal, metric) is not None
+
+
+def _seconds(clock: str) -> int:
+    base, _, extra = clock.partition("+")
+    m, sec = (extra or base).split(":")
+    return int(m) * 60 + int(sec) + (int(base) * 60 if extra else 0)
+
+
+def test_state_clock_ticks_every_second_even_without_events(client: TestClient) -> None:
+    # Right after the first goal the match is quiet until the kick-off.
+    clocks = [
+        client.get(f"/matches/{MATCH}/state", params={"t": t}).json()["clock"]
+        for t in range(2418, 2440)
+    ]
+    secs = [_seconds(c) for c in clocks]
+    assert secs == list(range(secs[0], secs[0] + len(secs)))
+
+
+def test_state_clock_and_period_across_the_break(client: TestClient) -> None:
+    a = client.get(f"/matches/{MATCH}/state", params={"t": 2701}).json()
+    assert (a["period"] == 1 and a["clock"].startswith("45:")) or a["clock"].startswith("45+")
+    late = client.get(f"/matches/{MATCH}/state", params={"t": 5600}).json()
+    assert late["period"] == 2

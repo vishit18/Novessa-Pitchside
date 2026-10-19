@@ -21,8 +21,8 @@ from backend.app.overlay import (
 )
 from backend.state.engine import Output, StateEngine
 from backend.state.models import Moment, Trigger
-from engine.clock import merge_by_time
-from engine.schema import League, MatchEvent, MatchMeta, TrackingFrame
+from engine.clock import display_clock, merge_by_time
+from engine.schema import EventType, League, MatchEvent, MatchMeta, TrackingFrame
 from engine.tracking import TrackingData
 
 INSTANT_DELAY_S = 0.2
@@ -110,11 +110,17 @@ class TimelineBuilder:
     def build(self, events: list[MatchEvent], tracking: TrackingData) -> Timeline:
         tl = Timeline()
         next_tick = 0.0
+        period_break = next(
+            (e.t_match for e in events if e.type == EventType.PERIOD_END and e.period == 1),
+            events[-1].t_match,
+        )
         frames = tracking.iter_frames(ENGINE_FRAME_HZ)
         for item in merge_by_time(events, frames):
             while item.t_match >= next_tick:
                 snap = self.engine.snapshot().model_dump(mode="json")
                 snap["t_match"] = round(next_tick, 2)
+                # The clock ticks every second, even when no event has happened for a while.
+                snap["period"], snap["clock"] = display_clock(next_tick, period_break)
                 tl.items.append(TimelineItem(round(next_tick, 2), "state", snap))
                 next_tick += STATE_EVERY_S
             if isinstance(item, MatchEvent):

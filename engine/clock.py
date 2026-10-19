@@ -92,11 +92,13 @@ async def stream[T: Timed](
 ) -> AsyncIterator[T]:
     """Yield each item when the clock reaches its `t_match`.
 
-    Items already behind the clock (after a seek forward) are skipped. Items are not replayed
-    after a seek backward; start a new stream for that.
+    Items before the clock's position when the stream starts (a seek forward) are skipped. After
+    that, nothing is dropped: an item the clock has already passed is sent straight away, so a
+    slow tick never loses an event. Start a new stream to seek backward.
     """
+    begin = clock.match_time()
     for item in items:
-        if item.t_match < clock.match_time() - 1e-9:
+        if item.t_match < begin - 1e-9:
             continue
         while True:
             delay = clock.wall_delay(item.t_match)
@@ -107,3 +109,20 @@ async def stream[T: Timed](
             if asyncio.iscoroutine(result):
                 await result
         yield item
+
+
+def display_clock(t_match: float, period_break: float, half: float = 2700.0) -> tuple[int, str]:
+    """Period and display clock for a match time: "23:07", "45+1:12", "90+2:40".
+
+    `period_break` is the match time at which period 1 ended (stoppage included). Matches the
+    clock the engine writes on each event.
+    """
+    if t_match <= period_break:
+        period, base, t = 1, 0.0, t_match
+    else:
+        period, base, t = 2, half, t_match - period_break
+    if t <= half:
+        total = base + t
+        return period, f"{int(total // 60):02d}:{int(total % 60):02d}"
+    extra = t - half
+    return period, f"{int((base + half) // 60)}+{int(extra // 60)}:{int(extra % 60):02d}"

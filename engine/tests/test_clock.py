@@ -1,7 +1,7 @@
 import asyncio
 from dataclasses import dataclass
 
-from engine.clock import ReplayClock, merge_by_time, stream
+from engine.clock import ReplayClock, display_clock, merge_by_time, stream
 
 
 @dataclass
@@ -85,3 +85,29 @@ def test_merge_by_time() -> None:
     a = [Item(1), Item(4), Item(9)]
     b = [Item(2), Item(3), Item(10)]
     assert [i.t_match for i in merge_by_time(a, b)] == [1, 2, 3, 4, 9, 10]
+
+
+def test_stream_never_drops_items_the_clock_has_already_passed() -> None:
+    f = Fake()
+    c = ReplayClock(speed=1.0, now=f.now)
+    c.play()
+    # Items 10 ms apart while each wait step is 50 ms, so most are already late when reached.
+    items = [Item(round(0.01 * i, 2), str(i)) for i in range(1, 60)]
+    out: list[str] = []
+
+    async def run() -> None:
+        async for it in stream(items, c, sleep=f.sleep, poll=0.05):
+            out.append(it.label)
+
+    asyncio.run(run())
+    assert out == [str(i) for i in range(1, 60)]
+
+
+def test_display_clock_formats() -> None:
+    assert display_clock(0, 2800) == (1, "00:00")
+    assert display_clock(1387.4, 2800) == (1, "23:07")
+    assert display_clock(2700, 2800) == (1, "45:00")
+    assert display_clock(2772, 2800) == (1, "45+1:12")
+    assert display_clock(2801, 2800) == (2, "45:01")
+    assert display_clock(2800 + 2700, 2800) == (2, "90:00")
+    assert display_clock(2800 + 2700 + 160, 2800) == (2, "90+2:40")

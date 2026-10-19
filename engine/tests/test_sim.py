@@ -1,6 +1,7 @@
 import itertools
 from pathlib import Path
 
+from engine.clock import display_clock
 from engine.io import read_match_file, write_match
 from engine.league import generate_league
 from engine.schema import EventType, League
@@ -117,3 +118,14 @@ def test_roundtrip_on_disk(match: Match, tmp_path: Path) -> None:
 def test_other_pairing_runs() -> None:
     m = simulate_match(generate_league(), "HAR", "SAL", seed=3, match_id="t02")
     assert m.events
+
+
+def test_display_clock_matches_every_event(match: Match) -> None:
+    brk = next(e.t_match for e in match.events if e.type == EventType.PERIOD_END and e.period == 1)
+    for e in match.events:
+        if e.type == EventType.PERIOD_START and e.period == 2:
+            continue  # shares its timestamp with the end of period 1
+        # t_match is stored rounded to 0.01 s, the engine clock uses the unrounded time, so at
+        # the very edge of a second the two may differ by one second.
+        got = {display_clock(e.t_match, brk), display_clock(e.t_match - 0.005, brk)}
+        assert (e.period, e.clock) in got, e.event_id
