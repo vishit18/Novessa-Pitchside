@@ -1,0 +1,9 @@
+#!/bin/sh
+# Strips AI attribution trailers so VJ is the only author on every commit.
+msg_file="$1"
+tmp="$(mktemp)"
+grep -v -i -E '^(co-authored-by:.*(claude|anthropic|copilot|noreply@anthropic)|claude-session:|.*generated with \[?claude)' "$msg_file" > "$tmp"
+# drop trailing blank lines
+sed -e :a -e '/^\n*$/{$d;N;ba' -e '}' "$tmp" > "$msg_file"
+rm -f "$tmp"
+exit 0

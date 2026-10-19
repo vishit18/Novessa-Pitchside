@@ -1,0 +1,14 @@
+.env
+.env.*
+!.env.example
+__pycache__/
+*.pyc
+.venv/
+node_modules/
+dist/
+.azure/
+footage/
+*.mp4
+*.mov
+.DS_Store
+.claude/settings.local.json

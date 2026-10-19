@@ -1,0 +1,135 @@
+# The agent system
+
+This is 20% of the score directly (Agentic Design) and the whole basis of the **Best Multi-Agent System** category prize. The judges for that prize check four things, so the design is built around them:
+
+1. Specialised agents with **distinct roles**
+2. Coordination through **shared state** and **clean handoffs**
+3. **Recovery from failure**
+4. An end-to-end result a **single agent couldn't match**
+
+Build with **Microsoft Agent Framework (Python)** using its graph-based **Workflow** API, with Foundry as the model provider (`FoundryChatClient` or the current equivalent; check Microsoft Learn MCP for the latest API before writing code, it changes often). Every agent run is traced to Foundry / App Insights.
+
+## The newsroom metaphor
+
+Think of it as a live TV gallery. The state engine is the data team. The agents are the editorial staff.
+
+```
+ candidate moments + state snapshot
+            │
+            ▼
+   ┌─────────────────┐   drops / merges / ranks, decides airtime
+   │  PRODUCER       │──────────────────────────────────────────┐
+   └────────┬────────┘                                          │
+            │ brief: "explain this, 2 lines, priority high"      │
+            ▼                                                   │
+   ┌─────────────────┐  claims + evidence   ┌─────────────────┐ │
+   │  ANALYST        │ ───────────────────▶ │  VERIFIER       │ │
+   │  (the "why")    │ ◀─── rejection +     │  (proves every  │ │
+   └─────────────────┘      reason, 1 retry │  claim via MCP) │ │
+                                            └────────┬────────┘ │
+                                    verified insight │          │
+            ┌────────────────────────────────────────┤          │
+            ▼                                        ▼          │
+   ┌─────────────────┐                     ┌─────────────────┐  │
+   │  NARRATOR       │ persona variants    │  STORY KEEPER   │  │
+   │  (analyst/casual│                     │  (running arcs, │  │
+   │  /kids/a11y)    │                     │  milestones)    │  │
+   └────────┬────────┘                     └─────────────────┘  │
+            ▼                                                   │
+   ┌─────────────────┐   ┌─────────────────┐                    │
+   │  LOCALISER      │──▶│  VOICE          │  (Azure AI Speech) │
+   │  (Translator +  │   │  commentary     │                    │
+   │  LLM polish)    │   └─────────────────┘                    │
+   └────────┬────────┘                                          │
+            ▼                                                   ▼
+      Overlay Gateway  ◀──── overlay instructions (timed) ── PRODUCER
+
+   RECAP EDITOR (half-time / full-time), exposed over A2A
+   QA (Content Safety) sits on every text output before it airs
+```
+
+## Agents
+
+### 1. Producer (orchestrator)
+- **Role:** the editorial brain. Decides *what* goes on screen, *when*, for *how long*, and what gets dropped. A real broadcast can't show 40 graphics a minute. This is the agent most other entries won't have.
+- **Inputs:** candidate moments with significance scores, what's currently on screen, recent airtime log, match context.
+- **Outputs:** `ProducerDecision` — for each moment: `air | merge_with | hold | drop`, priority, target personas, overlay slot (lower third, side panel, full-screen replay card), duration, and a brief for the Analyst.
+- **Rules it follows:** max one language overlay on screen at a time per slot; never interrupt a goal sequence; boost favourite-club and favourite-player moments in the persona layer, not globally.
+- Model: `chat-fast`. Falls back to a deterministic ranking policy if the model times out.
+
+### 2. Tactical Analyst
+- **Role:** explains *why* the moment matters in football terms: control vs chaos, pressure shifts, rhythm, individual quality, game state.
+- **Must** output structured claims with evidence references, e.g. `{"claim": "Kestrel have won the ball back 4 times in Ashford's half in 5 minutes", "evidence": {"metric":"pressure_index","window":"20:00-25:00","value":...}}`.
+- **Tools (via our MCP server):** `get_state`, `get_player_stats`, `get_window_stats`, `compare_periods`, `get_pass_network`.
+- Model: `chat-strong`.
+
+### 3. Verifier
+- **Role:** proves every claim before it airs. Re-queries the numbers through the MCP tools independently and checks each claim. Returns `approved | rejected(reason) | corrected(new_claim)`.
+- On rejection, the Analyst gets one retry with the reason. Second failure → the Producer airs the deterministic fallback card (numbers only, no prose) or drops it.
+- Logs the verification trail; the Control Room shows a green tick / red cross per claim. Judges love seeing this happen live.
+- Note: about 30 other entries mention fact-checking, so this alone isn't our differentiator. It's the hygiene that makes the Producer, personas, voice and real footage trustworthy.
+
+### 4. Narrator
+- **Role:** turns a verified insight into persona variants:
+  - **Analyst:** numbers-forward, terminology allowed, ≤ 2 lines
+  - **Casual:** story-first, no jargon, one number max
+  - **Kids / first match:** explains the rule or idea in plain words
+  - **Accessibility:** written for audio description, describes what happened spatially
+- Also writes the short live commentary line for the Voice agent.
+
+### 5. Story Keeper
+- **Role:** keeps the running narrative state across the match: active storylines, milestones, player arcs ("Okafor's quiet first half"), callbacks ("that's the third time this has happened"). Writes to shared state; the Narrator and Recap Editor read from it.
+- Runs every ~5 match-minutes and on major moments.
+
+### 6. Localiser
+- **Role:** multi-language. Uses **Azure AI Translator** for the raw translation, then a light LLM pass to fix football terminology and tone per language (e.g. proper local football idiom). Languages: EN, ES, FR, AR, HI (PT optional).
+- Caches every output.
+
+### 7. Voice
+- **Role:** turns commentary lines into speech with **Azure AI Speech** neural voices per language. Short, punchy, timed to the moment. Streamed to the client as audio.
+
+### 8. Recap Editor
+- **Role:** half-time and full-time recaps per persona and language, plus a 60-second highlights script and "what did I miss?" catch-ups for viewers who join late.
+- **Exposed over A2A** so an external broadcaster agent could ask "give me the full-time recap for match m01 in Spanish, casual tone". Include a tiny demo client script that calls it. Only a handful of entries mention A2A/MCP in their pitch, so this is a real differentiator.
+- Model: `chat-strong`.
+
+### QA gate (not an agent, a step)
+Every text output passes **Azure AI Content Safety** before it airs. Failures get logged and replaced with the fallback card.
+
+## Shared state
+
+A `MatchContext` object (in-memory per match, snapshotted to Cosmos DB) that all agents read and write through typed methods:
+- current state snapshot (from the state engine)
+- moment queue and decisions
+- verified insights
+- storylines and milestones
+- airtime log
+- per-agent health (latency, failures, circuit-breaker status)
+
+Agents don't pass huge prompts to each other; they pass IDs and read the shared context. That's the "handoff through shared state" the judges want to see.
+
+## Failure recovery (design it, then demo it)
+
+| Failure | Recovery |
+|---|---|
+| Model timeout (> 3 s) | retry once with backoff, then fallback output |
+| Model 429 / quota | circuit breaker opens for that agent; Producer switches to deterministic mode; Control Room shows it |
+| Verifier rejects claim | Analyst retries once with reason; then numbers-only card |
+| Translator fails | fall back to LLM translation; then English with a "translation unavailable" flag |
+| Speech fails | text-only commentary, no audio |
+| Content Safety flags | drop text, log, show fallback card |
+| Agent process crash | workflow checkpointing (Agent Framework supports it) resumes from last checkpoint |
+
+Add a **chaos switch** in the Control Room: "kill the Analyst for 30 seconds". In the demo we flip it and the viewer sees the system degrade gracefully and recover. This directly answers the judges' "recover from failures" check.
+
+## Proving multi-agent beats single-agent
+
+`scripts/eval_single_vs_multi.py`: run the same 3 matches with (a) one big prompt agent and (b) our workflow. Measure with **Foundry evaluations** (groundedness, relevance, fluency) plus our own: % claims verified, hallucinated numbers, latency, cost per match, overlay spam rate. Put the table in the README and flash it for 3 seconds in the video.
+
+## Our MCP server (`backend/mcp_server/`)
+
+"Match Intelligence MCP": exposes the state engine as tools: `get_state`, `get_player_stats`, `get_window_stats`, `compare_periods`, `get_pass_network`, `list_moments`, `get_recap`. The Analyst and Verifier call it, and anything else MCP-compatible can too (VS Code Copilot, Claude, a broadcaster's tools). Show it working from VS Code in the README. This hits the rubric's "MCP integration" line directly.
+
+## Prompts
+
+Store each agent's system prompt in `backend/agents/prompts/<agent>.md`, versioned. Keep them short and specific. Every agent uses JSON-schema structured output. Tone rules for all text: sound like a sharp, warm football broadcaster; no clichés like "a game of two halves" unless the data actually shows it; never invent a number.
