@@ -1,0 +1,134 @@
+{
+  "name": "Northbridge League",
+  "seed": 2026,
+  "clubs": [
+    {
+      "code": "ASH",
+      "name": "Ashford Rovers",
+      "primary_color": "#C8372D",
+      "secondary_color": "#F2EDE4",
+      "ground": "Millbrook Lane",
+      "strength": -3.6,
+      "identity": {
+        "label": "high press",
+        "formation": "4-3-3",
+        "press": 0.85,
+        "directness": 0.45,
+        "tempo": 0.8,
+        "line_height": 6.0
+      }
+    },
+    {
+      "code": "KES",
+      "name": "Kestrel Bay FC",
+      "primary_color": "#1F6FB5",
+      "secondary_color": "#F5C542",
+      "ground": "Harbour Road",
+      "strength": -2.8,
+      "identity": {
+        "label": "possession",
+        "formation": "4-2-3-1",
+        "press": 0.55,
+        "directness": 0.25,
+        "tempo": 0.55,
+        "line_height": 3.0
+      }
+    },
+    {
+      "code": "MIL",
+      "name": "Millwater United",
+      "primary_color": "#2B8A5A",
+      "secondary_color": "#FFFFFF",
+      "ground": "The Weir",
+      "strength": 6.5,
+      "identity": {
+        "label": "direct",
+        "formation": "4-4-2",
+        "press": 0.5,
+        "directness": 0.8,
+        "tempo": 0.7,
+        "line_height": 0.0
+      }
+    },
+    {
+      "code": "HAR",
+      "name": "Harrowgate Athletic",
+      "primary_color": "#6B3FA0",
+      "secondary_color": "#E8E8E8",
+      "ground": "Crown Fields",
+      "strength": 3.8,
+      "identity": {
+        "label": "deep block",
+        "formation": "5-4-1",
+        "press": 0.3,
+        "directness": 0.65,
+        "tempo": 0.5,
+        "line_height": -6.0
+      }
+    },
+    {
+      "code": "POR",
+      "name": "Port Calder",
+      "primary_color": "#14788C",
+      "secondary_color": "#F28C28",
+      "ground": "Quayside Park",
+      "strength": -3.9,
+      "identity": {
+        "label": "possession",
+        "formation": "4-2-3-1",
+        "press": 0.6,
+        "directness": 0.3,
+        "tempo": 0.6,
+        "line_height": 3.0
+      }
+    },
+    {
+      "code": "RED",
+      "name": "Redmoor Town",
+      "primary_color": "#8E2A2A",
+      "secondary_color": "#222222",
+      "ground": "Heather Ground",
+      "strength": 0.9,
+      "identity": {
+        "label": "direct",
+        "formation": "4-4-2",
+        "press": 0.45,
+        "directness": 0.75,
+        "tempo": 0.75,
+        "line_height": -1.0
+      }
+    },
+    {
+      "code": "SAL",
+      "name": "Saltmarsh City",
+      "primary_color": "#3A3F8F",
+      "secondary_color": "#DDE6F0",
+      "ground": "Tidewater Stadium",
+      "strength": -0.8,
+      "identity": {
+        "label": "high press",
+        "formation": "4-3-3",
+        "press": 0.8,
+        "directness": 0.5,
+        "tempo": 0.85,
+        "line_height": 5.0
+      }
+    },
+    {
+      "code": "THO",
+      "name": "Thornbury Wanderers",
+      "primary_color": "#B8A02D",
+      "secondary_color": "#1B1B1B",
+      "ground": "Bramble Park",
+      "strength": -4.4,
+      "identity": {
+        "label": "deep block",
+        "formation": "5-4-1",
+        "press": 0.35,
+        "directness": 0.6,
+        "tempo": 0.45,
+        "line_height": -5.0
+      }
+    }
+  ]
+}

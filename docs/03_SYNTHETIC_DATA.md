@@ -24,9 +24,9 @@ Every event, from the engine or from vision:
   "event_id": "m01-000412",
   "match_id": "m01",
   "seq": 412,
-  "t_match": 1387.4,          // seconds since kick-off of the period
+  "t_match": 1387.4,          // seconds of match time since the first kick-off; monotonic, includes stoppage, period 2 continues from where period 1 ended
   "period": 1,
-  "clock": "23:07",
+  "clock": "23:07",           // display clock: "23:07", "45+1:12", "90+2:40"
   "type": "pass",             // see list below
   "team": "ASH",
   "player_id": "ASH-08",
@@ -40,9 +40,14 @@ Every event, from the engine or from vision:
   "height": "ground",         // ground | low | high
   "body_part": "right_foot",
   "tags": ["progressive", "through_ball"],
+  "pass_difficulty": 84.0,    // passes only, 0-100, from the model in section 5
+  "difficulty_factors": [{"name": "pressure_on_passer", "points": 21.3}],  // passes only, points each factor added
+  "xg": null,                 // shots only
   "source": "synthetic"       // synthetic | vision
 }
 ```
+
+Red cards are not simulated in v1 (yellow cards only). Add them once the state engine can handle a side playing with ten.
 
 Event types (minimum): `kick_off, pass, carry, dribble, shot, save, goal, tackle, interception, clearance, block, foul, card, corner, free_kick, throw_in, offside, possession_change, pressure, substitution, period_start, period_end, injury_stoppage`.
 

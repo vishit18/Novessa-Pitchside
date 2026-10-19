@@ -1,0 +1,29 @@
+{
+  "score": [
+    2,
+    3
+  ],
+  "arcs": [
+    {
+      "kind": "late_collapse",
+      "team": "KES",
+      "from_s": 4242.472163488644,
+      "to_s": 6000.0,
+      "player_id": null
+    },
+    {
+      "kind": "star_quiet_then_moment",
+      "team": "ASH",
+      "from_s": 3600.0,
+      "to_s": 6000.0,
+      "player_id": "ASH-07"
+    },
+    {
+      "kind": "sub_changes_game",
+      "team": "KES",
+      "from_s": 3703.375630407636,
+      "to_s": 6000.0,
+      "player_id": null
+    }
+  ]
+}

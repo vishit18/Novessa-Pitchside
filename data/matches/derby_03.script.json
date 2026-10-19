@@ -1,0 +1,22 @@
+{
+  "score": [
+    3,
+    1
+  ],
+  "arcs": [
+    {
+      "kind": "dominate_no_score",
+      "team": "HAR",
+      "from_s": 0.0,
+      "to_s": 2700.0,
+      "player_id": null
+    },
+    {
+      "kind": "late_collapse",
+      "team": "HAR",
+      "from_s": 4412.666453192399,
+      "to_s": 6000.0,
+      "player_id": null
+    }
+  ]
+}
