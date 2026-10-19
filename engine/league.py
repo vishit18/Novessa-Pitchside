@@ -6,6 +6,7 @@ player name against real football before committing it.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import random
 from pathlib import Path
@@ -205,37 +206,49 @@ LAST = {
     ],
 }
 
-# Surnames of well-known players we must never generate. Checked in tests.
-DENYLIST = {
-    "Saka",
-    "Haaland",
-    "Salah",
-    "Rashford",
-    "Foden",
-    "Rice",
-    "Kane",
-    "Bruyne",
-    "Son",
-    "Fernandes",
-    "Odegaard",
-    "Palmer",
-    "Watkins",
-    "Isak",
-    "Gordon",
-    "Trippier",
-    "Pickford",
-    "Walker",
-    "Stones",
-    "Mbeumo",
-    "Wirtz",
-    "Gakpo",
-    "Diaz",
-    "Szoboszlai",
-    "Alisson",
-    "Raya",
-    "Saliba",
-    "Rodri",
-}
+# SHA-256 of lowercased surnames of well-known real players, so none appear in source.
+# Generated names are checked against this in tests via `is_denied`.
+DENYLIST_SHA256 = frozenset(
+    {
+        "00a722708a42f2462e1bbdce8d6967d918b4d6e5daafa9fb8a46ddf69a0ae342",
+        "0422d5b3a69178aef5290bbe631e2e1bf409931f920f2806d805d04aa85215ad",
+        "055654e9d79b0bfaf0532c668e6b03c11677a6c060b1fdbc94f14f5a83cda574",
+        "08614c84a3bbb4b05eeea6030fee50ab3baa8475450a5aba9873c04b7cd96feb",
+        "1491b1be53d40a5c7365bedfd07f3df08769208dd76356884814f54a328f2339",
+        "1a2e90d2c67a115ac9ead4969354337dade76079542aa789953e39a73a0059a9",
+        "209f76418ece7c936b65ff4777a578d860f762c37ad6c7f08f5826242199ef51",
+        "2101348579746d02ed47ce392c4ed67bafff06f86eddf6663e99d83d65977bea",
+        "2d2d674c7150952fb81f5e1f8113c2d32e6167d2c567b3048d3b513a8b79c80f",
+        "33db7a9acd9930641bd9dd22a367ac6e2b5f984feeb2b6ab5773794d6fc26854",
+        "4d08ae5378638d7eca766c5ab1a4a27220926a02e3c5b6ba97d8e1d4fb0c998a",
+        "5b6551cb55a20460e8a97126887e1502a11423a2279f7271502c8017c46290fa",
+        "7da426bb0cc1b8e3c0723c900755e5469db12fb840f4f094f07d290696e57cac",
+        "8cf25a00956fea6d3a84d53d3a3e291c7183e9c5eaf9425cd36f58311e1d8f84",
+        "98aa6675482552881925fe70d82559692d811b3bcd33f53b9a702c24d5322696",
+        "9fe93417853739c1c18c2e8b051860d1a317824f1aa91304d16f3fe832486f7a",
+        "a5cca33940ed2a85586687cc285e840acd8c5104a9d3887497d0b749a54d943c",
+        "baebd585e1b908373adbfb13179c3f969c276e96e47fceecfb56c10f8d11616c",
+        "c1dbd67f9e1d046391ba9774bf33792d9c048644b7561f85f6ca74f8449f083c",
+        "c4ab1bdd755151aa4a3b53a597f5532e4011c0a4e074c262a58f026d1c183dc8",
+        "d3e450cd37f7785cb23dfcef8a37f0df0e719302a73c36931952e2cda2b1677e",
+        "d8b01b2435a39d18015cabdf20afba9ca275412f2eb117f80fb7989c4101c029",
+        "e675137ec2f19377e04ef495f415108ec3953cd98df03792be0145a559431d6b",
+        "ec3620470529f11448cb4ec5baeec3dc4395f58d69d5b99ce1891409a7c02ef7",
+        "f57dbb83bc838bda3c0cf7d6091e9a3c16f824cef7ebef8faad554bf5ebc7ad4",
+        "f652588e2e7c40029ba044fc9fd660f506a6eb50522c0959cf2b5fef41eba355",
+        "f8b003e0b309fd38ca34d66152b3f66a8bd7851166688a810ef51563b1140a65",
+        "fcecca0fd203a501524e79667d348fbba752b076db039aabbef646aaff01dabd",
+    }
+)
+
+
+def is_denied(full_name: str) -> bool:
+    """True if any part of `full_name` matches a denylisted real surname."""
+    return any(
+        hashlib.sha256(part.lower().encode()).hexdigest() in DENYLIST_SHA256
+        for part in full_name.split()
+    )
+
 
 # 2 GK, 6 DEF, 6 MID, 4 FWD, with shirt numbers.
 SQUAD: list[tuple[Position, list[int]]] = [

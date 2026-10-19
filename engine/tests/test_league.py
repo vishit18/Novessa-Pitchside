@@ -1,6 +1,10 @@
+import hashlib
 from pathlib import Path
 
-from engine.league import DENYLIST, generate_league, load_league, save_league
+import pytest
+
+import engine.league
+from engine.league import generate_league, is_denied, load_league, save_league
 from engine.schema import League
 
 
@@ -21,8 +25,15 @@ def test_squads_and_ids(league: League) -> None:
 def test_names_unique_and_not_on_denylist(league: League) -> None:
     names = [p.name for c in league.clubs for p in c.players]
     assert len(names) == len(set(names))
-    for n in names:
-        assert not set(n.split()) & DENYLIST
+    assert not [n for n in names if is_denied(n)]
+
+
+def test_denylist_matches_on_any_part_of_a_name(monkeypatch: pytest.MonkeyPatch) -> None:
+    assert is_denied("Callum Hartley") is False
+    hashed = hashlib.sha256(b"hartley").hexdigest()
+    monkeypatch.setattr(engine.league, "DENYLIST_SHA256", frozenset({hashed}))
+    assert is_denied("Callum Hartley") is True
+    assert is_denied("Rhys Pennock") is False
 
 
 def test_save_and_load_roundtrip(league: League, tmp_path: Path) -> None:
