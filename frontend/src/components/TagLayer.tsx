@@ -40,7 +40,7 @@ function PlayerTag({ o }: { o: OverlayEnvelope }) {
       <span className="w-1.5" style={{ background: teamColour(team) }} />
       <div className="flex items-baseline gap-2 px-2.5 py-1">
         <span className="num text-[15px] font-semibold text-muted">{info?.shirt ?? ''}</span>
-        <span className="font-display text-[17px] font-semibold uppercase leading-none tracking-wide whitespace-nowrap">
+        <span className="font-display text-[18px] font-semibold leading-none whitespace-nowrap">
           {info?.name ?? id}
         </span>
         {typeof speed === 'number' && (
@@ -63,10 +63,10 @@ function PassTag({ o }: { o: OverlayEnvelope }) {
     <div className="-translate-x-1/2 -translate-y-[130%] overflow-hidden rounded-[3px] panel shadow-[0_6px_18px_rgb(0_0_0/0.45)]">
       <div className="flex items-baseline gap-2 px-2.5 py-1">
         <span className="num text-[26px] font-bold leading-none text-amber">{Math.round(d)}</span>
-        <span className="font-display text-[13px] font-semibold uppercase leading-tight tracking-wider text-muted">
-          pass difficulty
+        <span className="font-display text-[14px] font-medium leading-tight text-muted">
+          Pass difficulty
           <br />
-          {dist.toFixed(0)} m · {done ? 'completed' : 'lost'}
+          {dist.toFixed(0)} m, {done ? 'completed' : 'lost'}
         </span>
       </div>
       {factors[0] && (

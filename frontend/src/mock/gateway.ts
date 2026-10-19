@@ -238,8 +238,8 @@ export class MockGateway {
           ...base,
           show_at: e.t_match + 0.2,
           payload: {
-            headline: `GOAL  ${this.name(pid)}`,
-            body: `${club?.name ?? e.team}  ${scoreLine}  ·  ${e.clock}'`,
+            headline: `${this.name(pid)} scores`,
+            body: `${club?.name ?? e.team} lead ${scoreLine} at ${e.clock}`,
             team: e.team,
             player_id: pid,
             tone: 'goal',
@@ -270,8 +270,8 @@ export class MockGateway {
           duration_s: 5,
           anchor: { type: 'player', id: pid },
           payload: {
-            headline: `${(e.outcome ?? 'yellow').toUpperCase()} CARD  ${this.name(pid)}`,
-            body: `${club?.name ?? e.team}  ·  ${e.clock}'`,
+            headline: `${this.name(pid)} is shown a ${e.outcome ?? 'yellow'} card`,
+            body: `${club?.name ?? e.team}, ${e.clock}`,
             team: e.team,
             player_id: pid,
             tone: 'card',

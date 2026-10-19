@@ -19,6 +19,7 @@ export default function App() {
   const status = useStore((s) => s.status)
   const detail = useStore((s) => s.statusDetail)
   const meta = useStore((s) => s.meta)
+  const snapshot = useStore((s) => s.snapshot)
 
   useEffect(() => {
     const p = params()
@@ -37,7 +38,7 @@ export default function App() {
           <ScoreBug />
           {meta && (
             <p className="mt-2 hidden text-[12px] leading-snug text-muted sm:block">
-              {meta.competition} · Matchday {meta.matchday} · {meta.venue}
+              {meta.competition}, matchday {meta.matchday}, at {meta.venue}
             </p>
           )}
         </div>
@@ -56,7 +57,7 @@ export default function App() {
         </div>
       </div>
 
-      {!meta && !failed && (
+      {(!meta || !snapshot) && !failed && (
         <div className="absolute inset-0 grid place-items-center bg-ink/80">
           <div className="text-center">
             <Wordmark />
@@ -67,9 +68,7 @@ export default function App() {
       {failed && (
         <div className="absolute inset-0 grid place-items-center bg-ink/90 p-6">
           <div className="panel max-w-md rounded-[4px] p-6">
-            <h2 className="font-display text-2xl font-semibold uppercase tracking-wide">
-              Feed unavailable
-            </h2>
+            <h2 className="font-display text-2xl font-semibold">Feed unavailable</h2>
             <p className="mt-2 text-sm text-muted">{detail ?? 'The match feed did not start.'}</p>
             <button
               className="mt-4 h-9 rounded-[3px] border border-amber px-4 text-sm font-medium text-amber hover:bg-amber/10"

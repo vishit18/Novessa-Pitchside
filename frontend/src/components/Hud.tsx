@@ -29,7 +29,7 @@ export function ScoreBug() {
           >
             {snap?.clock ?? '00:00'}
           </span>
-          <span className="mt-0.5 text-[10px] uppercase tracking-[0.14em] text-muted">{half}</span>
+          <span className="mt-0.5 text-[11px] text-muted">{half}</span>
         </div>
         <Side code={away} score={snap?.score[away] ?? 0} align="right" />
       </div>
@@ -121,14 +121,10 @@ function Headline({ o }: { o: OverlayEnvelope }) {
               style={{ background: colour(team) }}
             />
           )}
-          <span className="font-display text-[34px] font-bold uppercase leading-none tracking-wide">
-            {head}
-          </span>
+          <span className="font-display text-[36px] font-bold leading-none">{head}</span>
         </div>
         <p className="mt-1 text-[14px] leading-snug text-muted">{body}</p>
-        {late > 6 && (
-          <p className="mt-1 text-[11px] uppercase tracking-wider text-amber">Earlier</p>
-        )}
+        {late > 6 && <p className="mt-1 text-[12px] text-amber">Earlier</p>}
       </div>
     </div>
   )
@@ -148,11 +144,11 @@ function ShotSpeed({ o }: { o: OverlayEnvelope }) {
           <span className="ml-1.5 text-[18px] font-medium text-muted">km/h</span>
         </div>
         <div className="pb-0.5">
-          <div className="font-display text-[22px] font-semibold uppercase leading-none tracking-wide">
-            Shot · {PLAYERS[pid]?.name ?? pid}
+          <div className="font-display text-[24px] font-semibold leading-none">
+            {PLAYERS[pid]?.name ?? pid}’s shot
           </div>
           <div className="mt-1 text-[13px] text-muted">
-            {typeof xg === 'number' ? `xG ${xg.toFixed(2)}  ·  ` : ''}
+            {typeof xg === 'number' ? `xG ${xg.toFixed(2)}, ` : ''}
             {outcome}
           </div>
         </div>
@@ -187,7 +183,7 @@ export function Wordmark() {
   return (
     <div className="flex select-none items-center gap-2" aria-label="Novessa Pitchside">
       <span className="h-4 w-[3px] bg-amber" />
-      <span className="font-display text-[18px] font-semibold uppercase leading-none tracking-[0.18em]">
+      <span className="font-display text-[22px] font-semibold leading-none tracking-wide">
         Novessa <span className="text-muted">Pitchside</span>
       </span>
     </div>
@@ -263,7 +259,7 @@ export function Controls() {
         </>
       )}
       <div className="flex items-center gap-1" role="group" aria-label="Stream delay">
-        <span className="mr-1 text-[11px] uppercase tracking-wider text-muted">Delay</span>
+        <span className="mr-1 text-[12px] text-muted">Stream delay</span>
         {DELAYS.map((d) => (
           <button key={d} className={btn} aria-pressed={delayS === d} onClick={() => setDelay(d)}>
             {d}s
@@ -271,7 +267,7 @@ export function Controls() {
         ))}
       </div>
       <span className="num hidden text-[13px] text-muted sm:inline">
-        behind live {clock.lead.toFixed(1)}s
+        {clock.lead.toFixed(1)}s behind live
       </span>
     </div>
   )
@@ -296,10 +292,8 @@ export function StatusPill() {
         className={`size-2 rounded-full ${live ? 'bg-chaos' : 'bg-amber pulse-soft'}`}
         aria-hidden="true"
       />
-      <span className="text-[11px] font-medium uppercase tracking-[0.14em]">{label}</span>
-      {kind === 'mock' && (
-        <span className="text-[11px] uppercase tracking-[0.14em] text-muted">Sample feed</span>
-      )}
+      <span className="text-[12px] font-medium">{label}</span>
+      {kind === 'mock' && <span className="text-[12px] text-muted">sample match</span>}
       {detail && !live && <span className="text-[11px] text-muted">{detail}</span>}
     </div>
   )
