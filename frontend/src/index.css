@@ -49,8 +49,9 @@ body {
 /* Floodlit stage: a warm pool of light above the pitch, dark at the edges. */
 .stage-bg {
   background:
-    radial-gradient(120% 70% at 50% -10%, rgb(255 176 32 / 0.1), transparent 60%),
-    radial-gradient(90% 90% at 50% 50%, #12171d 0%, var(--color-ink) 75%);
+    radial-gradient(38% 46% at 14% -6%, rgb(255 214 140 / 0.16), transparent 70%),
+    radial-gradient(38% 46% at 86% -6%, rgb(255 214 140 / 0.16), transparent 70%),
+    radial-gradient(100% 90% at 50% 55%, #141a21 0%, var(--color-ink) 78%);
 }
 
 /* TV-style entrances. 150-250 ms, ease-out, nothing bounces. */
@@ -105,9 +106,23 @@ body {
   }
 }
 
-/* Wide dark panel look shared by broadcast graphics. */
-.panel {
-  background: color-mix(in oklab, var(--color-raised) 92%, transparent);
-  border: 1px solid var(--color-hairline);
-  backdrop-filter: blur(8px);
+/*
+ * Broadcast plates. One shape language everywhere: two diagonally opposite corners are cut.
+ * The shadow goes on a wrapper (.plate-shadow) because clip-path would clip it.
+ */
+.plate {
+  --cut: 12px;
+  background: linear-gradient(180deg, rgb(27 33 41 / 0.95), rgb(17 21 27 / 0.95));
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.08);
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--cut)) 0,
+    100% var(--cut),
+    100% 100%,
+    var(--cut) 100%,
+    0 calc(100% - var(--cut))
+  );
+}
+.plate-shadow {
+  filter: drop-shadow(0 8px 14px rgb(0 0 0 / 0.5));
 }

@@ -3,53 +3,62 @@ import { CLUBS, PLAYERS } from '@/data/league'
 import { useStore } from '@/state/store'
 import type { OverlayEnvelope } from '@/types/overlay'
 import type { PlayerFrame } from '@/types/schema'
-import type { PitchRenderer, Point } from './pitch/PitchRenderer'
+import type { Point } from './pitch/PitchRenderer'
 
 export type TagRegistry = Map<string, { el: HTMLElement; overlay: OverlayEnvelope }>
 
-/** Where on the stage this overlay should sit, in CSS pixels, or null if it can't be placed. */
+/**
+ * Where on the stage this overlay should sit, in CSS pixels, or null if it can't be placed.
+ * `project` maps pitch metres to stage pixels, including any perspective tilt.
+ */
 export function resolveTagPoint(
   o: OverlayEnvelope,
   players: Map<string, PlayerFrame>,
-  r: PitchRenderer,
+  project: (x: number, y: number) => Point,
 ): Point | null {
   const a = o.anchor
   if (!a) return null
   if (a.type === 'player') {
     const p = players.get(a.id)
-    return p ? r.project(p.x, p.y) : null
+    return p ? project(p.x, p.y) : null
   }
   const ex = o.payload['end_x']
   const ey = o.payload['end_y']
   if (typeof ex === 'number' && typeof ey === 'number')
-    return r.project((a.x + ex) / 2, (a.y + ey) / 2)
-  return r.project(a.x, a.y)
+    return project((a.x + ex) / 2, (a.y + ey) / 2)
+  return project(a.x, a.y)
 }
 
 function teamColour(code: string | undefined): string {
   return (code && CLUBS[code]?.primary_color) || '#9aa5b1'
 }
 
+/** A name plate that sits above the player, joined to them by a thin leader. */
 function PlayerTag({ o }: { o: OverlayEnvelope }) {
   const id = o.anchor?.type === 'player' ? o.anchor.id : ''
   const info = PLAYERS[id]
   const team = id.split('-')[0]
   const speed = o.payload['speed_kmh']
   return (
-    <div className="flex -translate-x-1/2 -translate-y-[calc(100%+20px)] items-stretch overflow-hidden rounded-[3px] panel shadow-[0_6px_18px_rgb(0_0_0/0.45)]">
-      <span className="w-1.5" style={{ background: teamColour(team) }} />
-      <div className="flex items-baseline gap-2 px-2.5 py-1">
-        <span className="num text-[15px] font-semibold text-muted">{info?.shirt ?? ''}</span>
-        <span className="font-display text-[18px] font-semibold leading-none whitespace-nowrap">
-          {info?.name ?? id}
-        </span>
-        {typeof speed === 'number' && (
-          <span className="num text-[20px] font-bold leading-none text-amber">
-            {speed.toFixed(1)}
-            <span className="ml-0.5 text-[11px] font-medium text-muted">km/h</span>
-          </span>
-        )}
+    <div className="flex -translate-x-1/2 -translate-y-full flex-col items-center pb-[18px]">
+      <div className="plate-shadow">
+        <div className="plate flex items-stretch" style={{ ['--cut' as string]: '8px' }}>
+          <span className="w-[5px]" style={{ background: teamColour(team) }} />
+          <div className="flex items-baseline gap-2 py-1 pr-3.5 pl-2.5">
+            <span className="num text-[16px] font-semibold text-muted">{info?.shirt ?? ''}</span>
+            <span className="font-display text-[19px] font-semibold leading-none whitespace-nowrap">
+              {info?.name ?? id}
+            </span>
+            {typeof speed === 'number' && (
+              <span className="num text-[24px] font-bold leading-none text-amber">
+                {speed.toFixed(1)}
+                <span className="ml-1 text-[12px] font-medium text-muted">km/h</span>
+              </span>
+            )}
+          </div>
+        </div>
       </div>
+      <span className="absolute bottom-0 h-[18px] w-px bg-amber/80" />
     </div>
   )
 }
@@ -60,20 +69,26 @@ function PassTag({ o }: { o: OverlayEnvelope }) {
   const factors = (o.payload['factors'] as { name: string; points: number }[] | undefined) ?? []
   const done = o.payload['complete'] === true
   return (
-    <div className="-translate-x-1/2 -translate-y-[130%] overflow-hidden rounded-[3px] panel shadow-[0_6px_18px_rgb(0_0_0/0.45)]">
-      <div className="flex items-baseline gap-2 px-2.5 py-1">
-        <span className="num text-[26px] font-bold leading-none text-amber">{Math.round(d)}</span>
-        <span className="font-display text-[14px] font-medium leading-tight text-muted">
-          Pass difficulty
-          <br />
-          {dist.toFixed(0)} m, {done ? 'completed' : 'lost'}
-        </span>
-      </div>
-      {factors[0] && (
-        <div className="border-t border-hairline px-2.5 py-0.5 text-[11px] text-muted">
-          {factors[0].name.replaceAll('_', ' ')} +{Math.round(factors[0].points)}
+    <div className="-translate-x-1/2 -translate-y-[120%]">
+      <div className="plate-shadow">
+        <div className="plate" style={{ ['--cut' as string]: '8px' }}>
+          <div className="flex items-center gap-2.5 px-3 py-1.5">
+            <span className="num text-[34px] font-bold leading-none text-amber">
+              {Math.round(d)}
+            </span>
+            <span className="font-display text-[15px] leading-tight text-muted">
+              Pass difficulty
+              <br />
+              {dist.toFixed(0)} m, {done ? 'completed' : 'lost'}
+            </span>
+          </div>
+          {factors[0] && (
+            <div className="border-t border-white/10 px-3 py-1 text-[12px] text-muted">
+              {factors[0].name.replaceAll('_', ' ')} +{Math.round(factors[0].points)}
+            </div>
+          )}
         </div>
-      )}
+      </div>
     </div>
   )
 }
@@ -91,10 +106,10 @@ export function TagLayer({ registry }: { registry: MutableRefObject<TagRegistry>
             if (el) registry.current.set(o.msg_id, { el, overlay: o })
             else registry.current.delete(o.msg_id)
           }}
-          className="absolute left-0 top-0 will-change-transform"
+          className="absolute top-0 left-0 will-change-transform"
           style={{ visibility: 'hidden' }}
         >
-          <div className="tag" style={{ ['--life' as string]: `${o.duration_s}s` }}>
+          <div className="tag relative" style={{ ['--life' as string]: `${o.duration_s}s` }}>
             {o.kind === 'pass_difficulty' ? <PassTag o={o} /> : <PlayerTag o={o} />}
           </div>
         </div>

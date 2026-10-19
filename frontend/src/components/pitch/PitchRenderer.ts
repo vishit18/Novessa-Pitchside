@@ -1,4 +1,4 @@
-import { Application, Container, Graphics, Matrix, Text } from 'pixi.js'
+import { Application, Container, FillGradient, Graphics, Matrix, Text } from 'pixi.js'
 import { PLAYERS } from '@/data/league'
 import { lifeFraction } from '@/core/overlays'
 import type { OverlayEnvelope } from '@/types/overlay'
@@ -15,6 +15,7 @@ export interface Point {
   y: number
 }
 
+const APRON = 0x143a28
 const GRASS_A = 0x1b4a33
 const GRASS_B = 0x1e5237
 const LINE = 0xe9eef2
@@ -40,7 +41,10 @@ export class PitchRenderer {
   private lines = new Graphics()
   private annotations = new Graphics()
   private playersLayer = new Container()
+  private effects = new Graphics()
   private ballShadow = new Graphics()
+  private trail: Point[] = []
+  private fit = 1
   private ball = new Graphics()
   private sprites = new Map<string, PlayerSprite>()
   private looks: Record<string, TeamLook> = {}
@@ -69,6 +73,7 @@ export class PitchRenderer {
       this.grass,
       this.lines,
       this.annotations,
+      this.effects,
       this.playersLayer,
       this.ballShadow,
       this.ball,
@@ -95,6 +100,13 @@ export class PitchRenderer {
     return { x: this.ox + x * this.scale, y: this.oy + (PITCH_WIDTH - y) * this.scale }
   }
 
+  /** Shrink the pitch inside the canvas, e.g. to leave room for a perspective tilt. */
+  setFit(fit: number): void {
+    if (fit === this.fit) return
+    this.fit = fit
+    if (this.ready) this.layout(this.w, this.h, true)
+  }
+
   get pixelsPerMetre(): number {
     return this.scale
   }
@@ -109,7 +121,9 @@ export class PitchRenderer {
     const long = this.portrait ? h : w
     const short = this.portrait ? w : h
     this.pad = Math.max(10, Math.min(long, short * 1.5) * 0.03)
-    const s = Math.min((long - this.pad * 2) / PITCH_LENGTH, (short - this.pad * 2) / PITCH_WIDTH)
+    const s =
+      Math.min((long - this.pad * 2) / PITCH_LENGTH, (short - this.pad * 2) / PITCH_WIDTH) *
+      this.fit
     this.scale = s
     const pw = (this.portrait ? PITCH_WIDTH : PITCH_LENGTH) * s
     const ph = (this.portrait ? PITCH_LENGTH : PITCH_WIDTH) * s
@@ -126,6 +140,8 @@ export class PitchRenderer {
       ? new Matrix(0, this.scale, this.scale, 0, this.ox, this.oy)
       : new Matrix(this.scale, 0, 0, -this.scale, this.ox, this.oy + PITCH_WIDTH * this.scale)
     const g = new Graphics()
+    // Mown apron around the touchlines gives the surface some depth.
+    g.rect(-3, -3, PITCH_LENGTH + 6, PITCH_WIDTH + 6).fill(APRON)
     const stripes = 14
     const sw = PITCH_LENGTH / stripes
     for (let i = 0; i < stripes; i++) {
@@ -133,6 +149,24 @@ export class PitchRenderer {
     }
     g.setFromMatrix(m)
     this.grass.addChild(g)
+
+    // Floodlight falloff: lit toward the far touchline, darker near the camera.
+    if (!this.portrait) {
+      const light = new Graphics()
+      const grad = new FillGradient({
+        type: 'linear',
+        start: { x: 0, y: 0 },
+        end: { x: 0, y: 1 },
+        colorStops: [
+          { offset: 0, color: 'rgba(0,0,0,0.42)' },
+          { offset: 0.45, color: 'rgba(0,0,0,0)' },
+          { offset: 1, color: 'rgba(255,238,190,0.14)' },
+        ],
+      })
+      light.rect(-3, -3, PITCH_LENGTH + 6, PITCH_WIDTH + 6).fill(grad)
+      light.setFromMatrix(m)
+      this.grass.addChild(light)
+    }
 
     const L = this.lines
     const lw = 0.2
@@ -173,16 +207,23 @@ export class PitchRenderer {
     L.setFromMatrix(m)
   }
 
+  private radius(): number {
+    return Math.max(9, this.scale * 1.3)
+  }
+
   private drawDisc(sp: PlayerSprite): void {
     const look = this.looks[sp.team]
-    const r = Math.max(8, this.scale * 1.05)
+    const r = this.radius()
+    const primary = hex(look?.primary ?? '#888888')
     sp.disc.clear()
-    sp.disc.circle(0, r * 0.28, r).fill({ color: 0x000000, alpha: 0.28 })
-    sp.disc.circle(0, 0, r).fill(hex(look?.primary ?? '#888888'))
-    sp.disc
-      .circle(0, 0, r)
-      .stroke({ width: Math.max(1.5, r * 0.16), color: hex(look?.secondary ?? '#ffffff') })
-    sp.label.style.fontSize = Math.max(9, r * 1.05)
+    // soft ground shadow, then the kit disc with a thin secondary-colour rim
+    sp.disc.ellipse(r * 0.15, r * 0.55, r * 1.1, r * 0.6).fill({ color: 0x000000, alpha: 0.32 })
+    sp.disc.circle(0, 0, r).fill(primary)
+    sp.disc.circle(0, 0, r - Math.max(1, r * 0.1)).stroke({
+      width: Math.max(1.5, r * 0.18),
+      color: hex(look?.secondary ?? '#ffffff'),
+    })
+    sp.label.style.fontSize = Math.max(10, r * 1.1)
     sp.label.style.fill = textColourFor(look?.primary ?? '#888888')
   }
 
@@ -208,14 +249,62 @@ export class PitchRenderer {
   /** Draw one frame. `t` is render time, used for annotation animation. */
   draw(frame: TrackingFrame | null, overlays: OverlayEnvelope[], t: number): void {
     if (!this.ready) return
+    const fx = this.effects
+    fx.clear()
     if (frame) {
+      const at = new Map<string, Point>()
       for (const p of frame.players) {
         const sp = this.ensureSprite(p.id)
         const pt = this.project(p.x, p.y)
         sp.root.position.set(pt.x, pt.y)
+        at.set(p.id, pt)
       }
       const b = this.project(frame.ball.x, frame.ball.y)
       const r = Math.max(3.5, this.scale * 0.42)
+      const pr = this.radius()
+
+      // Ball trail: a short fading comet.
+      this.trail.push(b)
+      if (this.trail.length > 14) this.trail.shift()
+      for (let i = 1; i < this.trail.length; i++) {
+        const k = i / this.trail.length
+        const p0 = this.trail[i - 1]!
+        const p1 = this.trail[i]!
+        fx.moveTo(p0.x, p0.y)
+          .lineTo(p1.x, p1.y)
+          .stroke({ width: 1 + k * r * 0.9, color: AMBER, alpha: 0.06 + k * 0.3, cap: 'round' })
+      }
+
+      // Ring on whoever is closest to the ball, when they are close enough to be on it.
+      let near: Point | null = null
+      let nearD = Infinity
+      for (const pt of at.values()) {
+        const d = Math.hypot(pt.x - b.x, pt.y - b.y)
+        if (d < nearD) {
+          nearD = d
+          near = pt
+        }
+      }
+      if (near && nearD < pr * 2.6) {
+        fx.circle(near.x, near.y, pr + 5).stroke({ width: 2, color: AMBER, alpha: 0.9 })
+        fx.circle(near.x, near.y, pr + 9).stroke({ width: 6, color: AMBER, alpha: 0.12 })
+      }
+
+      // The one orchestrated moment: a ring rolls out from the scorer.
+      for (const o of overlays) {
+        if (o.kind !== 'insight' || o.payload['tone'] !== 'goal' || o.anchor?.type !== 'player')
+          continue
+        const who = at.get(o.anchor.id)
+        const k = (t - o.show_at) / 1.8
+        if (!who || k < 0 || k > 1) continue
+        const e = 1 - Math.pow(1 - k, 3)
+        fx.circle(who.x, who.y, pr + e * pr * 7).stroke({
+          width: 3 * (1 - k) + 1,
+          color: AMBER,
+          alpha: 0.8 * (1 - k),
+        })
+      }
+
       this.ballShadow
         .clear()
         .ellipse(b.x + 1, b.y + r * 0.9, r * 0.95, r * 0.5)

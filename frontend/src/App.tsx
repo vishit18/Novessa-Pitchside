@@ -34,14 +34,7 @@ export default function App() {
       <Stage />
 
       <div className="pointer-events-none absolute inset-x-0 top-0 flex flex-col items-start gap-2 p-4 sm:flex-row sm:justify-between sm:gap-3 sm:p-6">
-        <div>
-          <ScoreBug />
-          {meta && (
-            <p className="mt-2 hidden text-[12px] leading-snug text-muted sm:block">
-              {meta.competition}, matchday {meta.matchday}, at {meta.venue}
-            </p>
-          )}
-        </div>
+        <ScoreBug />
         <StatusPill />
       </div>
 
@@ -67,23 +60,25 @@ export default function App() {
       )}
       {failed && (
         <div className="absolute inset-0 grid place-items-center bg-ink/90 p-6">
-          <div className="panel max-w-md rounded-[4px] p-6">
-            <h2 className="font-display text-2xl font-semibold">Feed unavailable</h2>
-            <p className="mt-2 text-sm text-muted">{detail ?? 'The match feed did not start.'}</p>
-            <button
-              className="mt-4 h-9 rounded-[3px] border border-amber px-4 text-sm font-medium text-amber hover:bg-amber/10"
-              onClick={() => {
-                const p = params()
-                startMatch({
-                  matchId: p.matchId,
-                  viewer: p.viewer,
-                  startAt: p.startAt,
-                  speed: p.speed,
-                })
-              }}
-            >
-              Try again
-            </button>
+          <div className="plate-shadow max-w-md">
+            <div className="plate p-6">
+              <h2 className="font-display text-2xl font-semibold">Feed unavailable</h2>
+              <p className="mt-2 text-sm text-muted">{detail ?? 'The match feed did not start.'}</p>
+              <button
+                className="mt-4 h-9 border border-amber px-4 text-sm font-medium text-amber hover:bg-amber/10"
+                onClick={() => {
+                  const p = params()
+                  startMatch({
+                    matchId: p.matchId,
+                    viewer: p.viewer,
+                    startAt: p.startAt,
+                    speed: p.speed,
+                  })
+                }}
+              >
+                Try again
+              </button>
+            </div>
           </div>
         </div>
       )}

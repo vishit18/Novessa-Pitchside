@@ -8,7 +8,7 @@ import type { OverlayEnvelope } from '@/types/overlay'
 
 const colour = (code: string) => CLUBS[code]?.primary_color ?? '#9aa5b1'
 
-/** Score, clock and momentum. Top-left, like a TV score bug. */
+/** Score, clock and momentum, top-left. Momentum is the lit line along the bottom edge. */
 export function ScoreBug() {
   const meta = useStore((s) => s.meta)
   const snap = useStore((s) => s.snapshot)
@@ -19,80 +19,101 @@ export function ScoreBug() {
   const lead = m === 0 ? null : m > 0 ? home : away
   const half = (snap?.period ?? 1) === 1 ? '1st half' : '2nd half'
   return (
-    <div className="w-[min(100%,360px)] select-none" role="group" aria-label="Score and momentum">
-      <div className="panel flex items-stretch overflow-hidden rounded-[3px]">
-        <Side code={home} score={snap?.score[home] ?? 0} align="left" />
-        <div className="flex min-w-[88px] flex-col items-center justify-center border-x border-hairline px-3">
-          <span
-            className="num text-[26px] font-semibold leading-none text-amber"
-            aria-label="Match clock"
-          >
-            {snap?.clock ?? '00:00'}
-          </span>
-          <span className="mt-0.5 text-[11px] text-muted">{half}</span>
-        </div>
-        <Side code={away} score={snap?.score[away] ?? 0} align="right" />
-      </div>
-      <div
-        className="mt-1.5 flex items-center gap-2"
-        aria-label={`Momentum ${Math.abs(m)} to ${lead ?? 'neither side'}`}
-      >
-        <span className="num text-[11px] tracking-wider text-muted">{home}</span>
-        <div className="relative h-[5px] flex-1 overflow-hidden rounded-full bg-hairline">
-          <div className="absolute inset-y-0 left-1/2 w-px bg-muted/60" />
+    <div className="w-[min(100%,380px)] select-none" role="group" aria-label="Score and momentum">
+      <div className="plate-shadow">
+        <div className="plate relative">
+          <div className="flex items-stretch">
+            <Side code={home} score={snap?.score[home] ?? 0} align="left" />
+            <div className="flex min-w-[92px] flex-col items-center justify-center px-2 pb-1">
+              <span
+                className="num text-[28px] font-semibold leading-none text-amber"
+                aria-label="Match clock"
+              >
+                {snap?.clock ?? '00:00'}
+              </span>
+              <span className="mt-0.5 text-[12px] text-muted">{half}</span>
+            </div>
+            <Side code={away} score={snap?.score[away] ?? 0} align="right" />
+          </div>
           <div
-            className="absolute inset-y-0 transition-[left,width,background-color] duration-500 ease-out"
-            style={{
-              left: m >= 0 ? `${50 - m / 2}%` : '50%',
-              width: `${Math.abs(m) / 2}%`,
-              background: lead ? colour(lead) : 'transparent',
-            }}
-          />
+            className="relative h-[4px] bg-black/40"
+            role="img"
+            aria-label={`Momentum ${Math.abs(m)} to ${lead ?? 'neither side'}`}
+          >
+            <div className="absolute inset-y-0 left-1/2 w-px bg-white/30" />
+            <div
+              className="absolute inset-y-0 transition-[left,width] duration-500 ease-out"
+              style={{
+                left: m >= 0 ? `${50 - m / 2}%` : '50%',
+                width: `${Math.abs(m) / 2}%`,
+                background: lead ? colour(lead) : 'transparent',
+                boxShadow: lead ? `0 0 10px ${colour(lead)}` : 'none',
+              }}
+            />
+          </div>
         </div>
-        <span className="num text-[11px] tracking-wider text-muted">{away}</span>
       </div>
+      <p className="mt-2 hidden text-[12px] text-muted sm:block">
+        {meta.competition}, matchday {meta.matchday}, at {meta.venue}
+      </p>
     </div>
   )
 }
 
 function Side({ code, score, align }: { code: string; score: number; align: 'left' | 'right' }) {
+  const right = align === 'right'
   return (
     <div
-      className={`flex flex-1 items-center gap-2.5 px-3 py-2 ${align === 'right' ? 'flex-row-reverse' : ''}`}
+      className={`flex flex-1 items-center gap-2.5 py-2 ${right ? 'flex-row-reverse pr-3 pl-1' : 'pl-3 pr-1'}`}
     >
-      <span className="h-8 w-1.5 rounded-[1px]" style={{ background: colour(code) }} />
-      <span className="font-display text-[22px] font-semibold leading-none tracking-wide">
-        {code}
-      </span>
-      <span className="num text-[38px] font-bold leading-none" aria-label={`${code} score`}>
-        {score}
-      </span>
+      <span className="h-9 w-[5px]" style={{ background: colour(code) }} />
+      <span className="font-display text-[24px] font-semibold leading-none">{code}</span>
+      <Digit value={score} />
     </div>
   )
 }
 
-/** Hold the last lower third a moment so it can animate out. */
-function useLowerThird(): OverlayEnvelope | null {
-  const active = useStore((s) => s.active)
-  return active.find((o) => o.slot === 'lower_third') ?? null
+/** The score digit rolls up when it changes. */
+function Digit({ value }: { value: number }) {
+  const reduce = useReducedMotion()
+  return (
+    <span className="relative inline-block h-[40px] w-[26px] overflow-hidden text-center">
+      <AnimatePresence initial={false} mode="popLayout">
+        <motion.span
+          key={value}
+          className="num absolute inset-0 text-[40px] font-bold leading-[40px]"
+          initial={{ y: reduce ? 0 : 40, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: reduce ? 0 : -40, opacity: 0 }}
+          transition={{ duration: reduce ? 0.1 : 0.35, ease: [0.25, 1, 0.5, 1] }}
+        >
+          {value}
+        </motion.span>
+      </AnimatePresence>
+    </span>
+  )
 }
 
 export function LowerThird() {
-  const o = useLowerThird()
+  const active = useStore((s) => s.active)
+  const o = active.find((x) => x.slot === 'lower_third') ?? null
   const reduce = useReducedMotion()
-  const dur = reduce ? 0.12 : 0.22
   return (
-    <div className="pointer-events-none w-[min(100%,560px)]" aria-live="polite">
+    <div className="pointer-events-none w-[min(100%,640px)]" aria-live="polite">
       <AnimatePresence mode="wait">
         {o && (
           <motion.div
             key={`${o.moment_id}-${o.kind}`}
-            initial={{ opacity: 0, x: reduce ? 0 : -24 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: reduce ? 0 : -12 }}
-            transition={{ duration: dur, ease: [0.25, 1, 0.5, 1] }}
+            initial={{ clipPath: 'inset(-20px 100% -20px 0)', opacity: reduce ? 0 : 1 }}
+            animate={{ clipPath: 'inset(-20px -20px -20px 0)', opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: reduce ? 0.12 : 0.3, ease: [0.25, 1, 0.5, 1] }}
           >
-            {o.kind === 'shot_speed' ? <ShotSpeed o={o} /> : <Headline o={o} />}
+            <div className="plate-shadow">
+              <div className="plate" style={{ ['--cut' as string]: '18px' }}>
+                {o.kind === 'shot_speed' ? <ShotSpeed o={o} /> : <Headline o={o} />}
+              </div>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -100,31 +121,25 @@ export function LowerThird() {
   )
 }
 
-function toneColour(tone: unknown): string {
-  if (tone === 'card') return '#f5c542'
-  return 'var(--color-amber)'
+function toneColour(o: OverlayEnvelope): string {
+  const team = String(o.payload['team'] ?? '')
+  if (o.payload['tone'] === 'card') return '#f5c542'
+  return team ? colour(team) : 'var(--color-amber)'
 }
 
 function Headline({ o }: { o: OverlayEnvelope }) {
   const head = String(o.payload['headline'] ?? '')
   const body = String(o.payload['body'] ?? '')
   const late = lateness(o)
-  const team = String(o.payload['team'] ?? '')
   return (
-    <div className="panel flex overflow-hidden rounded-[3px] shadow-[0_10px_30px_rgb(0_0_0/0.5)]">
-      <span className="w-1.5 shrink-0" style={{ background: toneColour(o.payload['tone']) }} />
-      <div className="min-w-0 px-4 py-2.5">
-        <div className="flex items-center gap-2">
-          {team && (
-            <span
-              className="size-2.5 shrink-0 rounded-[1px]"
-              style={{ background: colour(team) }}
-            />
-          )}
-          <span className="font-display text-[36px] font-bold leading-none">{head}</span>
+    <div className="flex">
+      <span className="w-[7px] shrink-0" style={{ background: toneColour(o) }} />
+      <div className="min-w-0 py-3 pr-8 pl-4">
+        <div className="font-display text-[28px] sm:text-[42px] font-bold leading-[0.95]">
+          {head}
         </div>
-        <p className="mt-1 text-[14px] leading-snug text-muted">{body}</p>
-        {late > 6 && <p className="mt-1 text-[12px] text-amber">Earlier</p>}
+        <p className="mt-1.5 max-w-[56ch] text-[15px] leading-snug text-muted">{body}</p>
+        {late > 6 && <p className="mt-1 text-[12px] text-amber">From earlier in the match</p>}
       </div>
     </div>
   )
@@ -136,18 +151,18 @@ function ShotSpeed({ o }: { o: OverlayEnvelope }) {
   const pid = String(o.payload['player_id'] ?? '')
   const outcome = String(o.payload['outcome'] ?? '')
   return (
-    <div className="panel flex overflow-hidden rounded-[3px] shadow-[0_10px_30px_rgb(0_0_0/0.5)]">
-      <span className="w-1.5 shrink-0 bg-amber" />
-      <div className="flex items-end gap-4 px-4 py-2.5">
-        <div className="num text-[56px] font-bold leading-[0.9] text-amber">
+    <div className="flex">
+      <span className="w-[7px] shrink-0 bg-amber" />
+      <div className="flex items-end gap-5 py-3 pr-9 pl-4">
+        <div className="num text-[44px] sm:text-[64px] font-bold leading-[0.85] text-amber">
           <CountUp to={speed} />
-          <span className="ml-1.5 text-[18px] font-medium text-muted">km/h</span>
+          <span className="ml-2 text-[20px] font-medium text-muted">km/h</span>
         </div>
-        <div className="pb-0.5">
-          <div className="font-display text-[24px] font-semibold leading-none">
+        <div className="pb-1">
+          <div className="font-display text-[20px] sm:text-[26px] font-semibold leading-none">
             {PLAYERS[pid]?.name ?? pid}’s shot
           </div>
-          <div className="mt-1 text-[13px] text-muted">
+          <div className="mt-1.5 text-[14px] text-muted">
             {typeof xg === 'number' ? `xG ${xg.toFixed(2)}, ` : ''}
             {outcome}
           </div>
@@ -157,7 +172,7 @@ function ShotSpeed({ o }: { o: OverlayEnvelope }) {
   )
 }
 
-/** Count up to a value over ~0.5 s. */
+/** Count up to a value over half a second. */
 function CountUp({ to }: { to: number }) {
   const [v, setV] = useState(0)
   const reduce = useReducedMotion()
@@ -182,8 +197,8 @@ function CountUp({ to }: { to: number }) {
 export function Wordmark() {
   return (
     <div className="flex select-none items-center gap-2" aria-label="Novessa Pitchside">
-      <span className="h-4 w-[3px] bg-amber" />
-      <span className="font-display text-[22px] font-semibold leading-none tracking-wide">
+      <span className="h-5 w-[4px] bg-amber" />
+      <span className="font-display text-[24px] font-semibold leading-none tracking-wide">
         Novessa <span className="text-muted">Pitchside</span>
       </span>
     </div>
@@ -217,58 +232,63 @@ export function Controls() {
     }
   }, [])
   const btn =
-    'num h-8 min-w-9 rounded-[3px] border border-hairline px-2 text-[15px] font-semibold text-muted transition-colors hover:text-text aria-pressed:border-amber aria-pressed:text-amber'
+    'num h-8 min-w-9 border border-white/15 px-2.5 text-[16px] font-semibold text-muted transition-colors hover:text-text aria-pressed:border-amber aria-pressed:text-amber'
   return (
     <div
       onFocusCapture={wake}
-      className={`panel flex flex-wrap items-center justify-center gap-x-4 gap-y-2 rounded-[4px] px-3 py-2 transition-opacity duration-200 ${
+      className={`plate-shadow transition-opacity duration-200 ${
         shown
           ? 'opacity-100'
           : 'pointer-events-none opacity-0 focus-within:pointer-events-auto focus-within:opacity-100'
       }`}
-      role="toolbar"
-      aria-label="Playback"
     >
-      {controls && (
-        <>
-          <button
-            className={btn}
-            aria-pressed={paused}
-            onClick={() => {
-              controls.setPaused(!paused)
-              set({ paused: !paused })
-            }}
-          >
-            {paused ? 'Play' : 'Pause'}
-          </button>
-          <div className="flex items-center gap-1" role="group" aria-label="Replay speed">
-            {SPEEDS.map((s) => (
-              <button
-                key={s}
-                className={btn}
-                aria-pressed={speed === s}
-                onClick={() => {
-                  controls.setSpeed(s)
-                  set({ speed: s })
-                }}
-              >
-                {s}x
-              </button>
-            ))}
-          </div>
-        </>
-      )}
-      <div className="flex items-center gap-1" role="group" aria-label="Stream delay">
-        <span className="mr-1 text-[12px] text-muted">Stream delay</span>
-        {DELAYS.map((d) => (
-          <button key={d} className={btn} aria-pressed={delayS === d} onClick={() => setDelay(d)}>
-            {d}s
-          </button>
-        ))}
+      <div
+        className="plate flex flex-wrap items-center justify-center gap-x-5 gap-y-2 px-5 py-2.5"
+        style={{ ['--cut' as string]: '10px' }}
+        role="toolbar"
+        aria-label="Playback"
+      >
+        {controls && (
+          <>
+            <button
+              className={btn}
+              aria-pressed={paused}
+              onClick={() => {
+                controls.setPaused(!paused)
+                set({ paused: !paused })
+              }}
+            >
+              {paused ? 'Play' : 'Pause'}
+            </button>
+            <div className="flex items-center gap-1" role="group" aria-label="Replay speed">
+              {SPEEDS.map((s) => (
+                <button
+                  key={s}
+                  className={btn}
+                  aria-pressed={speed === s}
+                  onClick={() => {
+                    controls.setSpeed(s)
+                    set({ speed: s })
+                  }}
+                >
+                  {s}x
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+        <div className="flex items-center gap-1" role="group" aria-label="Stream delay">
+          <span className="mr-1.5 text-[13px] text-muted">Stream delay</span>
+          {DELAYS.map((d) => (
+            <button key={d} className={btn} aria-pressed={delayS === d} onClick={() => setDelay(d)}>
+              {d}s
+            </button>
+          ))}
+        </div>
+        <span className="num hidden text-[14px] text-muted sm:inline">
+          {clock.lead.toFixed(1)}s behind live
+        </span>
       </div>
-      <span className="num hidden text-[13px] text-muted sm:inline">
-        {clock.lead.toFixed(1)}s behind live
-      </span>
     </div>
   )
 }
@@ -287,14 +307,14 @@ export function StatusPill() {
           ? 'Reconnecting'
           : 'Offline'
   return (
-    <div className="panel flex items-center gap-2 rounded-full px-3 py-1" role="status">
+    <div className="flex items-center gap-2" role="status">
       <span
-        className={`size-2 rounded-full ${live ? 'bg-chaos' : 'bg-amber pulse-soft'}`}
+        className={`size-2.5 rounded-full ${live ? 'bg-chaos shadow-[0_0_10px_var(--color-chaos)]' : 'bg-amber pulse-soft'}`}
         aria-hidden="true"
       />
-      <span className="text-[12px] font-medium">{label}</span>
-      {kind === 'mock' && <span className="text-[12px] text-muted">sample match</span>}
-      {detail && !live && <span className="text-[11px] text-muted">{detail}</span>}
+      <span className="font-display text-[18px] font-semibold leading-none">{label}</span>
+      {kind === 'mock' && <span className="text-[13px] text-muted">sample match</span>}
+      {detail && !live && <span className="text-[13px] text-muted">{detail}</span>}
     </div>
   )
 }
