@@ -1,0 +1,31 @@
+# Thresholds for instant triggers and moment detection (docs/03 section 6).
+# Change a number here and the engine picks it up; nothing is hard-coded in the engine.
+
+triggers:
+  sprint_kmh: 30.0              # speed_burst fires when a player crosses this
+  sprint_reset_kmh: 24.0        # must drop below this before another burst counts
+  shot_speed_kmh: 95.0          # shot_speed fires at or above this
+  pass_difficulty: 75.0         # pass_difficulty fires at or above this (completed or not)
+  distance_step_km: 2.0         # distance_milestone every this many km
+  long_pass_m: 40.0             # a new match-longest pass above this is a milestone
+
+milestones:
+  team_pass_counts: [100, 250, 500]
+  player_pass_counts: [50]
+
+windows:
+  possession_s: 300
+  control_s: 180
+  rhythm_s: 120
+  pressure_s: 300
+  momentum_half_life_s: 180
+
+moments:
+  cooldown_s: 180               # minimum gap between moments of the same kind and team
+  big_chance_xg: 0.25
+  momentum_swing: 50            # change in momentum over momentum_swing_window_s
+  momentum_swing_window_s: 120
+  pressure_shift: 40            # change in (home - away) pressure index over two minutes
+  rhythm_break_ratio: 0.4       # tempo this far from baseline counts as a break
+  standout_pass_difficulty: 85
+  min_time_s: 120               # no swing or shift moments in the first two minutes

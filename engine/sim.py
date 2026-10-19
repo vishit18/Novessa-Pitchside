@@ -371,7 +371,7 @@ class MatchSimulator:
                 cur = self.pos[team, s]
                 delta = tgt[team, s] - cur
                 dist = float(np.linalg.norm(delta))
-                vmax = (7.0 + 0.03 * self._attr(team, s, "pace")) * self._fatigue(team, s)
+                vmax = (6.5 + 0.03 * self._attr(team, s, "pace")) * self._fatigue(team, s)
                 step = np.zeros(2)
                 if dist > 1e-6:
                     speed = min(vmax, dist / 2.2)
@@ -406,7 +406,7 @@ class MatchSimulator:
         cur = self.pos[team, slot]
         delta = target - cur
         dist = float(np.linalg.norm(delta))
-        vmax = (7.0 + 0.03 * self._attr(team, slot, "pace")) * self._fatigue(team, slot)
+        vmax = (6.5 + 0.03 * self._attr(team, slot, "pace")) * self._fatigue(team, slot)
         reach = vmax * self._scaled(dt) * 0.9
         new = target.copy() if dist <= reach else cur + delta / dist * reach
         self.pos[team, slot] = new
