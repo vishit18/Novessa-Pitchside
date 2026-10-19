@@ -1,7 +1,6 @@
 import type { StoreApi } from 'zustand/vanilla'
 import { ClockSync } from '@/core/clock'
 import { activeOverlays } from '@/core/overlays'
-import { MockSource } from '@/mock/mockSource'
 import { GATEWAY_WS } from '@/net/api'
 import { WebSocketSource } from '@/net/wsSource'
 import type { MatchSource, SourceOptions } from '@/net/source'
@@ -12,13 +11,8 @@ import { createUIStore, type UIState } from './store'
 /** Jitter buffer on top of any deliberate delay, in match seconds. */
 const BASE_LEAD_S = 0.3
 
-/**
- * The one place that picks a transport: the gateway (GATEWAY_WS), or the sample-file mock with
- * ?source=mock while it still exists.
- */
+/** The one place that picks a transport. */
 export function createSource(opts: SourceOptions): MatchSource {
-  const params = new URLSearchParams(window.location.search)
-  if (params.get('source') === 'mock') return new MockSource(opts)
   return new WebSocketSource(GATEWAY_WS, opts)
 }
 
@@ -47,7 +41,6 @@ export class Session {
     const source = createSource(this.opts)
     this.source = source
     this.store.getState().set({
-      sourceKind: source.kind,
       controls: source.controls ?? null,
       status: 'connecting',
       statusDetail: null,

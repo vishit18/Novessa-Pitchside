@@ -13,3 +13,5 @@ footage/
 .DS_Store
 .claude/settings.local.json
 .playwright-mcp/
+frontend/test-results/
+frontend/playwright-report/

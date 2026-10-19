@@ -10,7 +10,7 @@ export interface SourceHandlers {
   onMeta: (meta: MatchMeta) => void
 }
 
-/** Transport controls. Only the mock (and later the replay API) implements these. */
+/** Transport controls, sent to the gateway as {"op": ...} control messages. */
 export interface PlaybackControls {
   setSpeed: (speed: number) => void
   setPaused: (paused: boolean) => void
@@ -18,11 +18,10 @@ export interface PlaybackControls {
 }
 
 /**
- * Anything that produces the gateway's wire messages for one viewer. The mock and the real
- * WebSocket both implement this, so swapping them is a change in createSource() only.
+ * Anything that produces the gateway's wire messages for one viewer. Today that is the
+ * WebSocket; a recorded-file source for offline demos would implement the same interface.
  */
 export interface MatchSource {
-  readonly kind: 'mock' | 'ws'
   controls?: PlaybackControls
   connect(handlers: SourceHandlers): void
   close(): void

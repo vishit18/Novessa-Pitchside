@@ -23,7 +23,6 @@ function isWireMessage(x: unknown): x is WireMessage {
  * and de-duplication happen downstream in StreamBuffers.
  */
 export class WebSocketSource implements MatchSource {
-  readonly kind = 'ws' as const
   readonly controls: PlaybackControls
   private ws: WebSocket | null = null
   private handlers: SourceHandlers | null = null

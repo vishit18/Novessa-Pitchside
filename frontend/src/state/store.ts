@@ -20,7 +20,6 @@ export interface UIState {
   delayS: number
   speed: number
   paused: boolean
-  sourceKind: 'mock' | 'ws'
   controls: PlaybackControls | null
   set: (patch: Partial<Omit<UIState, 'set'>>) => void
 }
@@ -36,7 +35,6 @@ export function createUIStore(profile: ViewerProfile): StoreApi<UIState> {
     delayS: 0,
     speed: 4,
     paused: false,
-    sourceKind: 'mock',
     controls: null,
     set: (patch) => set(patch),
   }))

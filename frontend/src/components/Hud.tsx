@@ -73,6 +73,10 @@ function Side({ code, score, align }: { code: string; score: number; align: 'lef
     >
       <span className="h-9 w-[5px]" style={{ background: colour(code) }} />
       <span className="latin text-[24px] font-semibold leading-none">{code}</span>
+      {/* Screen readers get the settled score; the rolling digit is decoration. */}
+      <span className="sr-only" aria-label={`${code} score`}>
+        {score}
+      </span>
       <Digit value={score} />
     </div>
   )
@@ -82,7 +86,10 @@ function Side({ code, score, align }: { code: string; score: number; align: 'lef
 function Digit({ value }: { value: number }) {
   const reduce = useReducedMotion()
   return (
-    <span className="relative inline-block h-[40px] w-[26px] overflow-hidden text-center">
+    <span
+      className="relative inline-block h-[40px] w-[26px] overflow-hidden text-center"
+      aria-hidden="true"
+    >
       <AnimatePresence initial={false} mode="popLayout">
         <motion.span
           key={value}
@@ -310,7 +317,6 @@ export function Controls({ transport = true }: { transport?: boolean }) {
 export function StatusPill() {
   const status = useSessionState((s) => s.status)
   const detail = useSessionState((s) => s.statusDetail)
-  const kind = useSessionState((s) => s.sourceKind)
   const t = useT()
   const live = status === 'live'
   const label = t(
@@ -329,7 +335,6 @@ export function StatusPill() {
         aria-hidden="true"
       />
       <span className="font-display text-[18px] font-semibold leading-none">{label}</span>
-      {kind === 'mock' && <span className="text-[13px] text-muted">{t('sampleMatch')}</span>}
       {detail && !live && <span className="text-[13px] text-muted">{detail}</span>}
     </div>
   )
