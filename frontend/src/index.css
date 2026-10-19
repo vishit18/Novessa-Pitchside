@@ -1,0 +1,113 @@
+@import '@fontsource-variable/inter';
+@import '@fontsource/barlow-condensed/500.css';
+@import '@fontsource/barlow-condensed/600.css';
+@import '@fontsource/barlow-condensed/700.css';
+@import 'tailwindcss';
+
+/* Floodlights palette. docs/07_FRONTEND_DESIGN.md is the source of truth. */
+@theme {
+  --color-ink: #0d1014;
+  --color-raised: #161b22;
+  --color-hairline: #2a313b;
+  --color-text: #e8edf2;
+  --color-muted: #9aa5b1;
+  --color-amber: #ffb020;
+  --color-control: #5cc8ff;
+  --color-chaos: #ff4d4d;
+  --color-pressure: #e05cff;
+  --font-display: 'Barlow Condensed', 'Arial Narrow', sans-serif;
+  --font-sans: 'Inter Variable', system-ui, sans-serif;
+  --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  overflow-x: clip;
+}
+
+body {
+  background: var(--color-ink);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+.num {
+  font-family: var(--font-display);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-amber);
+  outline-offset: 2px;
+}
+
+/* Floodlit stage: a warm pool of light above the pitch, dark at the edges. */
+.stage-bg {
+  background:
+    radial-gradient(120% 70% at 50% -10%, rgb(255 176 32 / 0.1), transparent 60%),
+    radial-gradient(90% 90% at 50% 50%, #12171d 0%, var(--color-ink) 75%);
+}
+
+/* TV-style entrances. 150-250 ms, ease-out, nothing bounces. */
+@keyframes tag-in {
+  from {
+    opacity: 0;
+    translate: 0 6px;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+@keyframes tag-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes tag-out {
+  to {
+    opacity: 0;
+  }
+}
+.tag {
+  animation:
+    tag-in 0.2s var(--ease-out-quart) both,
+    tag-out 0.25s ease-in both;
+  animation-delay: 0s, calc(var(--life, 4s) - 0.25s);
+}
+
+@keyframes pulse-soft {
+  50% {
+    opacity: 0.45;
+  }
+}
+.pulse-soft {
+  animation: pulse-soft 1.6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tag {
+    animation:
+      tag-fade-in 0.15s linear both,
+      tag-out 0.15s linear both;
+    animation-delay: 0s, calc(var(--life, 4s) - 0.15s);
+  }
+  .pulse-soft {
+    animation: none;
+  }
+  * {
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Wide dark panel look shared by broadcast graphics. */
+.panel {
+  background: color-mix(in oklab, var(--color-raised) 92%, transparent);
+  border: 1px solid var(--color-hairline);
+  backdrop-filter: blur(8px);
+}
