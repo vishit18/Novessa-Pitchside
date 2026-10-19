@@ -63,13 +63,11 @@ Create `infra/main.bicep` and modules, referencing the existing Foundry resource
 | Key Vault | Standard | secrets | pennies |
 | User-assigned Managed Identity | — | keyless auth to everything | free |
 | Container Apps environment (Consumption) | Consumption | `api`, `agents`, `mcp` apps | free monthly grant covers us if min replicas = 0 except during demos |
-| Container Registry | Basic | images | ~$5/month — or skip and build with `azd` to a GitHub Container Registry image if cheaper |
+| Container Registry | Basic | images, pulled with managed identity (decided 20 Oct) | ~$5/month, about $6 until 10 Nov |
 | Event Hubs namespace | Basic, 1 TU, hub `match-events` | event-driven backbone | ~$11/month |
 | Cosmos DB for NoSQL | **Free tier** (1000 RU/s, 25 GB) | matches, moments, profiles, cache | free (enable free tier at create — only one per subscription) |
 | Static Web Apps | **Free** | frontend | free |
-| Azure AI Translator | **F0** | multi-language | free up to 2M chars/month |
-| Azure AI Speech | **F0** | voice commentary | free tier |
-| Azure AI Content Safety | **F0** | check every generated text before it airs | free tier |
+| Azure AI Translator, Speech, Content Safety | **reuse the Foundry resource** `NovessaPitchside1` | same Azure AI Services, one endpoint, one role assignment, no free-tier cap to run out of during judging | pay per use, cents with caching (decided 20 Oct) |
 | Foundry model usage | pay per token | agents | the main cost; budget ~$40–80 total with caching |
 
 Rough total for the whole hackathon plus judging: **$60–120**, inside the $200 credit. Check actual spend daily in Cost Management.
@@ -83,6 +81,12 @@ Role assignments for the managed identity: `Cognitive Services OpenAI User` + `A
 - Rate-limit the "go live" button (e.g. 5 fresh matches per hour globally).
 - Add an Application Insights availability test on the frontend URL and the `/health` endpoint, with an email alert.
 - After winners are announced, delete `rg-pitchside` so nothing keeps billing.
+
+## What actually exists (updated 20 Oct)
+
+- Subscription `Azure subscription 1`, upgraded to pay-as-you-go. Budget `pitchside-150`: $150 per month, email alerts at 50%, 80% and 100%.
+- Resource group `pitchside` (not `rg-pitchside`), Sweden Central.
+- Foundry resource and project `NovessaPitchside1`. Deployments: `chat-fast` (gpt-4.1-mini, 100K tokens/min) and `chat-strong` (gpt-5-mini, 500K tokens/min). Works in the portal playground; command-line calls with the signed-in user's token were still returning PermissionDenied on 20 Oct.
 
 ## Environment variables (`.env.example`)
 
