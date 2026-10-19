@@ -31,7 +31,8 @@ Never cut: the five pipeline stages, Verifier, failure recovery demo, split-view
 
 _Claude Code updates this at the end of every working day._
 
-- **Done:**
-- **Broken / risky:**
-- **Next:**
-- **Azure spend so far:**
+- **Done (Mon 19):** read CLAUDE.md and all docs. Repo initialised on `main`, `core.hooksPath` set to `.githooks`, first commit authored by VJ with no trailers. Folder scaffold, `pyproject.toml` (uv, Python 3.12, ruff, mypy strict, pytest), Makefile, `.env.example`, CI skeleton (backend always, frontend once `package-lock.json` exists), MIT licence, stub README. Lint, mypy and the smoke test pass locally.
+- **Broken / risky:** `make`, `az` and `azd` are not installed on VJ's machine. Windows App Control blocks `mypy.exe`, so use `uv run python -m mypy .` (the Makefile does). Local default Python is 3.14; uv installed 3.12 for the project. Plugins (`frontend-design`, `microsoft-docs`) not yet installed.
+- **Next (Tue 20):** event schema + Pydantic models, league generator, match engine v1, replay clock, tests.
+- **Needs VJ:** Azure free account + $150 budget alert, install `az`/`azd`, Foundry project with `chat-fast` and `chat-strong`, create the public GitHub repo `novessa-pitchside`, install the two plugins.
+- **Azure spend so far:** $0
