@@ -1,0 +1,267 @@
+{
+  "$defs": {
+    "Anchor": {
+      "description": "What an overlay is attached to: a player, or a spot on the pitch (metres).",
+      "properties": {
+        "type": {
+          "enum": [
+            "player",
+            "pitch"
+          ],
+          "title": "Type",
+          "type": "string"
+        },
+        "id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Id"
+        },
+        "x": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "X"
+        },
+        "y": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Y"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "title": "Anchor",
+      "type": "object"
+    },
+    "EvidenceRef": {
+      "properties": {
+        "metric": {
+          "title": "Metric",
+          "type": "string"
+        },
+        "value": {
+          "title": "Value",
+          "type": "number"
+        },
+        "window": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Window"
+        }
+      },
+      "required": [
+        "metric",
+        "value"
+      ],
+      "title": "EvidenceRef",
+      "type": "object"
+    },
+    "Provenance": {
+      "properties": {
+        "source": {
+          "description": "state_engine, agent:analyst, agent:recap, ...",
+          "title": "Source",
+          "type": "string"
+        },
+        "verified": {
+          "title": "Verified",
+          "type": "boolean"
+        },
+        "evidence": {
+          "items": {
+            "$ref": "#/$defs/EvidenceRef"
+          },
+          "title": "Evidence",
+          "type": "array"
+        }
+      },
+      "required": [
+        "source",
+        "verified"
+      ],
+      "title": "Provenance",
+      "type": "object"
+    }
+  },
+  "description": "The overlay envelope. Everything is keyed to match time, never wall time.",
+  "properties": {
+    "v": {
+      "const": 1,
+      "default": 1,
+      "title": "V",
+      "type": "integer"
+    },
+    "msg_id": {
+      "title": "Msg Id",
+      "type": "string"
+    },
+    "match_id": {
+      "title": "Match Id",
+      "type": "string"
+    },
+    "moment_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Moment Id"
+    },
+    "op": {
+      "default": "show",
+      "enum": [
+        "show",
+        "update",
+        "hide",
+        "clear_slot"
+      ],
+      "title": "Op",
+      "type": "string"
+    },
+    "slot": {
+      "enum": [
+        "lower_third",
+        "top_bar",
+        "side_panel",
+        "player_tag",
+        "pitch_annotation",
+        "fullscreen_card",
+        "ticker"
+      ],
+      "title": "Slot",
+      "type": "string"
+    },
+    "kind": {
+      "enum": [
+        "player_tag",
+        "speed_burst",
+        "distance_milestone",
+        "pass_difficulty",
+        "shot_speed",
+        "momentum_bar",
+        "control_chaos",
+        "pressure_shift",
+        "insight",
+        "milestone",
+        "commentary_line",
+        "recap",
+        "stat_compare"
+      ],
+      "title": "Kind",
+      "type": "string"
+    },
+    "priority": {
+      "maximum": 100,
+      "minimum": 0,
+      "title": "Priority",
+      "type": "integer"
+    },
+    "t_match": {
+      "title": "T Match",
+      "type": "number"
+    },
+    "t_wall_emit": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "T Wall Emit"
+    },
+    "show_at": {
+      "title": "Show At",
+      "type": "number"
+    },
+    "duration_s": {
+      "title": "Duration S",
+      "type": "number"
+    },
+    "anchor": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Anchor"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "persona": {
+      "items": {
+        "enum": [
+          "analyst",
+          "casual",
+          "kids",
+          "accessibility"
+        ],
+        "type": "string"
+      },
+      "title": "Persona",
+      "type": "array"
+    },
+    "lang": {
+      "default": "en",
+      "title": "Lang",
+      "type": "string"
+    },
+    "payload": {
+      "additionalProperties": true,
+      "title": "Payload",
+      "type": "object"
+    },
+    "provenance": {
+      "$ref": "#/$defs/Provenance"
+    }
+  },
+  "required": [
+    "msg_id",
+    "match_id",
+    "slot",
+    "kind",
+    "priority",
+    "t_match",
+    "show_at",
+    "duration_s",
+    "provenance"
+  ],
+  "title": "Overlay (protocol v1)",
+  "type": "object",
+  "$id": "https://novessa-pitchside.example/schemas/overlay-v1.json"
+}

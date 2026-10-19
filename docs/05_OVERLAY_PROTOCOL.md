@@ -17,7 +17,7 @@ Publish this as a versioned spec: `docs/overlay-protocol-v1.md` + JSON Schema in
   "kind": "pass_difficulty",           // see kinds below
   "priority": 70,                      // 0–100; renderer resolves collisions by slot + priority
   "t_match": 1387.4,                   // match clock time this refers to (sync key)
-  "t_wall_emit": "2026-10-24T19:03:11.204Z",
+  "t_wall_emit": "2026-10-24T19:03:11.204Z",  // set at send time, null in exports
   "show_at": 1387.6,                   // match time to appear
   "duration_s": 6.0,
   "anchor": {"type": "player", "id": "ASH-08"},   // or {"type":"pitch","x":..,"y":..} or null
@@ -49,6 +49,31 @@ Publish this as a versioned spec: `docs/overlay-protocol-v1.md` + JSON Schema in
 | `commentary_line` | agent | text, audio_url (optional) |
 | `recap` | agent | sections[] |
 | `stat_compare` | state engine | two players / teams, metric, values |
+
+## Transport
+
+The gateway sends JSON text frames over `WS /ws/matches/{id}?viewer=...&persona=...&speed=...&t=...`. Every frame is `{"type": ..., "data": ...}`:
+
+| type | data | rate |
+|---|---|---|
+| `frame` | `TrackingFrame` (docs/03) | 10 Hz |
+| `event` | `MatchEvent` (docs/03) | as they happen |
+| `state` | `StateSnapshot` (`backend/state/models.py`): score, clock, possession, momentum, pressure, control/chaos, rhythm | 1 Hz |
+| `overlay` | the envelope above | as they happen |
+
+The client may send `{"op": "play"|"pause"}`, `{"op": "speed", "value": 4}` and `{"op": "seek", "t": 1200}`. Query parameters: `persona` (analyst, casual, kids, accessibility), `club`, `player`, `metric`, `lang`. `GET /matches/{id}` returns `MatchMeta`. `t_wall_emit` is set when the gateway sends the message and is null in exports.
+
+## Payloads the renderer relies on
+
+- `pass_difficulty`: slot `pitch_annotation`, anchor `{"type": "pitch", "x", "y"}` at the pass start. Payload: `difficulty` (0-100), `distance_m`, `ball_speed_kmh`, `end_x`, `end_y`, `complete` (bool), `player_id`, `factors` `[{name, points}]` (omitted for the casual persona).
+- `shot_speed`: slot `lower_third`, anchored to the shooter. Payload: `speed_kmh`, `xg`, `outcome`, `player_id`.
+- `speed_burst`: slot `player_tag`, anchored to the player. Payload: `speed_kmh`, `rank_in_match`.
+- `distance_milestone`: slot `player_tag`. Payload: `km`.
+- `milestone` and `insight`: slot `lower_third`. Payload: `headline`, `body`, `team`, `tone` (`goal`, `chance`, `swing`, `milestone`, `info`), optional `moment_kind`.
+- `op: "update"` with the same `moment_id` merges its payload into the earlier overlay. Agent text arrives this way after the instant overlay.
+- `momentum_bar` is not sent as an overlay in v1. The renderer reads `state.momentum`.
+
+Until the agents are live, `insight` overlays carry a numbers-only fallback card written from the state engine (`provenance.source = "state_engine"`).
 
 ## Timing and sync
 
