@@ -111,7 +111,7 @@ Combine with fixed weights into a logit, scale to 0–100. Calibrate so that acr
 `scripts/calibrate.py` generates 200 matches and prints/plots distributions against typical top-flight ranges that are general football knowledge (not copied from any dataset):
 - goals per match ~2.5–3, shots per team ~10–15, pass completion ~75–88%, possession spread, distance per outfield player ~9–12 km, top sprint speeds ~32–35 km/h, shot speeds up to ~120 km/h
 
-Save the chart in `docs/img/calibration.png` and reference it in the README. If something is off, tune the engine.
+Do **not** calibrate against SoccerTrack v2 or any other real dataset; that data is reserved for the vision pipeline (`docs/06`). Save the chart in `docs/img/calibration.png` and reference it in the README. If something is off, tune the engine.
 
 ## 8. The dataset we publish
 

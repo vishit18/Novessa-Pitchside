@@ -31,6 +31,7 @@ A synthetic match engine streams a full 90 minutes of football-realistic events 
 
 ### Data and IP
 - **Synthetic data only** for the match intelligence. No real Premier League data, ever.
+- **Keep real and synthetic strictly apart.** SoccerTrack v2 is real footage of real (amateur) matches. It lives only in `vision/` and is used for exactly two things: showing auto-eventing works on video, and scoring our vision output against its labels. Never use it to build, train, tune or calibrate the synthetic engine, never mix its events into synthetic matches, and never feed it to the agents as if it were synthetic. Everything it produces is tagged `source: "vision"` and shown only in Real footage mode with the dataset credit visible.
 - **No real clubs, players, crests, kits, league names, sponsors or PL branding anywhere** in the UI, code, seed data, README or video. Our league, clubs and players are invented (see `docs/03_SYNTHETIC_DATA.md`). The rules say the demo must not include third-party trademarks.
 - Real footage comes only from the openly licensed SoccerTrack v2 dataset (CC BY 4.0) or another source listed in `docs/06`. Never download professional or lower-league match clips, highlights or YouTube videos. Credit every asset in `docs/ASSET_LICENSES.md`.
 - No copyrighted music. No stock assets unless the licence is explicitly free for commercial use and is recorded in `docs/ASSET_LICENSES.md`.

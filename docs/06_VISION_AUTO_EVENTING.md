@@ -11,6 +11,8 @@ Rules §4.7: footage is allowed, but we must source it ourselves and hold the ri
 
 ## Footage source: SoccerTrack v2 (CC BY 4.0)
 
+**What this data is, precisely:** real video of real university matches, plus human-made labels (player positions, jersey numbers, ball events). The only reconstructed part is the `ball` track, which is interpolated between labelled events rather than measured. None of it is synthetic, and none of it touches the synthetic engine or the main match experience. See the "Keep real and synthetic strictly apart" rule in `CLAUDE.md`.
+
 - Hugging Face: `atomscott/soccertrack-v2` (gated: VJ logs in and accepts the conditions). Paper: arXiv 2508.01802. Code: github.com/AtomScott/SoccerTrack-v2.
 - 10 full-length **university-level amateur** matches, 4K **panoramic full-pitch** video (BePro cameras). A fixed full-pitch view is ideal: one homography covers the whole clip.
 - Comes with **ground truth**: 2D pitch coordinates per player, track IDs, team side, jersey numbers, and ball action labels for 12 event classes. That means we can *measure* how good our auto-eventing is. Most entries can't.
