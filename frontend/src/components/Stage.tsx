@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { CLUBS } from '@/data/league'
 import { makeTilt, type Tilt } from '@/core/tilt'
+import { isGoal } from '@/core/overlays'
 import { frameAt } from '@/core/timeline'
-import { buffers, tick } from '@/state/runtime'
-import { useStore } from '@/state/store'
+import { useSession, useSessionState } from '@/state/useSession'
 import { PitchRenderer } from './pitch/PitchRenderer'
 import { TagLayer, type TagRegistry, resolveTagPoint } from './TagLayer'
 
@@ -21,9 +21,10 @@ export function Stage() {
   const hostRef = useRef<HTMLDivElement>(null)
   const tiltRef = useRef<HTMLDivElement>(null)
   const registry = useRef<TagRegistry>(new Map())
+  const session = useSession()
   const [renderer, setRenderer] = useState<PitchRenderer | null>(null)
-  const meta = useStore((s) => s.meta)
-  const goalOn = useStore((s) => s.active.some((o) => o.payload['tone'] === 'goal'))
+  const meta = useSessionState((s) => s.meta)
+  const goalOn = useSessionState((s) => s.active.some(isGoal))
 
   useEffect(() => {
     const host = hostRef.current
@@ -53,9 +54,9 @@ export function Stage() {
           r.setFit(deg ? TILT_FIT : 1)
         }
         r.layout(w, h)
-        const t = tick(now)
-        const frame = frameAt(buffers.frames, t)
-        const active = useStore.getState().active
+        const t = session.tick(now)
+        const frame = frameAt(session.buffers.frames, t)
+        const active = session.store.getState().active
         r.draw(frame, active, t)
         if (frame) {
           const players = new Map(frame.players.map((p) => [p.id, p]))
@@ -79,7 +80,7 @@ export function Stage() {
       cancelAnimationFrame(raf)
       r.destroy()
     }
-  }, [])
+  }, [session])
 
   useEffect(() => {
     if (!renderer || !meta) return

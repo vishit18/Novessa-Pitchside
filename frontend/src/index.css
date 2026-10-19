@@ -2,6 +2,9 @@
 @import '@fontsource/barlow-condensed/500.css';
 @import '@fontsource/barlow-condensed/600.css';
 @import '@fontsource/barlow-condensed/700.css';
+@import '@fontsource/ibm-plex-sans-arabic/400.css';
+@import '@fontsource/ibm-plex-sans-arabic/600.css';
+@import '@fontsource/ibm-plex-sans-arabic/700.css';
 @import 'tailwindcss';
 
 /* Floodlights palette. docs/07_FRONTEND_DESIGN.md is the source of truth. */
@@ -35,8 +38,30 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Arabic: Barlow and Inter have no Arabic glyphs, so both roles switch to Plex Sans Arabic. */
+[lang='ar'] {
+  --font-display: 'IBM Plex Sans Arabic', sans-serif;
+  --font-sans: 'IBM Plex Sans Arabic', sans-serif;
+}
+
+/* Broadcast graphics inside a shared-screen pane. Narrow panes shrink them further. */
+.hud-compact {
+  zoom: 0.68;
+}
+@media (max-width: 640px) {
+  .hud-compact {
+    zoom: 0.5;
+  }
+}
+
+/* Team codes and other Latin-only labels keep the condensed face in every language. */
+.latin {
+  font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif;
+}
+
+/* Live numbers keep the condensed Latin face in every language so they don't jitter. */
 .num {
-  font-family: var(--font-display);
+  font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif;
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.01em;
 }

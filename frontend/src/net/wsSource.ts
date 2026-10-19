@@ -1,6 +1,6 @@
 import type { WireMessage } from '@/types/overlay'
 import type { MatchMeta } from '@/types/schema'
-import type { MatchSource, SourceHandlers, SourceOptions } from './source'
+import type { MatchSource, PlaybackControls, SourceHandlers, SourceOptions } from './source'
 
 const MAX_BACKOFF_MS = 8000
 
@@ -15,41 +15,52 @@ function isWireMessage(x: unknown): x is WireMessage {
 }
 
 /**
- * WS /ws/matches/{id}?viewer=...  Sends {"type": "frame"|"event"|"state"|"overlay", "data": ...}.
- * Reconnects with exponential backoff. Buffering and de-duplication happen downstream in
- * StreamBuffers, so a replay of recent messages after a reconnect is harmless.
+ * WS /ws/matches/{id}?viewer=&persona=&club=&player=&metric=&lang=&speed=&t=  (docs/05 Transport)
+ *
+ * The gateway filters and words every overlay for the profile in the query string. Control
+ * messages ({"op": "play" | "pause" | "speed" | "seek"}) go back over the same socket.
+ * Reconnects with exponential backoff and resumes from the last match time it saw. Buffering
+ * and de-duplication happen downstream in StreamBuffers.
  */
 export class WebSocketSource implements MatchSource {
   readonly kind = 'ws' as const
+  readonly controls: PlaybackControls
   private ws: WebSocket | null = null
   private handlers: SourceHandlers | null = null
   private attempt = 0
   private timer: number | undefined
   private closedByUs = false
+  private lastT: number
+  private speed: number
+  private paused = false
 
   constructor(
     private readonly baseUrl: string,
     private readonly opts: SourceOptions,
-  ) {}
+  ) {
+    this.lastT = opts.startAt ?? 0
+    this.speed = opts.speed ?? 1
+    this.controls = {
+      setSpeed: (value) => {
+        this.speed = value
+        this.send({ op: 'speed', value })
+      },
+      setPaused: (p) => {
+        this.paused = p
+        this.send({ op: p ? 'pause' : 'play' })
+      },
+      seek: (t) => {
+        this.lastT = t
+        this.send({ op: 'seek', t })
+      },
+    }
+  }
 
   connect(handlers: SourceHandlers): void {
     this.handlers = handlers
     this.closedByUs = false
     void this.loadMeta(handlers)
     this.open()
-  }
-
-  /** GET /matches/{id}: lineups and colours. Accepts either {meta: ...} or the meta itself. */
-  private async loadMeta(h: SourceHandlers): Promise<void> {
-    const http = this.baseUrl.replace(/^ws/, 'http')
-    try {
-      const res = await fetch(`${http}/matches/${encodeURIComponent(this.opts.matchId)}`)
-      if (!res.ok) throw new Error(`match lookup failed (${res.status})`)
-      const body = (await res.json()) as { meta?: MatchMeta } & MatchMeta
-      h.onMeta(body.meta ?? body)
-    } catch (err) {
-      h.onStatus('error', err instanceof Error ? err.message : String(err))
-    }
   }
 
   close(): void {
@@ -59,9 +70,38 @@ export class WebSocketSource implements MatchSource {
     this.ws = null
   }
 
+  private get httpBase(): string {
+    return this.baseUrl.replace(/^ws/, 'http')
+  }
+
+  /** GET /matches/{id} returns MatchMeta: lineups and formations. */
+  private async loadMeta(h: SourceHandlers): Promise<void> {
+    try {
+      const res = await fetch(`${this.httpBase}/matches/${encodeURIComponent(this.opts.matchId)}`)
+      if (!res.ok) throw new Error(`match lookup failed (${res.status})`)
+      h.onMeta((await res.json()) as MatchMeta)
+    } catch (err) {
+      h.onStatus('error', err instanceof Error ? err.message : String(err))
+    }
+  }
+
   private url(): string {
-    const q = new URLSearchParams({ viewer: this.opts.viewer })
+    const p = this.opts.profile
+    const q = new URLSearchParams({
+      viewer: p.viewerId,
+      persona: p.persona,
+      lang: p.lang,
+      speed: String(this.speed),
+      t: String(Math.max(0, this.lastT)),
+    })
+    if (p.club) q.set('club', p.club)
+    if (p.player) q.set('player', p.player)
+    if (p.metric) q.set('metric', p.metric)
     return `${this.baseUrl}/ws/matches/${encodeURIComponent(this.opts.matchId)}?${q}`
+  }
+
+  private send(msg: Record<string, unknown>): void {
+    if (this.ws?.readyState === WebSocket.OPEN) this.ws.send(JSON.stringify(msg))
   }
 
   private open(): void {
@@ -72,14 +112,26 @@ export class WebSocketSource implements MatchSource {
     this.ws = ws
     ws.onopen = () => {
       this.attempt = 0
+      if (this.paused) this.send({ op: 'pause' })
       h.onStatus('live')
     }
     ws.onmessage = (ev) => {
+      let parsed: unknown
       try {
-        const parsed: unknown = JSON.parse(String(ev.data))
-        if (isWireMessage(parsed)) h.onMessage(parsed)
+        parsed = JSON.parse(String(ev.data))
       } catch {
-        // A malformed message must not take the stream down.
+        return // a malformed message must not take the stream down
+      }
+      if (isWireMessage(parsed)) {
+        if (parsed.type === 'frame') this.lastT = parsed.data.t_match
+        h.onMessage(parsed)
+      } else {
+        const type = (parsed as { type?: unknown }).type
+        if (type === 'end') {
+          this.closedByUs = true
+          h.onStatus('closed', 'full time')
+        }
+        // {"type": "error"} answers a malformed control message; the socket stays open.
       }
     }
     ws.onerror = () => h.onStatus('error', 'socket error')

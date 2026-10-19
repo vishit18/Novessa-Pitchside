@@ -2,27 +2,29 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { useEffect, useRef, useState } from 'react'
 import { CLUBS, PLAYERS } from '@/data/league'
 import { lateness } from '@/core/overlays'
-import { clock, setDelay } from '@/state/runtime'
-import { useStore } from '@/state/store'
+import { outcomeLabel } from '@/i18n/strings'
+import { useSession, useSessionState, useT } from '@/state/useSession'
 import type { OverlayEnvelope } from '@/types/overlay'
 
 const colour = (code: string) => CLUBS[code]?.primary_color ?? '#9aa5b1'
 
 /** Score, clock and momentum, top-left. Momentum is the lit line along the bottom edge. */
-export function ScoreBug() {
-  const meta = useStore((s) => s.meta)
-  const snap = useStore((s) => s.snapshot)
+export function ScoreBug({ showMatchLine = true }: { showMatchLine?: boolean }) {
+  const meta = useSessionState((s) => s.meta)
+  const snap = useSessionState((s) => s.snapshot)
+  const t = useT()
   if (!meta) return null
   const home = meta.home.code
   const away = meta.away.code
   const m = snap?.momentum ?? 0
   const lead = m === 0 ? null : m > 0 ? home : away
-  const half = (snap?.period ?? 1) === 1 ? '1st half' : '2nd half'
+  const half = t((snap?.period ?? 1) === 1 ? 'firstHalf' : 'secondHalf')
   return (
     <div className="w-[min(100%,380px)] select-none" role="group" aria-label="Score and momentum">
       <div className="plate-shadow">
         <div className="plate relative">
-          <div className="flex items-stretch">
+          {/* Home on the left in every language, as on a real score bug. */}
+          <div className="flex items-stretch" dir="ltr">
             <Side code={home} score={snap?.score[home] ?? 0} align="left" />
             <div className="flex min-w-[92px] flex-col items-center justify-center px-2 pb-1">
               <span
@@ -38,7 +40,8 @@ export function ScoreBug() {
           <div
             className="relative h-[4px] bg-black/40"
             role="img"
-            aria-label={`Momentum ${Math.abs(m)} to ${lead ?? 'neither side'}`}
+            aria-label={t('momentum', { v: Math.abs(m), team: lead ?? '-' })}
+            dir="ltr"
           >
             <div className="absolute inset-y-0 left-1/2 w-px bg-white/30" />
             <div
@@ -53,9 +56,11 @@ export function ScoreBug() {
           </div>
         </div>
       </div>
-      <p className="mt-2 hidden text-[12px] text-muted sm:block">
-        {meta.competition}, matchday {meta.matchday}, at {meta.venue}
-      </p>
+      {showMatchLine && (
+        <p className="mt-2 hidden text-[12px] text-muted sm:block">
+          {t('matchLine', { competition: meta.competition, n: meta.matchday, venue: meta.venue })}
+        </p>
+      )}
     </div>
   )
 }
@@ -67,7 +72,7 @@ function Side({ code, score, align }: { code: string; score: number; align: 'lef
       className={`flex flex-1 items-center gap-2.5 py-2 ${right ? 'flex-row-reverse pr-3 pl-1' : 'pl-3 pr-1'}`}
     >
       <span className="h-9 w-[5px]" style={{ background: colour(code) }} />
-      <span className="font-display text-[24px] font-semibold leading-none">{code}</span>
+      <span className="latin text-[24px] font-semibold leading-none">{code}</span>
       <Digit value={score} />
     </div>
   )
@@ -95,7 +100,7 @@ function Digit({ value }: { value: number }) {
 }
 
 export function LowerThird() {
-  const active = useStore((s) => s.active)
+  const active = useSessionState((s) => s.active)
   const o = active.find((x) => x.slot === 'lower_third') ?? null
   const reduce = useReducedMotion()
   return (
@@ -131,6 +136,7 @@ function Headline({ o }: { o: OverlayEnvelope }) {
   const head = String(o.payload['headline'] ?? '')
   const body = String(o.payload['body'] ?? '')
   const late = lateness(o)
+  const t = useT()
   return (
     <div className="flex">
       <span className="w-[7px] shrink-0" style={{ background: toneColour(o) }} />
@@ -139,7 +145,7 @@ function Headline({ o }: { o: OverlayEnvelope }) {
           {head}
         </div>
         <p className="mt-1.5 max-w-[56ch] text-[15px] leading-snug text-muted">{body}</p>
-        {late > 6 && <p className="mt-1 text-[12px] text-amber">From earlier in the match</p>}
+        {late > 6 && <p className="mt-1 text-[12px] text-amber">{t('earlier')}</p>}
       </div>
     </div>
   )
@@ -150,21 +156,26 @@ function ShotSpeed({ o }: { o: OverlayEnvelope }) {
   const xg = o.payload['xg']
   const pid = String(o.payload['player_id'] ?? '')
   const outcome = String(o.payload['outcome'] ?? '')
+  const t = useT()
+  const lang = useSessionState((s) => s.profile.lang)
   return (
     <div className="flex">
       <span className="w-[7px] shrink-0 bg-amber" />
       <div className="flex items-end gap-5 py-3 pr-9 pl-4">
-        <div className="num text-[44px] sm:text-[64px] font-bold leading-[0.85] text-amber">
+        <div
+          className="num text-[44px] sm:text-[64px] font-bold leading-[0.85] text-amber"
+          dir="ltr"
+        >
           <CountUp to={speed} />
           <span className="ml-2 text-[20px] font-medium text-muted">km/h</span>
         </div>
         <div className="pb-1">
           <div className="font-display text-[20px] sm:text-[26px] font-semibold leading-none">
-            {PLAYERS[pid]?.name ?? pid}’s shot
+            {t('shotBy', { name: PLAYERS[pid]?.name ?? pid })}
           </div>
           <div className="mt-1.5 text-[14px] text-muted">
             {typeof xg === 'number' ? `xG ${xg.toFixed(2)}, ` : ''}
-            {outcome}
+            {outcomeLabel(lang, outcome)}
           </div>
         </div>
       </div>
@@ -208,13 +219,17 @@ export function Wordmark() {
 const SPEEDS = [1, 4, 10, 30]
 const DELAYS = [0, 20, 40]
 
-/** Transport and viewer-delay controls. Hidden until the pointer moves or focus lands inside. */
-export function Controls() {
-  const controls = useStore((s) => s.controls)
-  const speed = useStore((s) => s.speed)
-  const paused = useStore((s) => s.paused)
-  const delayS = useStore((s) => s.delayS)
-  const set = useStore((s) => s.set)
+/**
+ * Transport and viewer-delay controls. Hidden until the pointer moves or focus lands inside.
+ * `transport` off hides play and speed, for views that share one transport across panes.
+ */
+export function Controls({ transport = true }: { transport?: boolean }) {
+  const session = useSession()
+  const t = useT()
+  const controls = useSessionState((s) => s.controls)
+  const speed = useSessionState((s) => s.speed)
+  const paused = useSessionState((s) => s.paused)
+  const delayS = useSessionState((s) => s.delayS)
   const [shown, setShown] = useState(false)
   const timer = useRef<number | undefined>(undefined)
   const wake = () => {
@@ -248,28 +263,22 @@ export function Controls() {
         role="toolbar"
         aria-label="Playback"
       >
-        {controls && (
+        {controls && transport && (
           <>
             <button
               className={btn}
               aria-pressed={paused}
-              onClick={() => {
-                controls.setPaused(!paused)
-                set({ paused: !paused })
-              }}
+              onClick={() => session.setPaused(!paused)}
             >
-              {paused ? 'Play' : 'Pause'}
+              {t(paused ? 'play' : 'pause')}
             </button>
-            <div className="flex items-center gap-1" role="group" aria-label="Replay speed">
+            <div className="flex items-center gap-1" role="group" aria-label={t('replaySpeed')}>
               {SPEEDS.map((s) => (
                 <button
                   key={s}
                   className={btn}
                   aria-pressed={speed === s}
-                  onClick={() => {
-                    controls.setSpeed(s)
-                    set({ speed: s })
-                  }}
+                  onClick={() => session.setSpeed(s)}
                 >
                   {s}x
                 </button>
@@ -277,16 +286,21 @@ export function Controls() {
             </div>
           </>
         )}
-        <div className="flex items-center gap-1" role="group" aria-label="Stream delay">
-          <span className="mr-1.5 text-[13px] text-muted">Stream delay</span>
+        <div className="flex items-center gap-1" role="group" aria-label={t('streamDelay')}>
+          <span className="mr-1.5 text-[13px] text-muted">{t('streamDelay')}</span>
           {DELAYS.map((d) => (
-            <button key={d} className={btn} aria-pressed={delayS === d} onClick={() => setDelay(d)}>
+            <button
+              key={d}
+              className={btn}
+              aria-pressed={delayS === d}
+              onClick={() => session.setDelay(d)}
+            >
               {d}s
             </button>
           ))}
         </div>
         <span className="num hidden text-[14px] text-muted sm:inline">
-          {clock.lead.toFixed(1)}s behind live
+          {t('behindLive', { s: session.clock.lead.toFixed(1) })}
         </span>
       </div>
     </div>
@@ -294,18 +308,20 @@ export function Controls() {
 }
 
 export function StatusPill() {
-  const status = useStore((s) => s.status)
-  const detail = useStore((s) => s.statusDetail)
-  const kind = useStore((s) => s.sourceKind)
+  const status = useSessionState((s) => s.status)
+  const detail = useSessionState((s) => s.statusDetail)
+  const kind = useSessionState((s) => s.sourceKind)
+  const t = useT()
   const live = status === 'live'
-  const label =
+  const label = t(
     status === 'live'
-      ? 'Live'
+      ? 'live'
       : status === 'connecting'
-        ? 'Connecting'
+        ? 'connecting'
         : status === 'reconnecting'
-          ? 'Reconnecting'
-          : 'Offline'
+          ? 'reconnecting'
+          : 'offline',
+  )
   return (
     <div className="flex items-center gap-2" role="status">
       <span
@@ -313,7 +329,7 @@ export function StatusPill() {
         aria-hidden="true"
       />
       <span className="font-display text-[18px] font-semibold leading-none">{label}</span>
-      {kind === 'mock' && <span className="text-[13px] text-muted">sample match</span>}
+      {kind === 'mock' && <span className="text-[13px] text-muted">{t('sampleMatch')}</span>}
       {detail && !live && <span className="text-[13px] text-muted">{detail}</span>}
     </div>
   )

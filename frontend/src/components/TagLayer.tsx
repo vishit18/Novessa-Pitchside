@@ -1,6 +1,6 @@
 import type { MutableRefObject } from 'react'
 import { CLUBS, PLAYERS } from '@/data/league'
-import { useStore } from '@/state/store'
+import { useSessionState, useT } from '@/state/useSession'
 import type { OverlayEnvelope } from '@/types/overlay'
 import type { PlayerFrame } from '@/types/schema'
 import type { Point } from './pitch/PitchRenderer'
@@ -68,6 +68,7 @@ function PassTag({ o }: { o: OverlayEnvelope }) {
   const dist = Number(o.payload['distance_m'] ?? 0)
   const factors = (o.payload['factors'] as { name: string; points: number }[] | undefined) ?? []
   const done = o.payload['complete'] === true
+  const t = useT()
   return (
     <div className="-translate-x-1/2 -translate-y-[120%]">
       <div className="plate-shadow">
@@ -77,9 +78,9 @@ function PassTag({ o }: { o: OverlayEnvelope }) {
               {Math.round(d)}
             </span>
             <span className="font-display text-[15px] leading-tight text-muted">
-              Pass difficulty
+              {t('passDifficulty')}
               <br />
-              {dist.toFixed(0)} m, {done ? 'completed' : 'lost'}
+              {t(done ? 'passDone' : 'passLost', { m: dist.toFixed(0) })}
             </span>
           </div>
           {factors[0] && (
@@ -95,7 +96,7 @@ function PassTag({ o }: { o: OverlayEnvelope }) {
 
 /** DOM tags for anchored overlays. Stage moves them every frame via the registry. */
 export function TagLayer({ registry }: { registry: MutableRefObject<TagRegistry> }) {
-  const active = useStore((s) => s.active)
+  const active = useSessionState((s) => s.active)
   const tags = active.filter((o) => o.slot === 'player_tag' || o.slot === 'pitch_annotation')
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden">

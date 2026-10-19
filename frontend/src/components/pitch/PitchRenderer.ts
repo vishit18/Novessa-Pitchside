@@ -1,6 +1,6 @@
 import { Application, Container, FillGradient, Graphics, Matrix, Text } from 'pixi.js'
 import { PLAYERS } from '@/data/league'
-import { lifeFraction } from '@/core/overlays'
+import { isGoal, lifeFraction } from '@/core/overlays'
 import type { OverlayEnvelope } from '@/types/overlay'
 import { PITCH_LENGTH, PITCH_WIDTH } from '@/types/schema'
 import type { TrackingFrame } from '@/types/schema'
@@ -292,8 +292,7 @@ export class PitchRenderer {
 
       // The one orchestrated moment: a ring rolls out from the scorer.
       for (const o of overlays) {
-        if (o.kind !== 'insight' || o.payload['tone'] !== 'goal' || o.anchor?.type !== 'player')
-          continue
+        if (!isGoal(o) || o.anchor?.type !== 'player') continue
         const who = at.get(o.anchor.id)
         const k = (t - o.show_at) / 1.8
         if (!who || k < 0 || k > 1) continue

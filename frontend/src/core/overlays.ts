@@ -89,6 +89,11 @@ export function lifeFraction(o: OverlayEnvelope, t: number): number {
   return Math.min(1, Math.max(0, (t - o.show_at) / o.duration_s))
 }
 
+/** A goal card. The gateway marks it with moment_kind; tone is the older fallback. */
+export function isGoal(o: OverlayEnvelope): boolean {
+  return o.payload['moment_kind'] === 'goal' || o.payload['tone'] === 'goal'
+}
+
 /** How late an overlay is relative to the football it describes, in seconds. */
 export function lateness(o: OverlayEnvelope): number {
   return Math.max(0, o.show_at - o.t_match)

@@ -1,3 +1,4 @@
+import type { ViewerProfile } from '@/state/profile'
 import type { WireMessage } from '@/types/overlay'
 import type { MatchMeta } from '@/types/schema'
 
@@ -17,8 +18,8 @@ export interface PlaybackControls {
 }
 
 /**
- * Anything that produces the gateway's wire messages. The mock and the real WebSocket
- * both implement this, so swapping them is a change in createSource() only.
+ * Anything that produces the gateway's wire messages for one viewer. The mock and the real
+ * WebSocket both implement this, so swapping them is a change in createSource() only.
  */
 export interface MatchSource {
   readonly kind: 'mock' | 'ws'
@@ -29,7 +30,8 @@ export interface MatchSource {
 
 export interface SourceOptions {
   matchId: string
-  viewer: string
+  /** The gateway filters and words every overlay for this profile. */
+  profile: ViewerProfile
   /** Mock only: start match time in seconds. */
   startAt?: number
   /** Mock only: replay speed multiplier. */
