@@ -393,6 +393,8 @@ class StateEngine:
         self._passes.append((ev.t_match, ok))
         length = _dist(ev)
         p.longest_pass_m = max(p.longest_pass_m, length)
+        if ok:
+            p.hardest_pass = max(p.hardest_pass, diff)
 
         x0 = ev.x if ev.x is not None else 52.5
         if self._u(ev.team, x0) <= PITCH_L / 2:
@@ -525,6 +527,7 @@ class StateEngine:
             self.player(passer).xa += xg
         self._momentum[ev.team] += 2.0 + 12.0 * xg
         speed = ev.ball_speed_kmh or 0.0
+        p.top_shot_kmh = max(p.top_shot_kmh, speed)
         if speed >= self.cfg.triggers.shot_speed_kmh:
             out.append(
                 Trigger(

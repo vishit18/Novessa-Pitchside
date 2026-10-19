@@ -11,6 +11,8 @@ import re
 from dataclasses import dataclass, field
 from typing import Any
 
+import numpy as np
+
 from backend.app.overlay import (
     ALL_PERSONAS,
     Anchor,
@@ -49,6 +51,24 @@ MILESTONE_HEADLINES = {
 }
 
 
+# Columns kept per player per second. Stored as a float32 array rather than dicts: a match has
+# about 5,700 ticks and 25 players, and dicts for all of that would cost hundreds of MB.
+STAT_COLUMNS = (
+    "passes", "passes_complete", "difficulty_sum", "longest_pass_m", "hardest_pass", "shots",
+    "xg", "xa", "duels_won", "duels_lost", "distance_km", "top_speed_kmh", "top_shot_kmh",
+    "sprints",
+)  # fmt: skip
+INT_COLUMNS = {"passes", "passes_complete", "shots", "duels_won", "duels_lost", "sprints"}
+HIDDEN_COLUMNS = {"difficulty_sum"}
+# One-number mode metric id -> the column whose maximum is the match leader.
+LEADER_COLUMNS = {
+    "sprint_speed": "top_speed_kmh",
+    "shot_speed": "top_shot_kmh",
+    "pass_difficulty": "hardest_pass",
+    "distance": "distance_km",
+}
+
+
 @dataclass
 class TimelineItem:
     """One thing to send at `t_match`. `type` is the WebSocket message type."""
@@ -57,22 +77,61 @@ class TimelineItem:
     type: str
     data: dict[str, Any]
 
+    def json_data(self) -> dict[str, Any]:
+        """The message body, ready for JSON. Subclasses build it lazily."""
+        return self.data
+
+
+@dataclass
+class StatsItem(TimelineItem):
+    """The `player_stats` message, held as an array and expanded only when sent."""
+
+    ids: tuple[str, ...] = ()
+    rows: np.ndarray = field(default_factory=lambda: np.zeros((0, len(STAT_COLUMNS))))
+    on_pitch: tuple[bool, ...] = ()
+
+    def json_data(self) -> dict[str, Any]:
+        cols = {c: i for i, c in enumerate(STAT_COLUMNS)}
+        players = []
+        for i, pid in enumerate(self.ids):
+            row = self.rows[i]
+            entry: dict[str, Any] = {
+                "player_id": pid,
+                "team": pid.split("-")[0],
+                "on_pitch": self.on_pitch[i],
+            }
+            for c, j in cols.items():
+                if c in HIDDEN_COLUMNS:
+                    continue
+                entry[c] = int(row[j]) if c in INT_COLUMNS else round(float(row[j]), 3)
+            passes = entry["passes"]
+            entry["pass_accuracy"] = round(entry["passes_complete"] / passes, 4) if passes else None
+            entry["avg_difficulty"] = (
+                round(float(row[cols["difficulty_sum"]]) / passes, 2) if passes else None
+            )
+            players.append(entry)
+        return {"t_match": self.t_match, "players": players, "leaders": self.data["leaders"]}
+
 
 @dataclass
 class Timeline:
     items: list[TimelineItem] = field(default_factory=list)
     overlays: list[Overlay] = field(default_factory=list)
 
-    def state_at(self, t: float) -> dict[str, Any] | None:
-        """The latest state message at or before `t`."""
-        best: dict[str, Any] | None = None
+    def latest(self, kind: str, t: float) -> TimelineItem | None:
+        """The latest item of a type at or before `t`."""
+        best: TimelineItem | None = None
         for it in self.items:
-            if it.type != "state":
-                continue
             if it.t_match > t:
                 break
-            best = it.data
+            if it.type == kind:
+                best = it
         return best
+
+    def state_at(self, t: float) -> dict[str, Any] | None:
+        """The latest state message at or before `t`."""
+        item = self.latest("state", t)
+        return item.json_data() if item else None
 
 
 class NameBook:
@@ -96,6 +155,9 @@ class TimelineBuilder:
         self.names = NameBook(league)
         self.engine = StateEngine(meta)
         self._n = 0
+        self._order: list[str] = []
+        self._ids: tuple[str, ...] = ()
+        self._on_pitch: set[str] = set()
 
     def _overlay(self, **kw: Any) -> Overlay:
         self._n += 1
@@ -122,6 +184,7 @@ class TimelineBuilder:
                 # The clock ticks every second, even when no event has happened for a while.
                 snap["period"], snap["clock"] = display_clock(next_tick, period_break)
                 tl.items.append(TimelineItem(round(next_tick, 2), "state", snap))
+                tl.items.append(self._stats_item(round(next_tick, 2)))
                 next_tick += STATE_EVERY_S
             if isinstance(item, MatchEvent):
                 tl.items.append(TimelineItem(item.t_match, "event", item.model_dump(mode="json")))
@@ -129,12 +192,37 @@ class TimelineBuilder:
                 for o in outs:
                     tl.overlays.extend(self._to_overlays(o, item))
             elif isinstance(item, TrackingFrame):
+                self._on_pitch = {p.id for p in item.players}
                 for o in self.engine.ingest_frame(item):
                     tl.overlays.extend(self._to_overlays(o, None))
         for ov in tl.overlays:
             tl.items.append(TimelineItem(ov.t_match, "overlay", ov.model_dump(mode="json")))
         tl.items.sort(key=lambda i: i.t_match)
         return tl
+
+    def _stats_item(self, t: float) -> StatsItem:
+        """Snapshot every player's stats at tick `t`, plus the leader for each metric."""
+        for pid in self.engine.players:
+            if pid not in self._order:
+                self._order.append(pid)
+                self._ids = tuple(self._order)
+        rows = np.zeros((len(self._ids), len(STAT_COLUMNS)), dtype=np.float32)
+        for i, pid in enumerate(self._ids):
+            st = self.engine.players[pid]
+            rows[i] = [getattr(st, c) for c in STAT_COLUMNS]
+        leaders: dict[str, dict[str, Any]] = {}
+        for metric, col in LEADER_COLUMNS.items():
+            if not len(rows):
+                break
+            j = STAT_COLUMNS.index(col)
+            best = int(np.argmax(rows[:, j]))
+            if rows[best, j] > 0:
+                leaders[metric] = {
+                    "player_id": self._ids[best],
+                    "value": round(float(rows[best, j]), 3),
+                }
+        on_pitch = tuple(pid in self._on_pitch for pid in self._ids)
+        return StatsItem(t, "player_stats", {"leaders": leaders}, self._ids, rows, on_pitch)
 
     # ---- mapping -------------------------------------------------------------------------
 

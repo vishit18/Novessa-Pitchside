@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, computed_field
 
 TriggerKind = Literal[
     "speed_burst",
@@ -92,6 +92,7 @@ class PlayerStats(BaseModel):
     passes_complete: int = 0
     difficulty_sum: float = 0.0
     longest_pass_m: float = 0.0
+    hardest_pass: float = 0.0
     shots: int = 0
     xg: float = 0.0
     xa: float = 0.0
@@ -99,12 +100,15 @@ class PlayerStats(BaseModel):
     duels_lost: int = 0
     distance_km: float = 0.0
     top_speed_kmh: float = 0.0
+    top_shot_kmh: float = 0.0
     sprints: int = 0
 
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def pass_accuracy(self) -> float | None:
         return self.passes_complete / self.passes if self.passes else None
 
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def avg_difficulty(self) -> float | None:
         return self.difficulty_sum / self.passes if self.passes else None

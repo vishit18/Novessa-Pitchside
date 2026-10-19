@@ -77,11 +77,12 @@ class Session:
 
     async def _run(self) -> None:
         start = self.clock.match_time()
-        state = self.match.timeline.state_at(start)
-        if state:
-            await self.send("state", state)
+        for kind in ("state", "player_stats"):
+            latest = self.match.timeline.latest(kind, start)
+            if latest:
+                await self.send(kind, latest.json_data())
         async for item in stream(self._items(start), self.clock):
-            data = item.data
+            data = item.json_data()
             if item.type == "overlay":
                 shown = for_viewer(data, self.profile)
                 if shown is None:

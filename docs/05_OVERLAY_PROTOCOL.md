@@ -59,9 +59,14 @@ The gateway sends JSON text frames over `WS /ws/matches/{id}?viewer=...&persona=
 | `frame` | `TrackingFrame` (docs/03) | 10 Hz |
 | `event` | `MatchEvent` (docs/03) | as they happen |
 | `state` | `StateSnapshot` (`backend/state/models.py`): score, clock, possession, momentum, pressure, control/chaos, rhythm | 1 Hz |
+| `player_stats` | `{t_match, players: [PlayerStats + on_pitch], leaders}` (see below) | 1 Hz |
 | `overlay` | the envelope above | as they happen |
 
 The client may send `{"op": "play"|"pause"}`, `{"op": "speed", "value": 4}` and `{"op": "seek", "t": 1200}`. Query parameters: `persona` (analyst, casual, kids, accessibility), `club`, `player`, `metric`, `lang`. `GET /matches/{id}` returns `MatchMeta`. `t_wall_emit` is set when the gateway sends the message and is null in exports.
+
+## player_stats
+
+Sent to every viewer regardless of profile, once a second. `players` has one entry for every player who has been on the pitch (22 plus any substitutes who came on). Each entry: `player_id`, `team`, `on_pitch`, `passes`, `passes_complete`, `pass_accuracy` (0-1 or null), `avg_difficulty` (or null), `longest_pass_m`, `hardest_pass` (highest difficulty among completed passes), `shots`, `xg`, `xa`, `duels_won`, `duels_lost`, `distance_km`, `top_speed_kmh`, `top_shot_kmh`, `sprints`. `leaders` maps each one-number metric to the current match leader, `{metric: {player_id, value}}`, for `sprint_speed` (top speed km/h), `shot_speed` (hardest shot km/h), `pass_difficulty` (`hardest_pass`) and `distance` (km). A metric with no leader yet is omitted. All numbers come from the state engine; the UI computes nothing.
 
 ## Payloads the renderer relies on
 

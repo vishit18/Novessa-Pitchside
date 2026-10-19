@@ -208,3 +208,69 @@ def test_state_clock_and_period_across_the_break(client: TestClient) -> None:
     assert (a["period"] == 1 and a["clock"].startswith("45:")) or a["clock"].startswith("45+")
     late = client.get(f"/matches/{MATCH}/state", params={"t": 5600}).json()
     assert late["period"] == 2
+
+
+def _stats_at(client: TestClient, t: int) -> dict[str, Any]:
+    with client.websocket_connect(f"/ws/matches/{MATCH}?t={t}&speed=1") as ws:
+        msgs = [ws.receive_json(), ws.receive_json()]
+    return next(m["data"] for m in msgs if m["type"] == "player_stats")
+
+
+def test_player_stats_is_sent_on_connect_with_every_field(client: TestClient) -> None:
+    data = _stats_at(client, 3000)
+    assert len(data["players"]) >= 22
+    p = data["players"][0]
+    expected = {
+        "player_id", "team", "on_pitch", "passes", "passes_complete", "pass_accuracy",
+        "avg_difficulty", "longest_pass_m", "hardest_pass", "shots", "xg", "xa", "duels_won",
+        "duels_lost", "distance_km", "top_speed_kmh", "top_shot_kmh", "sprints",
+    }  # fmt: skip
+    assert set(p) == expected
+    assert sum(1 for q in data["players"] if q["on_pitch"]) == 22
+    assert "difficulty_sum" not in p
+
+
+def test_player_stats_agree_with_the_events(client: TestClient) -> None:
+    t = 3000
+    events = client.get(f"/matches/{MATCH}/overlays.jsonl")  # warm
+    assert events.status_code == 200
+    data = _stats_at(client, t)
+    # Count passes straight from the raw event stream up to the same tick.
+    with client.websocket_connect(f"/ws/matches/{MATCH}?t=0&speed=2000") as ws:
+        passes = shots = 0
+        while True:
+            m = ws.receive_json()
+            if m["type"] == "event":
+                e = m["data"]
+                if e["t_match"] > t:
+                    break
+                passes += e["type"] == "pass"
+                shots += e["type"] == "shot"
+    assert abs(sum(p["passes"] for p in data["players"]) - passes) <= 3  # tick edge
+    assert abs(sum(p["shots"] for p in data["players"]) - shots) <= 1
+    for p in data["players"]:
+        if p["passes"]:
+            assert 0 <= p["pass_accuracy"] <= 1
+
+
+def test_leaders_are_the_maximum_of_each_metric(client: TestClient) -> None:
+    data = _stats_at(client, 4000)
+    by_id = {p["player_id"]: p for p in data["players"]}
+    cols = {"sprint_speed": "top_speed_kmh", "shot_speed": "top_shot_kmh",
+            "pass_difficulty": "hardest_pass", "distance": "distance_km"}  # fmt: skip
+    assert set(data["leaders"]) <= set(cols)
+    assert "sprint_speed" in data["leaders"] and "distance" in data["leaders"]
+    for metric, lead in data["leaders"].items():
+        best = max(p[cols[metric]] for p in data["players"])
+        assert lead["value"] == pytest.approx(best, abs=1e-3)
+        assert by_id[lead["player_id"]][cols[metric]] == pytest.approx(best, abs=1e-3)
+
+
+def test_player_stats_stream_at_one_hertz(client: TestClient) -> None:
+    with client.websocket_connect(f"/ws/matches/{MATCH}?t=1000&speed=100") as ws:
+        times: list[float] = []
+        while len(times) < 6:
+            m = ws.receive_json()
+            if m["type"] == "player_stats":
+                times.append(m["data"]["t_match"])
+    assert times[1:] == [times[1] + i for i in range(5)]
