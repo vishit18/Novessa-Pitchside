@@ -10,8 +10,9 @@ import json
 import logging
 import os
 import tempfile
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-from typing import Protocol, TypeVar
+from typing import Any, Protocol, TypeVar
 
 from pydantic import BaseModel
 
@@ -80,5 +81,66 @@ class FileCache:
         self._path(seed).write_text(json.dumps(data, separators=(",", ":")), "utf-8")
 
 
+class CosmosCache:
+    """Cosmos DB `agent_cache` container, with the file cache in front of it.
+
+    Reads try the local layer first and only go to Cosmos on a miss. Writes land locally at
+    once and go to Cosmos on a worker thread, so a slow or failing database never holds up a
+    broadcast. Keyless: DefaultAzureCredential (Cosmos DB Built-in Data Contributor role).
+    """
+
+    def __init__(
+        self,
+        endpoint: str,
+        database: str,
+        local: AgentCache | None = None,
+        container: Any = None,
+    ) -> None:
+        if container is None:
+            from azure.cosmos import CosmosClient
+            from azure.identity import DefaultAzureCredential
+
+            client = CosmosClient(endpoint, credential=DefaultAzureCredential())
+            container = client.get_database_client(database).get_container_client("agent_cache")
+        self._container = container
+        self._local = local or FileCache()
+        self._pool = ThreadPoolExecutor(max_workers=2, thread_name_prefix="cosmos-cache")
+
+    def get(self, key: str, model: type[T]) -> T | None:
+        hit = self._local.get(key, model)
+        if hit is not None:
+            return hit
+        try:
+            doc = self._container.read_item(item=key, partition_key=key)
+        except Exception as exc:  # not found is normal; anything else must not stop the show
+            if type(exc).__name__ != "CosmosResourceNotFoundError":
+                log.warning("cosmos cache read failed: %s", exc)
+            return None
+        value = model.model_validate(doc["value"])
+        self._local.put(key, value)
+        return value
+
+    def put(self, key: str, value: BaseModel) -> None:
+        self._local.put(key, value)
+        doc: dict[str, object] = {
+            "id": key,
+            "cache_key": key,
+            "value": value.model_dump(mode="json"),
+        }
+        self._pool.submit(self._write, doc)
+
+    def _write(self, doc: dict[str, object]) -> None:
+        try:
+            self._container.upsert_item(doc)
+        except Exception as exc:
+            log.warning("cosmos cache write failed: %s", exc)
+
+
 def default_cache() -> AgentCache:
-    return NullCache() if os.environ.get("AGENT_CACHE", "on") == "off" else FileCache()
+    """Off, file, or Cosmos-backed file cache, from `AGENT_CACHE` and `STORE`."""
+    if os.environ.get("AGENT_CACHE", "on") == "off":
+        return NullCache()
+    endpoint, database = os.environ.get("COSMOS_ENDPOINT"), os.environ.get("COSMOS_DATABASE")
+    if os.environ.get("STORE", "local") == "cosmos" and endpoint and database:
+        return CosmosCache(endpoint, database)
+    return FileCache()

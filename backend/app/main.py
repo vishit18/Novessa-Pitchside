@@ -23,11 +23,13 @@ from backend.a2a.server import mount_a2a
 from backend.agents.recap import make_recap
 from backend.app.agents_runtime import AgentRuntime
 from backend.app.catchup import build_catchup
+from backend.app.live import LiveIngest
 from backend.app.overlay import Overlay, ViewerProfile
 from backend.app.personas import for_viewer
 from backend.app.real import mount_real
 from backend.app.store import LoadedMatch, MatchStore, StaleDataError, UnknownMatchError
 from backend.app.timeline import TimelineItem
+from backend.bus import default_bus
 from engine.clock import ReplayClock, merge_by_time, stream
 from engine.schema import League, MatchMeta
 
@@ -158,11 +160,15 @@ def create_app(data_dir: Path | None = None) -> FastAPI:
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         app.state.store = MatchStore(data_dir)
         app.state.agents = AgentRuntime(app.state.store)
+        app.state.bus = default_bus()
+        app.state.live = LiveIngest(app.state.store, app.state.bus)
         if os.environ.get("PRELOAD") == "1":
             app.state.preload = [
                 asyncio.create_task(app.state.store.get(mid)) for mid in app.state.store.match_ids()
             ]
         yield
+        await app.state.live.stop()
+        await app.state.bus.close()
 
     app = FastAPI(title="Novessa Pitchside gateway", version="0.1.0", lifespan=lifespan)
     origins = os.environ.get("CORS_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173")
@@ -240,6 +246,24 @@ def create_app(data_dir: Path | None = None) -> FastAPI:
         runtime: AgentRuntime = app.state.agents
         runtime.start(match_id)
         return {"enabled": runtime.enabled, "progress": runtime.progress.get(match_id)}
+
+    @app.post("/matches/{match_id}/live/start")
+    async def live_start(
+        match_id: str, speed: float = Query(4.0, gt=0, le=60), until: float | None = None
+    ) -> dict[str, Any]:
+        """Stream a match onto the event bus and consume it live (Event Hubs in Azure)."""
+        await load(match_id)
+        live: LiveIngest = app.state.live
+        return {"bus": app.state.bus.name, **live.start(match_id, speed, until).summary()}
+
+    @app.get("/live/health")
+    async def live_health() -> dict[str, Any]:
+        """Per-match live ingest numbers: messages, and publish-to-overlay latency vs 150 ms."""
+        live: LiveIngest = app.state.live
+        return {
+            "bus": app.state.bus.name,
+            "matches": {mid: st.summary() for mid, st in live.stats.items()},
+        }
 
     @app.get("/matches/{match_id}/audio/{moment_id}")
     async def audio(

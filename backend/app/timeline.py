@@ -172,7 +172,8 @@ class TimelineBuilder:
         self._ids: tuple[str, ...] = ()
         self._on_pitch: set[str] = set()
         # Match second where the first half ends; the clock shown to viewers depends on it.
-        self._period_break = 0.0
+        # Unknown until the half-time whistle when events arrive live, so first-half until then.
+        self._period_break = float("inf")
 
     def _overlay(self, **kw: Any) -> Overlay:
         self._n += 1
@@ -204,21 +205,38 @@ class TimelineBuilder:
                 next_tick += STATE_EVERY_S
             if isinstance(item, MatchEvent):
                 tl.items.append(TimelineItem(item.t_match, "event", item.model_dump(mode="json")))
-                outs = self.engine.ingest_event(item)
-                for o in outs:
-                    if isinstance(o, Moment):
-                        tl.moments.append(o)
-                    tl.overlays.extend(self._to_overlays(o, item))
+                moments, overlays = self.feed_event(item)
             elif isinstance(item, TrackingFrame):
-                self._on_pitch = {p.id for p in item.players}
-                for o in self.engine.ingest_frame(item):
-                    if isinstance(o, Moment):
-                        tl.moments.append(o)
-                    tl.overlays.extend(self._to_overlays(o, None))
+                moments, overlays = self.feed_frame(item)
+            else:
+                continue
+            tl.moments.extend(moments)
+            tl.overlays.extend(overlays)
         for ov in tl.overlays:
             tl.items.append(TimelineItem(ov.t_match, "overlay", ov.model_dump(mode="json")))
         tl.items.sort(key=lambda i: i.t_match)
         return tl
+
+    def feed_event(self, ev: MatchEvent) -> tuple[list[Moment], list[Overlay]]:
+        """Run one event through the state engine; the moments and overlays it raised.
+
+        The live path calls this as events arrive from the bus. `build` calls it for a replay.
+        """
+        if ev.type == EventType.PERIOD_END and ev.period == 1:
+            self._period_break = ev.t_match
+        return self._collect(self.engine.ingest_event(ev), ev)
+
+    def feed_frame(self, frame: TrackingFrame) -> tuple[list[Moment], list[Overlay]]:
+        """Same for one tracking frame."""
+        self._on_pitch = {p.id for p in frame.players}
+        return self._collect(self.engine.ingest_frame(frame), None)
+
+    def _collect(
+        self, outs: list[Output], ev: MatchEvent | None
+    ) -> tuple[list[Moment], list[Overlay]]:
+        moments = [o for o in outs if isinstance(o, Moment)]
+        overlays = [ov for o in outs for ov in self._to_overlays(o, ev)]
+        return moments, overlays
 
     def _stats_item(self, t: float) -> StatsItem:
         """Snapshot every player's stats at tick `t`, plus the leader for each metric."""

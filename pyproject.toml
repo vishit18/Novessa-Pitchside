@@ -19,6 +19,8 @@ dependencies = [
     "mcp>=1.2",
     "httpx>=0.28.1",
     "a2a-sdk>=1.2.3",
+    "azure-eventhub>=5.15.1",
+    "azure-cosmos>=4.17.1",
 ]
 
 [dependency-groups]
