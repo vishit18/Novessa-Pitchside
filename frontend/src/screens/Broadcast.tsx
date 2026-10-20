@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { CommentaryToggle } from '@/components/CommentaryToggle'
 import { PlayerCard } from '@/components/PlayerCard'
 import { CLUBS, PLAYERS } from '@/data/league'
 import { navigate, withParams } from '@/router'
@@ -60,6 +61,7 @@ export function Broadcast({ query }: { query: URLSearchParams }) {
       {change}
       {phone}
       {recap}
+      <CommentaryToggle />
     </div>
   )
 

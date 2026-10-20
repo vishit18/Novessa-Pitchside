@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { FeedCard } from '@/components/companion/FeedCard'
 import { CatchUpSheet } from '@/components/companion/CatchUpSheet'
 import { ScoreBug, StatusPill } from '@/components/Hud'
@@ -6,6 +6,7 @@ import { GATEWAY_HTTP } from '@/net/api'
 import { navigate, withParams } from '@/router'
 import { defaultProfile, isRtl, loadProfile } from '@/state/profile'
 import type { Session } from '@/state/session'
+import { useCommentary } from '@/state/useCommentary'
 import {
   SessionContext,
   useLiveSession,
@@ -51,25 +52,10 @@ function CompanionBody({ matchId }: { matchId: string }) {
   const feed = useSessionState((s) => s.feed)
   const status = useSessionState((s) => s.status)
   const t = useT()
-  const [commentary, setCommentary] = useState(false)
   const [sheetOpen, setSheetOpen] = useState(false)
   const closeSheet = useCallback(() => setSheetOpen(false), [])
   const [open, setOpen] = useState<string | null>(null)
-  const player = useAudio()
-
-  // With commentary on, speak each new card once, as it arrives.
-  const spoken = useRef(new Set<string>())
-  const newest = feed[0]
-  useEffect(() => {
-    if (!commentary || !newest?.audioUrl || spoken.current.has(newest.id)) return
-    spoken.current.add(newest.id)
-    player.play(`${GATEWAY_HTTP}${newest.audioUrl}`)
-  }, [commentary, newest, player])
-
-  const toggleCommentary = () => {
-    if (commentary) player.stop()
-    setCommentary(!commentary)
-  }
+  const { on: commentary, toggle: toggleCommentary, player } = useCommentary()
 
   return (
     <main
@@ -133,26 +119,5 @@ function CompanionBody({ matchId }: { matchId: string }) {
 
       <CatchUpSheet open={sheetOpen} matchId={matchId} session={session} onClose={closeSheet} />
     </main>
-  )
-}
-
-/** One audio element at a time: starting a line stops the one before it. */
-function useAudio() {
-  const el = useRef<HTMLAudioElement | null>(null)
-  return useMemo(
-    () => ({
-      play(url: string) {
-        el.current?.pause()
-        const a = new Audio(url)
-        el.current = a
-        // Browsers refuse audio until the viewer has tapped something; the toggle is that tap.
-        void a.play().catch(() => undefined)
-      },
-      stop() {
-        el.current?.pause()
-        el.current = null
-      },
-    }),
-    [],
   )
 }
