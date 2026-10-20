@@ -1,0 +1,21 @@
+{
+ "match": "117093",
+ "half": 1,
+ "start_s": 1890.0,
+ "seconds": 100.0,
+ "first_frame": 47250,
+ "frames": 2500,
+ "fps": 25,
+ "source_resolution": [
+  4096,
+  1080
+ ],
+ "clip_resolution": [
+  2560,
+  676
+ ],
+ "redacted": [
+  "painted university name and crest"
+ ],
+ "credit": "Footage: SoccerTrack v2 (CC BY 4.0)"
+}

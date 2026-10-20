@@ -31,8 +31,32 @@ dev = [
     "types-PyYAML",
 ]
 
+# Offline auto-eventing on real footage (vision/). Kept out of the default install so the
+# deployed API image stays small. Install with: uv sync --group vision
+# All permissively licensed: no Ultralytics YOLO (AGPL), see docs/06.
+vision = [
+    "torch>=2.8",
+    "torchvision>=0.23",
+    "transformers>=4.56",
+    "opencv-python-headless>=4.10",
+    "scipy>=1.14",
+    "ijson>=3.3",
+    "pillow>=10.4",
+]
+
 [tool.uv]
 package = false
+
+# The default PyTorch wheels on Windows are CPU only. This index carries CUDA 12.8 builds,
+# which the RTX 50 series (Blackwell) needs.
+[[tool.uv.index]]
+name = "pytorch-cu128"
+url = "https://download.pytorch.org/whl/cu128"
+explicit = true
+
+[tool.uv.sources]
+torch = { index = "pytorch-cu128" }
+torchvision = { index = "pytorch-cu128" }
 
 [tool.ruff]
 line-length = 100
@@ -48,8 +72,19 @@ strict = true
 plugins = ["pydantic.mypy"]
 exclude = ["footage/", "frontend/"]
 
+[[tool.mypy.overrides]]
+# Heavy vision-only packages without complete type information.
+module = ["cv2.*", "scipy.*", "torch.*", "torchvision.*", "transformers.*", "ijson.*"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+# OpenCV, SciPy and PyTorch return untyped arrays. The rest of the repo stays strict.
+module = ["vision.*", "scripts.prepare_footage"]
+warn_return_any = false
+warn_unused_ignores = false
+
 [tool.pytest.ini_options]
-testpaths = ["backend/tests", "engine"]
+testpaths = ["backend/tests", "engine", "vision/tests"]
 asyncio_mode = "auto"
 
 [tool.ruff.lint.per-file-ignores]
