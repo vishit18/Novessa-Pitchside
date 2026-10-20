@@ -5,6 +5,8 @@ import type { Lang } from '@/state/profile'
  * the agents already in the viewer's language; this file only covers the labels around it.
  */
 const en = {
+  sentOff: 'Sent off',
+  subbedOff: 'Substituted',
   following: 'Following',
   speedNow: 'Speed now',
   distance: 'Distance',
@@ -52,6 +54,8 @@ const en = {
 export type StringKey = keyof typeof en
 
 const es: Record<StringKey, string> = {
+  sentOff: 'Expulsado',
+  subbedOff: 'Sustituido',
   following: 'Siguiendo a',
   speedNow: 'Velocidad ahora',
   distance: 'Distancia',
@@ -97,6 +101,8 @@ const es: Record<StringKey, string> = {
 }
 
 const ar: Record<StringKey, string> = {
+  sentOff: 'طُرد',
+  subbedOff: 'تم استبداله',
   following: 'تتابع',
   speedNow: 'السرعة الآن',
   distance: 'المسافة',

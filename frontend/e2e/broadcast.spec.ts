@@ -1,38 +1,48 @@
 import { expect, test } from '@playwright/test'
 
 /**
- * The first goal of derby_01 is at 40:17 (t_match 2417.9). Start just before it so the
- * test sees a real overlay arrive from the gateway and render.
+ * derby_01 (ASH v KES) is the showcase match. Times below come from its overlay export
+ * (GET /matches/derby_01/overlays.jsonl): Tobias Wragg (ASH-17) scores a penalty at show_at
+ * 366.9 s, and Zakaria Tazi (ASH-06) is sent off for a second yellow at 3564.5 s.
+ * If the demo seeds change, update these from the export.
  */
-const GOAL_URL = '/watch?match=derby_01&t=2414&speed=1'
+const PENALTY_GOAL_T = 362
+const RED_CARD_T = 3558
 
 test('broadcast view shows the pitch, the score and the goal overlay', async ({ page }) => {
-  await page.goto(GOAL_URL)
+  await page.goto(`/watch?match=derby_01&t=${PENALTY_GOAL_T}&speed=1`)
 
   // The pitch canvas is up and the score bug has data.
   await expect(page.locator('canvas')).toBeVisible()
-  await expect(page.getByLabel('Match clock')).toHaveText(/^40:\d\d$/, { timeout: 20_000 })
+  await expect(page.getByLabel('Match clock')).toHaveText(/^0[56]:\d\d$/, { timeout: 20_000 })
 
   // The goal card arrives over the socket and wipes in as a lower third.
   const lowerThird = page.locator('[aria-live="polite"]')
   await expect(lowerThird).toContainText('Goal', { timeout: 20_000 })
-  await expect(lowerThird).toContainText('Ishaan Sodhi')
-  await expect(page.getByLabel('KES score')).toHaveText('1')
+  await expect(lowerThird).toContainText('Tobias Wragg')
+  await expect(page.getByLabel('ASH score')).toHaveText('1')
 })
 
 test('split view shows the same goal to both viewers', async ({ page }) => {
-  await page.goto('/split?match=derby_01&t=2414&speed=1')
+  await page.goto(`/split?match=derby_01&t=${PENALTY_GOAL_T}&speed=1`)
   const cards = page.locator('[aria-live="polite"]')
   await expect(cards).toHaveCount(2)
   await expect(cards.nth(0)).toContainText('Goal', { timeout: 20_000 })
   await expect(cards.nth(1)).toContainText('Goal', { timeout: 5_000 })
 })
 
-test('player focus follows one player and shows their live speed', async ({ page }) => {
-  await page.goto('/watch?match=derby_01&t=2330&speed=1&player=KES-18')
-  const card = page.getByRole('region', { name: /Ishaan Sodhi/ })
-  await expect(card).toBeVisible()
-  await expect(card.getByRole('heading', { name: 'Ishaan Sodhi' })).toBeVisible()
-  // Live speed comes from the frame stream, so it turns from a dash into a number.
+test('player focus follows one player and shows their live stats', async ({ page }) => {
+  await page.goto(`/watch?match=derby_01&t=${PENALTY_GOAL_T}&speed=1&player=ASH-17`)
+  const card = page.getByRole('region', { name: /Tobias Wragg/ })
+  await expect(card.getByRole('heading', { name: 'Tobias Wragg' })).toBeVisible()
+  // Live speed comes from the frame stream; distance from player_stats. Both replace the dash.
   await expect(card.getByText(/^\d+\.\d\s*km\/h$/).first()).toBeVisible({ timeout: 20_000 })
+  await expect(card.getByText(/^\d+\.\d\d\s*km$/)).toBeVisible({ timeout: 20_000 })
+})
+
+test('following a player who is sent off shows it on the card', async ({ page }) => {
+  await page.goto(`/watch?match=derby_01&t=${RED_CARD_T}&speed=1&player=ASH-06`)
+  await expect(page.locator('[aria-live="polite"]')).toContainText('Red card', { timeout: 20_000 })
+  const card = page.getByRole('region', { name: /Zakaria Tazi/ })
+  await expect(card.getByRole('status')).toHaveText('Sent off', { timeout: 20_000 })
 })

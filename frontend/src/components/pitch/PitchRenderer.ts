@@ -295,11 +295,16 @@ export class PitchRenderer {
     this.lastDrawMs = now
     if (frame) {
       const at = new Map<string, Point>()
+      // After a red card (or a substitution) a player leaves the frame: hide his sprite.
+      for (const sp of this.sprites.values()) sp.root.visible = false
+      // Dim everyone else only while the followed player is actually on the pitch.
+      const focusOn = this.focus !== null && frame.players.some((p) => p.id === this.focus)
       for (const p of frame.players) {
         const sp = this.ensureSprite(p.id)
+        sp.root.visible = true
         const pt = this.project(p.x, p.y)
         sp.root.position.set(pt.x, pt.y)
-        sp.root.alpha = this.focus && p.id !== this.focus ? 0.45 : 1
+        sp.root.alpha = focusOn && p.id !== this.focus ? 0.45 : 1
         // Zooming in should bring the pitch closer, not turn the players into dinner plates.
         sp.root.scale.set(1 / Math.sqrt(this.cam.zoom))
         at.set(p.id, pt)

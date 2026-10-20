@@ -46,6 +46,17 @@ export function PlayerCard() {
           </div>
         </div>
 
+        {stats && !stats.on_pitch && (
+          <p
+            className={`self-start px-2.5 py-1 font-display text-[22px] font-semibold leading-none ${
+              stats.reds > 0 ? 'bg-chaos text-white' : 'bg-white/10 text-text'
+            }`}
+            role="status"
+          >
+            {t(stats.reds > 0 ? 'sentOff' : 'subbedOff')}
+          </p>
+        )}
+
         <div>
           <p className="text-[13px] text-muted">{t('speedNow')}</p>
           <p className="num text-[64px] font-bold leading-none" dir="ltr">
