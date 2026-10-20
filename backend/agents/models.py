@@ -76,6 +76,29 @@ class NarratorOutput(BaseModel):
     variants: dict[Persona, Variant]
 
 
+class RecapOutput(BaseModel):
+    """What the Recap Editor writes. The facts behind it are computed, not written."""
+
+    headline: str
+    paragraphs: list[str] = Field(min_length=1, max_length=4)
+    highlights: list[str] = Field(
+        min_length=3, max_length=9, description="Short lines for a 60 second highlights read"
+    )
+
+
+class Recap(BaseModel):
+    match_id: str
+    kind: Literal["half_time", "full_time"]
+    persona: Persona
+    lang: str
+    status: Literal["verified", "fallback"]
+    translation: str = "english"
+    t_match: float
+    output: RecapOutput
+    facts: dict[str, object]
+    trail: list[str] = Field(default_factory=list)
+
+
 class Localised(BaseModel):
     """Persona variants in one language, and how they were made."""
 

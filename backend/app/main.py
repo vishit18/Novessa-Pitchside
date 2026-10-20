@@ -19,6 +19,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import PlainTextResponse, Response
 from pydantic import ValidationError
 
+from backend.a2a.server import mount_a2a
+from backend.agents.recap import make_recap
 from backend.app.agents_runtime import AgentRuntime
 from backend.app.overlay import Overlay, ViewerProfile
 from backend.app.personas import for_viewer
@@ -30,6 +32,7 @@ from engine.schema import League, MatchMeta
 FRAME_HZ = 10.0
 BAD_REQUEST = 4400
 NOT_FOUND = 4404
+PERSONAS = ("analyst", "casual", "kids", "accessibility")
 TEXT_WAIT_S = 90.0  # how long a socket waits for the agents before leaving the fallback card
 
 
@@ -173,6 +176,23 @@ def create_app(data_dir: Path | None = None) -> FastAPI:
         except StaleDataError as exc:
             raise HTTPException(500, str(exc)) from exc
 
+    mount_a2a(app, lambda: app.state.agents)
+
+    @app.get("/matches/{match_id}/recap")
+    async def recap(
+        match_id: str, kind: str = "full_time", persona: str = "casual", lang: str = "en"
+    ) -> dict[str, Any]:
+        """Half-time or full-time recap, per persona and language."""
+        runtime: AgentRuntime = app.state.agents
+        if not runtime.enabled:
+            raise HTTPException(503, "agents are switched off")
+        if kind not in ("half_time", "full_time") or persona not in PERSONAS:
+            raise HTTPException(400, "bad kind or persona")
+        await load(match_id)
+        ctx = await runtime.context(match_id)
+        out = await make_recap(ctx, kind, persona, lang)  # type: ignore[arg-type]
+        return out.model_dump(mode="json")
+
     @app.get("/health")
     async def health() -> dict[str, str]:
         return {"status": "ok"}
@@ -203,7 +223,7 @@ def create_app(data_dir: Path | None = None) -> FastAPI:
     ) -> Response:
         """Spoken commentary line (MP3) for one moment, in the viewer's persona and language."""
         runtime: AgentRuntime = app.state.agents
-        if persona not in ("analyst", "casual", "kids", "accessibility"):
+        if persona not in PERSONAS:
             raise HTTPException(400, "unknown persona")
         data = await runtime.audio(match_id, moment_id, persona, lang)  # type: ignore[arg-type]
         if data is None:

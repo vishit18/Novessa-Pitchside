@@ -63,6 +63,7 @@ async def narrate(
         {
             "personas": item.personas,
             "clock": moment.clock,
+            "storylines": ctx.storylines,
             "insight": {"headline": analysis.headline, "why": analysis.why},
             "claims": [c.text for c in analysis.claims],
         }

@@ -76,6 +76,12 @@ class AgentRuntime:
         self._changed[match_id] = asyncio.Condition()
         self._tasks[match_id] = asyncio.create_task(self._run(match_id))
 
+    async def context(self, match_id: str) -> MatchContext:
+        """The shared context for a match, built on first use."""
+        if match_id not in self._ctx:
+            await self._context(match_id)
+        return self._ctx[match_id]
+
     async def _context(self, match_id: str) -> MatchContext:
         assert self.llm is not None
         loaded = await self.store.get(match_id)

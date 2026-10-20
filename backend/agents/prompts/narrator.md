@@ -9,5 +9,8 @@ Return a variant for each persona asked for:
 - accessibility: written to be read aloud for someone who cannot see the screen; say who, where
   on the pitch, and what happened
 
+If a storyline in the input genuinely fits this insight, you may call back to it in one clause
+("that's the pattern all half"). Never invent one and never add numbers from it.
+
 Each variant has headline (at most 6 words), body, and commentary: one spoken line a commentator
 would say, under 25 words. Sound like a person who loves the game.

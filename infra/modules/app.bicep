@@ -78,6 +78,8 @@ resource api 'Microsoft.App/containerApps@2024-03-01' = {
           resources: { cpu: json('1.0'), memory: '2Gi' }
           env: concat(envList, [
             { name: 'AZURE_CLIENT_ID', value: identityClientId }
+            // Built from the app name and environment domain, so it needs no reference to itself.
+            { name: 'PUBLIC_BASE_URL', value: 'https://ca-api-${token}.${environment.properties.defaultDomain}' }
             { name: 'CORS_ORIGINS', value: 'https://${web.properties.defaultHostname}' }
             { name: 'APPLICATIONINSIGHTS_CONNECTION_STRING', secretRef: 'appinsights-connection-string' }
           ])

@@ -14,7 +14,7 @@ from __future__ import annotations
 from agent_framework import Executor, Workflow, WorkflowBuilder, WorkflowContext, handler
 from pydantic import BaseModel
 
-from backend.agents import analyst, narrator, producer, verifier
+from backend.agents import analyst, narrator, producer, storykeeper, verifier
 from backend.agents.cache import cache_key
 from backend.agents.context import MatchContext
 from backend.agents.llm import AgentUnavailable
@@ -60,6 +60,8 @@ class ProducerExecutor(Executor):
     async def run(self, batch: MomentBatch, wf: WorkflowContext[Brief, Aired]) -> None:
         ctx = self.ctx
         moments = [ctx.intel.get_moment(i) for i in batch.moment_ids]
+        if moments:
+            storykeeper.update(ctx, min(m.t_match for m in moments))
         decision = await producer.decide(ctx, moments)
         by_id = {m.moment_id: m for m in moments}
         for item in decision.items:

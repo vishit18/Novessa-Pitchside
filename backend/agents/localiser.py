@@ -93,20 +93,16 @@ async def _polish(
     return out.lines if _faithful(english, out.lines, _names_in(ctx, english)) else None
 
 
-async def localise(
-    ctx: MatchContext, moment_id: str, variants: dict[Persona, Variant], lang: str
-) -> Localised:
-    """Persona variants in `lang`. Cached per (seed, moment, language)."""
+async def localise_lines(
+    ctx: MatchContext, english: list[str], lang: str
+) -> tuple[list[str], str, str]:
+    """Translate and polish a list of lines. Returns (lines, status, note).
+
+    Falls back step by step: translator + polish, translator alone, model alone, English.
+    """
     if lang == "en" or lang not in LANGUAGES:
-        return Localised(lang="en", status="english", variants=variants)
-    key = cache_key(ctx.seed, moment_id, "loc", "*", lang)
-    hit = ctx.cache.get(key, Localised)
-    if hit is not None:
-        return hit
-    fields = _fields(variants)
-    english = [text for _, _, text in fields]
+        return english, "english", ""
     names = _names_in(ctx, english)
-    result: Localised | None = None
     draft: list[str] | None = None
     note = ""
     if ctx.translator is not None:
@@ -118,31 +114,33 @@ async def localise(
             note = str(exc)
     if draft is not None:
         polished = await _polish(ctx, lang, english, draft)
-        if polished is not None:
-            result = Localised(
-                lang=lang, status="polished", variants=_rebuild(variants, fields, polished)
-            )
-        else:
-            result = Localised(
-                lang=lang, status="translated", variants=_rebuild(variants, fields, draft)
-            )
-    else:
-        ctx.llm.note_fallback("localiser")
-        llm_only = await _polish(ctx, lang, english, None)
-        if llm_only is not None:
-            result = Localised(
-                lang=lang,
-                status="llm",
-                variants=_rebuild(variants, fields, llm_only),
-                note=note or "translator unavailable",
-            )
-    if result is None:
-        # Last step: say so honestly and show English.
-        return Localised(
-            lang=lang,
-            status="unavailable",
-            variants=variants,
-            note=note or "translation unavailable",
-        )
+        return (polished, "polished", "") if polished is not None else (draft, "translated", "")
+    ctx.llm.note_fallback("localiser")
+    llm_only = await _polish(ctx, lang, english, None)
+    if llm_only is not None:
+        return llm_only, "llm", note or "translator unavailable"
+    return english, "unavailable", note or "translation unavailable"
+
+
+async def localise(
+    ctx: MatchContext, moment_id: str, variants: dict[Persona, Variant], lang: str
+) -> Localised:
+    """Persona variants in `lang`. Cached per (seed, moment, language)."""
+    if lang == "en" or lang not in LANGUAGES:
+        return Localised(lang="en", status="english", variants=variants)
+    key = cache_key(ctx.seed, moment_id, "loc", "*", lang)
+    hit = ctx.cache.get(key, Localised)
+    if hit is not None:
+        return hit
+    fields = _fields(variants)
+    lines, status, note = await localise_lines(ctx, [text for _, _, text in fields], lang)
+    if status == "unavailable":
+        return Localised(lang=lang, status="unavailable", variants=variants, note=note)
+    result = Localised(
+        lang=lang,
+        status=status,
+        variants=_rebuild(variants, fields, lines),
+        note=note,
+    )
     ctx.cache.put(key, result)
     return result
