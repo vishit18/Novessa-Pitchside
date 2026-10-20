@@ -101,6 +101,7 @@ Cosmos DB free tier is one per subscription. If Sweden Central will not take a n
 
 - Subscription `Azure subscription 1`, upgraded to pay-as-you-go. Budget `pitchside-150`: $150 per month, email alerts at 50%, 80% and 100%.
 - Resource group `pitchside` (not `rg-pitchside`), Sweden Central.
+- Deployed 20 Oct: api at https://ca-api-uirzml34ufpge.salmonocean-c33a3a80.swedencentral.azurecontainerapps.io (`/health` ok). Static Web App is in westus2 (westeurope and Sweden Central refuse new SWA accounts); the web service is not deployed yet.
 - Foundry resource and project `NovessaPitchside1`. Deployments: `chat-fast` (gpt-4.1-mini, 100K tokens/min) and `chat-strong` (gpt-5-mini, 500K tokens/min). Both work with Entra tokens through `https://novessapitchside1.cognitiveservices.azure.com/openai/deployments/<name>/chat/completions` (checked 20 Oct: `chat-fast` 1.3 s, `chat-strong` 1.7 s with `reasoning_effort: minimal`). The `openai.azure.com` host returned PermissionDenied for the same token, so use the cognitiveservices host. Subscription is PayAsYouGo with the spending limit off.
 
 ## Environment variables (`.env.example`)
