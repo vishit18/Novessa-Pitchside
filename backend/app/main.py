@@ -22,6 +22,7 @@ from pydantic import ValidationError
 from backend.a2a.server import mount_a2a
 from backend.agents.recap import make_recap
 from backend.app.agents_runtime import AgentRuntime
+from backend.app.catchup import build_catchup
 from backend.app.overlay import Overlay, ViewerProfile
 from backend.app.personas import for_viewer
 from backend.app.store import LoadedMatch, MatchStore, StaleDataError, UnknownMatchError
@@ -286,6 +287,16 @@ def create_app(data_dir: Path | None = None) -> FastAPI:
         if state is None:
             raise HTTPException(404, "no state at that time")
         return state
+
+    @app.get("/matches/{match_id}/catchup")
+    async def catchup(match_id: str, t: float = Query(..., ge=0)) -> dict[str, Any]:
+        """Spoiler-safe summary of the match up to `t` match seconds. No model calls."""
+        loaded = await load(match_id)
+        try:
+            out = build_catchup(match_id, loaded, _store(app).names, t)
+        except ValueError:
+            raise HTTPException(404, "nothing has happened by then") from None
+        return out.model_dump(mode="json")
 
     @app.get("/matches/{match_id}/overlays.jsonl")
     async def overlays_jsonl(match_id: str) -> PlainTextResponse:

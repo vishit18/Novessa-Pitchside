@@ -385,6 +385,7 @@ class TimelineBuilder:
             "team": m.team,
             "tone": tone,
             "moment_kind": m.kind,
+            "clock": m.clock,
             "significance": m.significance,
         }
         if m.card:

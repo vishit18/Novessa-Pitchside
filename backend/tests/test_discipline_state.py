@@ -139,9 +139,16 @@ def test_penalty_overlay_and_headline(overlays: list[dict[str, Any]]) -> None:
 def test_state_message_carries_team_stats(client: TestClient) -> None:
     s = client.get("/matches/derby_01/state", params={"t": 5000}).json()
     assert set(s["team_stats"]) == {"ASH", "KES"}
-    assert {"fouls", "yellows", "reds", "corners", "free_kicks", "penalties", "shots"} == set(
-        s["team_stats"]["ASH"]
-    )
+    assert {
+        "fouls",
+        "yellows",
+        "reds",
+        "corners",
+        "free_kicks",
+        "penalties",
+        "shots",
+        "offsides",
+    } == set(s["team_stats"]["ASH"])
     assert s["team_stats"]["ASH"]["reds"] == 1  # the second-yellow red happens at 57:06
 
 

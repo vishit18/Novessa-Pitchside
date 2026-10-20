@@ -79,11 +79,13 @@ The `state` message carries `team_stats`: `{TEAM: {fouls, yellows, reds, corners
 - `speed_burst`: slot `player_tag`, anchored to the player. Payload: `speed_kmh`, `rank_in_match`.
 - `distance_milestone`: slot `player_tag`. Payload: `km`.
 - Cards, penalties and red cards arrive as `insight` overlays (`moment_kind` `card` or `penalty`, `tone` `info` or `chance`). The payload adds `card` (`yellow` or `red`) for cards and `staff: true` for a manager. A second yellow gives one overlay saying so.
-- `milestone` and `insight`: slot `lower_third`. Payload: `headline`, `body`, `team`, `tone` (`goal`, `chance`, `swing`, `milestone`, `info`), optional `moment_kind`.
+- `milestone` and `insight`: slot `lower_third`. Payload: `headline`, `body`, `team`, `tone` (`goal`, `chance`, `swing`, `milestone`, `info`), optional `moment_kind`, and for insights `clock` (the match clock as shown on the score bug, e.g. `60:38`).
 - `op: "update"` with the same `moment_id` merges its payload into the earlier overlay. Agent text arrives this way after the instant overlay.
 - `momentum_bar` is not sent as an overlay in v1. The renderer reads `state.momentum`.
 
 Agent text update: `op: "update"`, same `moment_id`, `msg_id` ending `-text-<lang>`, payload `headline`, `body`, `commentary`, `agent_status` (`verified`), `translation` (`english`, `polished`, `translated`, `llm`, `unavailable`) and `audio_url` when Speech is configured; top-level `lang` is the language the text is really in. `provenance.source` is `agent:analyst`. Only verified text is sent; a moment that fell back keeps its numbers-only card. The viewer's persona picks the variant (kids and accessibility fall back to casual, then analyst).
+
+Catch-up: `GET /matches/{id}/catchup?t=<match seconds>` returns the score, a two-sentence summary and up to six story moments, all computed from state at or before `t` and nothing after it (no model calls). Spoiler-safe by construction; the Companion view calls it for "What did I miss?".
 
 Gateway extras: `GET /agents/health`, `POST /agents/{agent}/kill?seconds=30` (chaos switch), `GET /matches/{id}/insights` (outputs with verification trails).
 
