@@ -11,7 +11,7 @@ var roleOpenAiUser = '5e0bd9bd-7b93-4f28-af87-19fc36ad61bd'
 var roleCognitiveServicesUser = 'a97b65f3-24c7-4388-baec-2e87135dc908'
 var roleAzureAiUser = '53ca6127-db72-4b80-b1b0-d745d6d5456d'
 var roleEventHubsDataOwner = 'f526a384-b230-433a-b45c-95f59c4a2dec'
-var roleKeyVaultSecretsUser = '4633458b-17de-408a-b874-0f2f5a9d0d6c'
+var roleKeyVaultSecretsUser = '4633458b-17de-408a-b874-0445c86b69e6'
 var roleAcrPull = '7f951dda-4ed3-4680-a7ca-43fe172d538d'
 // Cosmos data-plane role, not an Azure RBAC role.
 var cosmosDataContributor = '00000000-0000-0000-0000-000000000002'

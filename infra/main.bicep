@@ -14,7 +14,7 @@ param location string = resourceGroup().location
 param cosmosLocation string = location
 
 @description('Static Web Apps are only offered in a few regions.')
-param swaLocation string = 'westeurope'
+param swaLocation string = 'westus2'
 
 @description('The existing Foundry (AI Services) resource.')
 param foundryAccountName string = 'NovessaPitchside1'
