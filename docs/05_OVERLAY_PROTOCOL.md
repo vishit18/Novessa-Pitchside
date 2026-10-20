@@ -83,6 +83,10 @@ The `state` message carries `team_stats`: `{TEAM: {fouls, yellows, reds, corners
 - `op: "update"` with the same `moment_id` merges its payload into the earlier overlay. Agent text arrives this way after the instant overlay.
 - `momentum_bar` is not sent as an overlay in v1. The renderer reads `state.momentum`.
 
+Agent text update: `op: "update"`, same `moment_id`, `msg_id` ending `-text`, payload `headline`, `body`, `commentary`, `agent_status` (`verified`). `provenance.source` is `agent:analyst`. Only verified text is sent; a moment that fell back keeps its numbers-only card. The viewer's persona picks the variant (kids and accessibility fall back to casual, then analyst).
+
+Gateway extras: `GET /agents/health`, `POST /agents/{agent}/kill?seconds=30` (chaos switch), `GET /matches/{id}/insights` (outputs with verification trails).
+
 Until the agents are live, `insight` overlays carry a numbers-only fallback card written from the state engine (`provenance.source = "state_engine"`).
 
 ## Timing and sync

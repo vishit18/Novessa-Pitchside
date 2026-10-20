@@ -14,7 +14,7 @@ Priority: **P0** = we fail or score badly without it. **P1** = needed to win. **
 |---|---|---|---|
 | [ ] | **Ingest** synthetic events *as they happen*: passes, shots, tackles, possession changes, pressure events, match metadata | Match engine streams events in real time onto the event bus (Event Hubs in Azure, in-memory locally). Gateway consumes them live. | 0:10 |
 | [ ] | **Interpret** into statistics, patterns and context | `backend/state`: rolling possession, momentum, pressure index, pass networks, player load, rhythm, all deterministic | 0:20 |
-| [ ] | **Explain** why a moment matters, not just that it happened | Tactical Analyst agent writes the "why", Verifier agent checks it against the numbers | 0:30 |
+| [x] | **Explain** why a moment matters, not just that it happened | Tactical Analyst agent writes the "why", Verifier agent checks it against the numbers. Lives in `backend/agents/` (analyst, verifier, workflow); text reaches viewers as an `update` overlay from `backend/app/agents_runtime.py` | 0:30 |
 | [ ] | **Render** insight that sits on screen alongside the match | Timed overlay protocol (`docs/05`) rendered over the 2D tactical feed and over real footage | throughout |
 | [ ] | **Personalise** so an analyst and a casual fan get two *genuinely different* experiences | Persona engine + split-screen "same moment, two viewers" view | 0:50 |
 
@@ -86,7 +86,7 @@ Priority: **P0** = we fail or score badly without it. **P1** = needed to win. **
 - [ ] Quality software practices → tests, CI, typed code, linting, IaC, ADRs in `docs/adr/`
 - [ ] Effective use of **hero technologies**. Their list: Microsoft Foundry, Agent Framework, Azure MCP, GitHub Copilot Agent Mode, Fabric, GitHub SDK, GitHub CLI, Azure Apps and AI Services, Azure databases. We use:
   - [ ] Microsoft Foundry (models, agents, tracing, evaluations, content safety)
-  - [ ] Microsoft Agent Framework (workflow orchestration)
+  - [x] Microsoft Agent Framework (workflow orchestration): `backend/agents/workflow.py`
   - [ ] Azure MCP (dev tooling) **and** our own MCP server
   - [ ] GitHub CLI (`gh`) + GitHub Actions for CI/CD
   - [ ] Azure Container Apps, Static Web Apps (Azure Apps)

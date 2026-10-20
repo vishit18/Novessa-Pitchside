@@ -130,6 +130,17 @@ Add a **chaos switch** in the Control Room: "kill the Analyst for 30 seconds". I
 
 "Match Intelligence MCP": exposes the state engine as tools: `get_state`, `get_player_stats`, `get_window_stats`, `compare_periods`, `get_pass_network`, `list_moments`, `get_recap`. The Analyst and Verifier call it, and anything else MCP-compatible can too (VS Code Copilot, Claude, a broadcaster's tools). Show it working from VS Code in the README. This hits the rubric's "MCP integration" line directly.
 
+## How it is built (21 Oct)
+
+- `backend/agents/workflow.py`: the Agent Framework `WorkflowBuilder` graph. Executors: Producer, Analyst, Verifier, Narrator, Gate. The Verifier has an edge back to the Analyst (one retry with the reason) and an edge to the Gate for the numbers-only fallback card. Messages are small Pydantic models (`models.py`); everything else lives in `MatchContext`.
+- `intel.py` (`MatchIntel`) is the one source of numbers. The MCP server (`backend/mcp_server/server.py`) wraps it, and the Verifier calls `measure` to recompute each claim.
+- The Analyst never calculates. It gets an **evidence menu** (computed rows for the moment: state, 5-minute windows per team, involved players) and copies rows into its claims. The Verifier re-measures every claim and also rejects any number in the prose that no claim, engine fact, clock reading or window backs. No model is involved in verifying.
+- The Narrator may not add numbers either; if it does, the verified Analyst text airs instead.
+- `llm.py` (`ResilientLLM`): timeout, one retry with backoff, JSON validated against the Pydantic model, circuit breaker, OpenTelemetry span, per-agent health, chaos `kill`. A failure raises `AgentUnavailable` and each agent uses its fallback.
+- Cache: `cache.py`, keyed `(seed, moment_id, stage, persona, lang)`. Only verified results are cached. Local runs write `data/cache/agents/`; if that is not writable the temp dir is used.
+- Gateway: `AgentRuntime` runs batches of five candidate moments (significance 50 or more) in the background and each socket attaches the text with `op: "update"` once it is ready. Chaos switch: `POST /agents/{agent}/kill?seconds=30`. Health: `GET /agents/health`. Trails: `GET /matches/{id}/insights`.
+- Not built yet: Story Keeper, Localiser, Voice, Recap Editor and the A2A endpoint.
+
 ## Prompts
 
 Store each agent's system prompt in `backend/agents/prompts/<agent>.md`, versioned. Keep them short and specific. Every agent uses JSON-schema structured output. Tone rules for all text: sound like a sharp, warm football broadcaster; no clichés like "a game of two halves" unless the data actually shows it; never invent a number.
