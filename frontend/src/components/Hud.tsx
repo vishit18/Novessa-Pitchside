@@ -154,7 +154,9 @@ function Headline({ o }: { o: OverlayEnvelope }) {
         <div className="font-display text-[28px] sm:text-[42px] font-bold leading-[0.95]">
           {head}
         </div>
-        <p className="mt-1.5 max-w-[56ch] text-[15px] leading-snug text-muted">{body}</p>
+        <p className="mt-1.5 max-w-[56ch] text-[16px] leading-snug text-text/80 sm:text-[20px]">
+          {body}
+        </p>
         {late > 6 && <p className="mt-1 text-[12px] text-amber">{t('earlier')}</p>}
       </div>
     </div>
@@ -249,9 +251,11 @@ export function Controls({ transport = true }: { transport?: boolean }) {
   }
   useEffect(() => {
     window.addEventListener('pointermove', wake)
+    window.addEventListener('pointerdown', wake)
     window.addEventListener('keydown', wake)
     return () => {
       window.removeEventListener('pointermove', wake)
+      window.removeEventListener('pointerdown', wake)
       window.removeEventListener('keydown', wake)
       window.clearTimeout(timer.current)
     }

@@ -70,43 +70,45 @@ export function Split({ query }: { query: URLSearchParams }) {
         </button>
       </header>
 
-      <div className="grid flex-1 grid-cols-1 content-center gap-5 lg:grid-cols-2">
-        <Column session={a} profile={left.profile} onChange={change(a, setLeft)} />
-        <Column session={b} profile={right.profile} onChange={change(b, setRight)} />
-      </div>
+      <div className="flex flex-1 flex-col justify-center gap-6">
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-2 lg:gap-8">
+          <Column session={a} profile={left.profile} onChange={change(a, setLeft)} />
+          <Column session={b} profile={right.profile} onChange={change(b, setRight)} />
+        </div>
 
-      <div className="flex justify-center">
-        <div className="plate-shadow">
-          <div
-            className="plate flex flex-wrap items-center justify-center gap-x-5 gap-y-2 px-5 py-2.5"
-            style={{ ['--cut' as string]: '10px' }}
-            role="toolbar"
-            aria-label="Playback for both viewers"
-          >
-            <button
-              className={chip(paused)}
-              aria-pressed={paused}
-              onClick={() => {
-                both((s) => s.setPaused(!paused))
-                setPaused(!paused)
-              }}
+        <div className="flex justify-center">
+          <div className="plate-shadow">
+            <div
+              className="plate flex flex-wrap items-center justify-center gap-x-5 gap-y-2 px-5 py-2.5"
+              style={{ ['--cut' as string]: '10px' }}
+              role="toolbar"
+              aria-label="Playback for both viewers"
             >
-              {paused ? 'Play' : 'Pause'}
-            </button>
-            <div className="flex gap-1" role="group" aria-label="Replay speed">
-              {SPEEDS.map((v) => (
-                <button
-                  key={v}
-                  className={chip(speed === v)}
-                  aria-pressed={speed === v}
-                  onClick={() => {
-                    both((s) => s.setSpeed(v))
-                    setSpeed(v)
-                  }}
-                >
-                  {v}x
-                </button>
-              ))}
+              <button
+                className={chip(paused)}
+                aria-pressed={paused}
+                onClick={() => {
+                  both((s) => s.setPaused(!paused))
+                  setPaused(!paused)
+                }}
+              >
+                {paused ? 'Play' : 'Pause'}
+              </button>
+              <div className="flex gap-1" role="group" aria-label="Replay speed">
+                {SPEEDS.map((v) => (
+                  <button
+                    key={v}
+                    className={chip(speed === v)}
+                    aria-pressed={speed === v}
+                    onClick={() => {
+                      both((s) => s.setSpeed(v))
+                      setSpeed(v)
+                    }}
+                  >
+                    {v}x
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -133,7 +135,7 @@ function Column({
   const [delay, setDelay] = useState(0)
   return (
     <section className="flex min-w-0 flex-col gap-3" aria-label={`${profile.persona} viewer`}>
-      <div className="aspect-video w-full overflow-hidden">
+      <div className="aspect-video w-full overflow-hidden lg:aspect-[16/10]">
         <BroadcastPane session={session} compact transport={false} />
       </div>
       <div className="flex flex-wrap items-center gap-x-6 gap-y-2.5">

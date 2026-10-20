@@ -46,7 +46,12 @@ body {
 
 /* Broadcast graphics inside a shared-screen pane. Narrow panes shrink them further. */
 .hud-compact {
-  zoom: 0.68;
+  zoom: 0.82;
+}
+@media (max-width: 1279px) {
+  .hud-compact {
+    zoom: 0.68;
+  }
 }
 @media (max-width: 640px) {
   .hud-compact {

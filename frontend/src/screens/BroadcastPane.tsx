@@ -65,7 +65,8 @@ function PaneBody({ compact, transport, corner }: Omit<Props, 'session'>) {
             </div>
           )}
         </div>
-        <div className="flex justify-center">
+        {/* On a phone the controls float above the lower third so they never reserve space. */}
+        <div className="flex justify-center max-sm:absolute max-sm:inset-x-4 max-sm:bottom-full max-sm:mb-2">
           <Controls transport={transport} />
         </div>
       </div>
