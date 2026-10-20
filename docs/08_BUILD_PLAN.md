@@ -43,3 +43,7 @@ _Claude Code updates this at the end of every working day._
 - **Next:** gateway (REST + WebSocket, overlay protocol schema), Broadcast view v1 with pitch and instant overlays, Bicep and the first `azd up`.
 - **Needs VJ:** public GitHub repo, plugins, SoccerTrack v2 conditions check, pay-as-you-go upgrade decision, portal check of model access.
 - **Azure spend so far:** about $0
+
+- **Where we stopped (20 Oct night, backend session):** models work keyless from the CLI (`chat-fast` 1.3 s, `chat-strong` 1.7 s, cognitiveservices host). Subscription is PayAsYouGo, spending limit off, budget `pitchside-150` set. Infra is written and `what-if` clean but **nothing is deployed**; run `azd provision` then `azd deploy api` when ready (steps in `docs/02`). Gateway runs locally with `uv run uvicorn backend.app.main:app --port 8000`. 86 Python tests, ruff and mypy clean.
+- **Next, in order:** (1) agents: Producer, Analyst, Verifier, Narrator with the MCP server, cache and Content Safety (`docs/04`); (2) `EventBus` with Event Hubs and the Cosmos store (the deployed resources are unused until this exists); (3) Localiser, Voice, Recap + A2A; (4) deploy and `calibrate.py`; (5) vision pipeline. Calibration still to tune: goals about 3.0, penalties about 0.5, sprints over 30 km/h too frequent.
+- **Frontend session:** working on one-number mode, then the discipline and set-piece panel from `state.team_stats`. Commits `frontend/` only.
