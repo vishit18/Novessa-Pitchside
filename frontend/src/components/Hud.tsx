@@ -133,9 +133,12 @@ export function LowerThird() {
   )
 }
 
+/** The strip down the left of a lower third: card colour for cards, else the team's kit. */
 function toneColour(o: OverlayEnvelope): string {
+  const card = o.payload['card']
+  if (card === 'yellow') return '#f5c542'
+  if (card === 'red') return 'var(--color-chaos)'
   const team = String(o.payload['team'] ?? '')
-  if (o.payload['tone'] === 'card') return '#f5c542'
   return team ? colour(team) : 'var(--color-amber)'
 }
 
