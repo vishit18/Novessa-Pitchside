@@ -1,10 +1,11 @@
 import type { StoreApi } from 'zustand/vanilla'
 import { ClockSync } from '@/core/clock'
+import { isStoryOverlay, momentFeed } from '@/core/feed'
 import { activeOverlays } from '@/core/overlays'
 import { GATEWAY_WS } from '@/net/api'
 import { WebSocketSource } from '@/net/wsSource'
 import type { MatchSource, SourceOptions } from '@/net/source'
-import type { WireMessage } from '@/types/overlay'
+import type { OverlayEnvelope, WireMessage } from '@/types/overlay'
 import { StreamBuffers } from './buffers'
 import { createUIStore, type UIState } from './store'
 
@@ -29,6 +30,10 @@ export class Session {
   private lastSnapshotT = -1
   private lastStatsT = -1
   private lastSpeedMs = 0
+  /** Every story overlay received, never pruned, so the feed can be rebuilt at any time. */
+  private feedLog: OverlayEnvelope[] = []
+  private lastFeedMs = 0
+  private lastFeedSig = ''
 
   constructor(readonly opts: SourceOptions) {
     this.store = createUIStore(opts.profile)
@@ -41,6 +46,8 @@ export class Session {
     this.lastActiveSig = ''
     this.lastSnapshotT = -1
     this.lastStatsT = -1
+    this.feedLog = []
+    this.lastFeedSig = ''
     const source = createSource(this.opts)
     this.source = source
     this.store.getState().set({
@@ -52,6 +59,7 @@ export class Session {
       playerStats: null,
       focusSpeed: null,
       active: [],
+      feed: [],
       speed: this.opts.speed ?? 4,
       paused: false,
     })
@@ -90,9 +98,12 @@ export class Session {
         this.buffers.clear()
         this.clock.reset()
         this.lastSnapshotT = -1
+        this.feedLog = []
+        this.lastFeedSig = ''
       }
       this.clock.observe(msg.data.t_match, performance.now())
     }
+    if (msg.type === 'overlay' && isStoryOverlay(msg.data)) this.feedLog.push(msg.data)
     this.buffers.ingest(msg)
   }
 
@@ -120,7 +131,16 @@ export class Session {
       this.lastStatsT = stats.t_match
       patch.playerStats = stats
     }
-    if (patch.active || patch.snapshot || patch.playerStats) this.store.getState().set(patch)
+    if (nowMs - this.lastFeedMs > 400) {
+      this.lastFeedMs = nowMs
+      const feed = momentFeed(this.feedLog, t)
+      const feedSig = feed.map((f) => `${f.id}:${f.headline}:${f.body}:${f.audioUrl}`).join('|')
+      if (feedSig !== this.lastFeedSig) {
+        this.lastFeedSig = feedSig
+        patch.feed = feed
+      }
+    }
+    if (Object.keys(patch).length) this.store.getState().set(patch)
     return t
   }
 

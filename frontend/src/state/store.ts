@@ -1,4 +1,5 @@
 import { createStore, type StoreApi } from 'zustand/vanilla'
+import type { FeedItem } from '@/core/feed'
 import type { ConnectionStatus, PlaybackControls } from '@/net/source'
 import type { OverlayEnvelope, PlayerStatsMessage } from '@/types/overlay'
 import type { MatchMeta, StateSnapshot } from '@/types/schema'
@@ -19,6 +20,8 @@ export interface UIState {
   focusSpeed: number | null
   /** Overlays to draw right now, already resolved per slot. */
   active: OverlayEnvelope[]
+  /** Story cards this viewer has already been shown, newest first. The Companion's feed. */
+  feed: FeedItem[]
   /** Seconds this viewer sits behind the live edge. */
   delayS: number
   speed: number
@@ -37,6 +40,7 @@ export function createUIStore(profile: ViewerProfile): StoreApi<UIState> {
     playerStats: null,
     focusSpeed: null,
     active: [],
+    feed: [],
     delayS: 0,
     speed: 4,
     paused: false,

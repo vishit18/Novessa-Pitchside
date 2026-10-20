@@ -113,6 +113,11 @@ body {
   animation-delay: 0s, calc(var(--life, 4s) - 0.2s);
 }
 
+/* A card joining the Companion feed. Same entrance as an overlay tag. */
+.feed-in {
+  animation: tag-in 0.2s var(--ease-out) both;
+}
+
 @keyframes pulse-soft {
   50% {
     opacity: 0.45;
@@ -136,6 +141,9 @@ button:not(:disabled):active {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .feed-in {
+    animation: tag-fade-in 0.15s linear both;
+  }
   button:not(:disabled):active {
     scale: 1;
   }

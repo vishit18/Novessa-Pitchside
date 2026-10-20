@@ -47,3 +47,10 @@ def test_every_moment_is_at_or_before_the_requested_time(client: TestClient) -> 
 def test_bad_requests(client: TestClient) -> None:
     assert client.get(f"/matches/{MATCH}/catchup").status_code == 422
     assert client.get("/matches/nope/catchup", params={"t": 10}).status_code == 404
+
+
+def test_bodies_name_the_club_not_its_code(client: TestClient) -> None:
+    out = client.get(f"/matches/{MATCH}/catchup", params={"t": 700}).json()
+    goal = next(m for m in out["moments"] if m["kind"] == "goal")
+    assert "Ashford Rovers" in goal["body"]
+    assert " ASH" not in goal["body"]

@@ -7,6 +7,7 @@ gets the score, who has had the ball, and the handful of moments that mattered s
 
 from __future__ import annotations
 
+import re
 from typing import Any
 
 from pydantic import BaseModel
@@ -40,6 +41,14 @@ class CatchUp(BaseModel):
     summary: str
     moments: list[CatchUpMoment]
     note: str
+
+
+CODE_PATTERN = re.compile(r"\b[A-Z]{3}\b")
+
+
+def _clubs_by_name(text: str, names: NameBook) -> str:
+    """Swap a bare club code such as ASH for the club name."""
+    return CODE_PATTERN.sub(lambda m: names.clubs.get(m.group(0), m.group(0)), text)
 
 
 def _headline(m: Moment) -> str:
@@ -94,7 +103,7 @@ def build_catchup(match_id: str, loaded: LoadedMatch, names: NameBook, t_match: 
             clock=m.clock,
             kind=m.kind,
             headline=_headline(m),
-            body=names.humanise(m.summary),
+            body=_clubs_by_name(names.humanise(m.summary), names),
             team=m.team,
         )
         for m in sorted(top, key=lambda m: m.t_match)
