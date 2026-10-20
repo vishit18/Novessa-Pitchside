@@ -91,7 +91,8 @@ module app 'modules/app.bicep' = {
     apiMinReplicas: int(apiMinReplicas)
     env: {
       FOUNDRY_PROJECT_ENDPOINT: foundryProjectEndpoint
-      FOUNDRY_OPENAI_ENDPOINT: 'https://${foundry.name}.openai.azure.com/'
+      // Token (Entra) auth works on the cognitiveservices.azure.com host, not openai.azure.com.
+      FOUNDRY_OPENAI_ENDPOINT: foundry.properties.endpoint
       FOUNDRY_DEPLOYMENT_FAST: foundryDeploymentFast
       FOUNDRY_DEPLOYMENT_STRONG: foundryDeploymentStrong
       CONTENT_SAFETY_ENDPOINT: foundry.properties.endpoint
