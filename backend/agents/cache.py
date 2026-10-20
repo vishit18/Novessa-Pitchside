@@ -7,13 +7,16 @@ Local runs use JSON files under `data/cache/agents/`; Cosmos DB takes over in Az
 from __future__ import annotations
 
 import json
+import logging
 import os
+import tempfile
 from pathlib import Path
 from typing import Protocol, TypeVar
 
 from pydantic import BaseModel
 
 T = TypeVar("T", bound=BaseModel)
+log = logging.getLogger("pitchside.agents")
 
 DEFAULT_DIR = Path(__file__).resolve().parents[2] / "data" / "cache" / "agents"
 
@@ -58,9 +61,21 @@ class FileCache:
         return model.model_validate(raw) if raw is not None else None
 
     def put(self, key: str, value: BaseModel) -> None:
+        """Remember `value`. A disk problem never stops a broadcast: it stays in memory."""
         seed = int(key.split(":", 1)[0])
         data = self._load(seed)
         data[key] = value.model_dump(mode="json")
+        try:
+            self._write(seed, data)
+        except OSError:
+            # Container images are read-only under /app. Use the temp dir instead.
+            self.directory = Path(tempfile.gettempdir()) / "pitchside-agent-cache"
+            try:
+                self._write(seed, data)
+            except OSError:
+                log.warning("agent cache cannot write to disk; keeping results in memory only")
+
+    def _write(self, seed: int, data: dict[str, object]) -> None:
         self.directory.mkdir(parents=True, exist_ok=True)
         self._path(seed).write_text(json.dumps(data, separators=(",", ":")), "utf-8")
 

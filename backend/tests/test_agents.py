@@ -305,3 +305,14 @@ async def test_goals_always_air(intel: MatchIntel, names: NameBook) -> None:
     ctx = make_ctx(intel, names, Dropper(["good"]))
     out = await run_batch(ctx, [goals[0].moment_id])
     assert out[0].item.decision == "air"
+
+
+def test_cache_survives_an_unwritable_directory(tmp_path: Path) -> None:
+    blocker = tmp_path / "file"
+    blocker.write_text("not a directory")
+    cache = FileCache(blocker / "inside")
+    first = AnalystOutput(
+        headline="h", why="w", claims=[Claim(text="t", metric="momentum", value=1.0, t_to=1.0)]
+    )
+    cache.put("5:mom-1:analyst:*:en", first)
+    assert cache.get("5:mom-1:analyst:*:en", AnalystOutput) == first

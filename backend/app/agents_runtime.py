@@ -90,7 +90,13 @@ class AgentRuntime:
             info["total"] = len(moments)
             for i in range(0, len(moments), BATCH_SIZE):
                 batch = moments[i : i + BATCH_SIZE]
-                out = await run_batch(ctx, [m.moment_id for m in batch])
+                try:
+                    out = await run_batch(ctx, [m.moment_id for m in batch])
+                except Exception:
+                    # One bad batch must not stop the rest of the match.
+                    log.exception("agent batch %s for %s failed", i // BATCH_SIZE, match_id)
+                    info["failed_batches"] = info.get("failed_batches", 0) + 1
+                    continue
                 async with self._changed[match_id]:
                     for a in out:
                         self._results[match_id][a.moment_id] = a
