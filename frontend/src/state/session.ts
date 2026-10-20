@@ -27,6 +27,8 @@ export class Session {
   private source: MatchSource | null = null
   private lastActiveSig = ''
   private lastSnapshotT = -1
+  private lastStatsT = -1
+  private lastSpeedMs = 0
 
   constructor(readonly opts: SourceOptions) {
     this.store = createUIStore(opts.profile)
@@ -38,6 +40,7 @@ export class Session {
     this.clock.reset()
     this.lastActiveSig = ''
     this.lastSnapshotT = -1
+    this.lastStatsT = -1
     const source = createSource(this.opts)
     this.source = source
     this.store.getState().set({
@@ -46,6 +49,8 @@ export class Session {
       statusDetail: null,
       meta: null,
       snapshot: null,
+      playerStats: null,
+      focusSpeed: null,
       active: [],
       speed: this.opts.speed ?? 4,
       paused: false,
@@ -101,6 +106,7 @@ export class Session {
     const active = activeOverlays(this.buffers.overlays, t)
     const sig = active.map((o) => `${o.msg_id}:${JSON.stringify(o.payload)}`).join('|')
     const snap = this.buffers.stateAt(t)
+    const stats = this.buffers.playerStatsAt(t)
     const patch: Partial<UIState> = {}
     if (sig !== this.lastActiveSig) {
       this.lastActiveSig = sig
@@ -110,7 +116,18 @@ export class Session {
       this.lastSnapshotT = snap.t_match
       patch.snapshot = snap
     }
-    if (patch.active || patch.snapshot) this.store.getState().set(patch)
+    if (stats && stats.t_match !== this.lastStatsT) {
+      this.lastStatsT = stats.t_match
+      patch.playerStats = stats
+    }
+    if (patch.active || patch.snapshot || patch.playerStats) this.store.getState().set(patch)
     return t
+  }
+
+  /** Publish the followed player's live speed, a few times a second rather than every frame. */
+  reportFocusSpeed(kmh: number | null, nowMs: number): void {
+    if (nowMs - this.lastSpeedMs < 250) return
+    this.lastSpeedMs = nowMs
+    this.store.getState().set({ focusSpeed: kmh })
   }
 }

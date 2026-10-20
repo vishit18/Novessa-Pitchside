@@ -1,6 +1,6 @@
 import { insertSorted, lastAtOrBefore, trimBefore } from '@/core/timeline'
 import { pruneOverlays } from '@/core/overlays'
-import type { OverlayEnvelope, WireMessage } from '@/types/overlay'
+import type { OverlayEnvelope, PlayerStatsMessage, WireMessage } from '@/types/overlay'
 import type { MatchEvent, StateSnapshot, TrackingFrame } from '@/types/schema'
 
 /**
@@ -12,6 +12,7 @@ export class StreamBuffers {
   frames: TrackingFrame[] = []
   events: MatchEvent[] = []
   states: StateSnapshot[] = []
+  playerStats: PlayerStatsMessage[] = []
   overlays: OverlayEnvelope[] = []
   private seenFrames = new Set<number>()
   private seenEvents = new Set<string>()
@@ -37,6 +38,9 @@ export class StreamBuffers {
       case 'state':
         insertSorted(this.states, msg.data)
         break
+      case 'player_stats':
+        insertSorted(this.playerStats, msg.data)
+        break
       case 'overlay': {
         const o = msg.data
         // update/hide messages reuse nothing special; msg_id is unique per message
@@ -52,6 +56,7 @@ export class StreamBuffers {
   trim(renderT: number): void {
     trimBefore(this.frames, renderT - 2)
     trimBefore(this.states, renderT - 2)
+    trimBefore(this.playerStats, renderT - 2)
     const keepEvents = lastAtOrBefore(this.events, renderT - 60)
     if (keepEvents > 0) this.events.splice(0, keepEvents)
     this.overlays = pruneOverlays(this.overlays, renderT)
@@ -64,7 +69,14 @@ export class StreamBuffers {
     return i >= 0 ? this.states[i]! : null
   }
 
+  /** Latest player stats at or before `t`. */
+  playerStatsAt(t: number): PlayerStatsMessage | null {
+    const i = lastAtOrBefore(this.playerStats, t)
+    return i >= 0 ? this.playerStats[i]! : null
+  }
+
   clear(): void {
+    this.playerStats = []
     this.frames = []
     this.events = []
     this.states = []

@@ -15,7 +15,8 @@ const TILT_FIT = 0.92
  * The pitch canvas plus the DOM tags that ride on it. One requestAnimationFrame loop reads
  * the stream buffers at render time `t` and draws; React only re-renders when the set of
  * active overlays changes. The canvas sits under a CSS perspective tilt; tags are placed with
- * the same projection so they stay upright.
+ * the same projection so they stay upright. With a player in the viewer's profile the camera
+ * follows that player (player focus mode).
  */
 export function Stage() {
   const hostRef = useRef<HTMLDivElement>(null)
@@ -25,6 +26,7 @@ export function Stage() {
   const [renderer, setRenderer] = useState<PitchRenderer | null>(null)
   const meta = useSessionState((s) => s.meta)
   const goalOn = useSessionState((s) => s.active.some(isGoal))
+  const focus = useSessionState((s) => s.profile.player)
 
   useEffect(() => {
     const host = hostRef.current
@@ -61,9 +63,11 @@ export function Stage() {
         if (frame) {
           const players = new Map(frame.players.map((p) => [p.id, p]))
           const project = (x: number, y: number) => {
-            const p = r.project(x, y)
+            const p = r.screen(x, y)
             return tilt.project(p.x, p.y)
           }
+          const followed = session.store.getState().profile.player
+          if (followed) session.reportFocusSpeed(players.get(followed)?.v_kmh ?? null, now)
           for (const entry of registry.current.values()) {
             const pt = resolveTagPoint(entry.overlay, players, project)
             if (!pt) continue
@@ -81,6 +85,10 @@ export function Stage() {
       r.destroy()
     }
   }, [session])
+
+  useEffect(() => {
+    renderer?.setFocus(focus)
+  }, [renderer, focus])
 
   useEffect(() => {
     if (!renderer || !meta) return

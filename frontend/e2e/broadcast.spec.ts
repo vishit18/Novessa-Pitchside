@@ -27,3 +27,12 @@ test('split view shows the same goal to both viewers', async ({ page }) => {
   await expect(cards.nth(0)).toContainText('Goal', { timeout: 20_000 })
   await expect(cards.nth(1)).toContainText('Goal', { timeout: 5_000 })
 })
+
+test('player focus follows one player and shows their live speed', async ({ page }) => {
+  await page.goto('/watch?match=derby_01&t=2330&speed=1&player=KES-18')
+  const card = page.getByRole('region', { name: /Ishaan Sodhi/ })
+  await expect(card).toBeVisible()
+  await expect(card.getByRole('heading', { name: 'Ishaan Sodhi' })).toBeVisible()
+  // Live speed comes from the frame stream, so it turns from a dash into a number.
+  await expect(card.getByText(/^\d+\.\d\s*km\/h$/).first()).toBeVisible({ timeout: 20_000 })
+})

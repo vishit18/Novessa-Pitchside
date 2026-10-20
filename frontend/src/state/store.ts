@@ -1,6 +1,6 @@
 import { createStore, type StoreApi } from 'zustand/vanilla'
 import type { ConnectionStatus, PlaybackControls } from '@/net/source'
-import type { OverlayEnvelope } from '@/types/overlay'
+import type { OverlayEnvelope, PlayerStatsMessage } from '@/types/overlay'
 import type { MatchMeta, StateSnapshot } from '@/types/schema'
 import type { ViewerProfile } from './profile'
 
@@ -14,6 +14,9 @@ export interface UIState {
   status: ConnectionStatus
   statusDetail: string | null
   snapshot: StateSnapshot | null
+  playerStats: PlayerStatsMessage | null
+  /** Live speed of the followed player, straight from the latest frame. */
+  focusSpeed: number | null
   /** Overlays to draw right now, already resolved per slot. */
   active: OverlayEnvelope[]
   /** Seconds this viewer sits behind the live edge. */
@@ -31,6 +34,8 @@ export function createUIStore(profile: ViewerProfile): StoreApi<UIState> {
     status: 'connecting',
     statusDetail: null,
     snapshot: null,
+    playerStats: null,
+    focusSpeed: null,
     active: [],
     delayS: 0,
     speed: 4,

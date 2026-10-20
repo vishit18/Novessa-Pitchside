@@ -1,5 +1,7 @@
-import { Application, Container, FillGradient, Graphics, Matrix, Text } from 'pixi.js'
+import { Application, BlurFilter, Container, FillGradient, Graphics, Matrix, Text } from 'pixi.js'
 import { PLAYERS } from '@/data/league'
+import { followCamera, type Camera } from '@/core/camera'
+import { Heatmap } from '@/core/heatmap'
 import { isGoal, lifeFraction } from '@/core/overlays'
 import type { OverlayEnvelope } from '@/types/overlay'
 import { PITCH_LENGTH, PITCH_WIDTH } from '@/types/schema'
@@ -31,14 +33,26 @@ interface PlayerSprite {
   team: string
 }
 
+/** How far the camera zooms in on a followed player. */
+const FOCUS_ZOOM = { landscape: 2.1, portrait: 1.6 }
+
 /**
  * Draws the 2D tactical pitch with PixiJS. Pitch coordinates are metres (105 x 68, origin
  * bottom-left). In a portrait container the pitch turns 90 degrees so it still fills the screen.
+ * Everything sits in one `world` container so a camera can follow a player (player focus mode).
  */
 export class PitchRenderer {
   private app = new Application()
+  private world = new Container()
   private grass = new Container()
   private lines = new Graphics()
+  private heat = new Graphics()
+  private heatmap = new Heatmap()
+  private heatDirty = false
+  private focus: string | null = null
+  private cam: Camera = { x: 0, y: 0, zoom: 1 }
+  private lastDrawMs = 0
+  private pitchMatrix = new Matrix()
   private annotations = new Graphics()
   private playersLayer = new Container()
   private effects = new Graphics()
@@ -69,9 +83,13 @@ export class PitchRenderer {
     host.appendChild(this.app.canvas)
     this.app.canvas.style.display = 'block'
     this.app.canvas.setAttribute('aria-hidden', 'true')
-    this.app.stage.addChild(
+    // Blur turns the coarse grid into a smooth density field.
+    this.heat.filters = [new BlurFilter({ strength: 14, quality: 3 })]
+    this.app.stage.addChild(this.world)
+    this.world.addChild(
       this.grass,
       this.lines,
+      this.heat,
       this.annotations,
       this.effects,
       this.playersLayer,
@@ -98,6 +116,23 @@ export class PitchRenderer {
   project(x: number, y: number): Point {
     if (this.portrait) return { x: this.ox + y * this.scale, y: this.oy + x * this.scale }
     return { x: this.ox + x * this.scale, y: this.oy + (PITCH_WIDTH - y) * this.scale }
+  }
+
+  /** Follow one player (player focus mode), or null for the whole pitch. */
+  setFocus(id: string | null): void {
+    if (id === this.focus) return
+    this.focus = id
+    this.heatmap.reset()
+    this.heat.clear()
+  }
+
+  /** Metres to CSS pixels on screen, after the camera. Use this to place DOM tags. */
+  screen(x: number, y: number): Point {
+    const p = this.project(x, y)
+    return {
+      x: p.x * this.world.scale.x + this.world.x,
+      y: p.y * this.world.scale.y + this.world.y,
+    }
   }
 
   /** Shrink the pitch inside the canvas, e.g. to leave room for a perspective tilt. */
@@ -129,6 +164,7 @@ export class PitchRenderer {
     const ph = (this.portrait ? PITCH_LENGTH : PITCH_WIDTH) * s
     this.ox = (w - pw) / 2
     this.oy = (h - ph) / 2
+    if (!this.focus) this.cam = { x: w / 2, y: h / 2, zoom: 1 }
     this.drawPitch()
     for (const sp of this.sprites.values()) this.drawDisc(sp)
   }
@@ -139,6 +175,8 @@ export class PitchRenderer {
     const m = this.portrait
       ? new Matrix(0, this.scale, this.scale, 0, this.ox, this.oy)
       : new Matrix(this.scale, 0, 0, -this.scale, this.ox, this.oy + PITCH_WIDTH * this.scale)
+    this.pitchMatrix = m
+    this.heatDirty = true
     const g = new Graphics()
     // Mown apron around the touchlines gives the surface some depth.
     g.rect(-3, -3, PITCH_LENGTH + 6, PITCH_WIDTH + 6).fill(APRON)
@@ -238,6 +276,7 @@ export class PitchRenderer {
       style: { fontFamily: 'Barlow Condensed', fontWeight: '700', fontSize: 12, fill: 0xffffff },
     })
     label.anchor.set(0.5, 0.52)
+    label.resolution = 3 // stays sharp when the camera zooms in
     root.addChild(disc, label)
     this.playersLayer.addChild(root)
     sp = { root, disc, label, team: id.split('-')[0] ?? '' }
@@ -251,17 +290,27 @@ export class PitchRenderer {
     if (!this.ready) return
     const fx = this.effects
     fx.clear()
+    const now = performance.now()
+    const dt = this.lastDrawMs ? Math.min(0.1, (now - this.lastDrawMs) / 1000) : 0
+    this.lastDrawMs = now
     if (frame) {
       const at = new Map<string, Point>()
       for (const p of frame.players) {
         const sp = this.ensureSprite(p.id)
         const pt = this.project(p.x, p.y)
         sp.root.position.set(pt.x, pt.y)
+        sp.root.alpha = this.focus && p.id !== this.focus ? 0.45 : 1
+        // Zooming in should bring the pitch closer, not turn the players into dinner plates.
+        sp.root.scale.set(1 / Math.sqrt(this.cam.zoom))
         at.set(p.id, pt)
+        if (p.id === this.focus && this.heatmap.sample(p.x, p.y, t)) this.heatDirty = true
       }
+      this.moveCamera(this.focus ? (at.get(this.focus) ?? null) : null, dt)
+      if (this.heatDirty) this.drawHeat()
       const b = this.project(frame.ball.x, frame.ball.y)
       const r = Math.max(3.5, this.scale * 0.42)
-      const pr = this.radius()
+      // Disc radius on screen after the camera, matching the sprite counter-scale.
+      const pr = this.radius() / Math.sqrt(this.cam.zoom)
 
       // Ball trail: a short fading comet.
       this.trail.push(b)
@@ -286,8 +335,18 @@ export class PitchRenderer {
         }
       }
       if (near && nearD < pr * 2.6) {
-        fx.circle(near.x, near.y, pr + 5).stroke({ width: 2, color: AMBER, alpha: 0.9 })
-        fx.circle(near.x, near.y, pr + 9).stroke({ width: 6, color: AMBER, alpha: 0.12 })
+        // Thin white ring for the ball carrier; amber is kept for the viewer's own player.
+        const followed = this.focus !== null
+        const color = followed ? LINE : AMBER
+        fx.circle(near.x, near.y, pr + 5).stroke({ width: followed ? 1.5 : 2, color, alpha: 0.85 })
+        if (!followed) fx.circle(near.x, near.y, pr + 9).stroke({ width: 6, color, alpha: 0.12 })
+      }
+
+      // The followed player: a steady ring with a soft halo.
+      const me = this.focus ? at.get(this.focus) : undefined
+      if (me) {
+        fx.circle(me.x, me.y, pr + 4).stroke({ width: 2.5, color: AMBER, alpha: 1 })
+        fx.circle(me.x, me.y, pr + 10).stroke({ width: 8, color: AMBER, alpha: 0.14 })
       }
 
       // The one orchestrated moment: a ring rolls out from the scorer.
@@ -316,6 +375,37 @@ export class PitchRenderer {
     }
     this.drawAnnotations(overlays, t)
     this.app.renderer.render(this.app.stage)
+  }
+
+  private moveCamera(target: Point | null, dt: number): void {
+    const zoom = target ? (this.portrait ? FOCUS_ZOOM.portrait : FOCUS_ZOOM.landscape) : 1
+    const goal = target ? { ...target, zoom } : { x: this.w / 2, y: this.h / 2, zoom: 1 }
+    const pw = (this.portrait ? PITCH_WIDTH : PITCH_LENGTH) * this.scale
+    const ph = (this.portrait ? PITCH_LENGTH : PITCH_WIDTH) * this.scale
+    this.cam = followCamera(
+      this.cam,
+      goal,
+      dt,
+      { w: this.w, h: this.h },
+      { left: this.ox, top: this.oy, width: pw, height: ph },
+    )
+    this.world.scale.set(this.cam.zoom)
+    this.world.position.set(
+      this.w / 2 - this.cam.x * this.cam.zoom,
+      this.h / 2 - this.cam.y * this.cam.zoom,
+    )
+  }
+
+  /** Heatmap in amber, drawn in pitch metres under the players and blurred by its filter. */
+  private drawHeat(): void {
+    this.heatDirty = false
+    const g = this.heat
+    g.clear()
+    if (!this.focus) return
+    for (const c of this.heatmap.cells()) {
+      g.rect(c.x, c.y, c.w, c.h).fill({ color: AMBER, alpha: 0.12 + c.v * 0.5 })
+    }
+    g.setFromMatrix(this.pitchMatrix)
   }
 
   private drawAnnotations(overlays: OverlayEnvelope[], t: number): void {

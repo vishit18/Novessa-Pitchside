@@ -55,9 +55,38 @@ export interface OverlayEnvelope {
   provenance: Provenance
 }
 
+/**
+ * Per-player match stats from the state engine (PlayerStats in backend/state/models.py).
+ * Provisional: shape proposed to the gateway, mirror docs/05 once it lands there.
+ */
+export interface PlayerStatsEntry {
+  player_id: string
+  team: string
+  on_pitch?: boolean
+  passes: number
+  passes_complete: number
+  pass_accuracy: number | null
+  avg_difficulty: number | null
+  longest_pass_m: number
+  shots: number
+  xg: number
+  xa: number
+  duels_won: number
+  duels_lost: number
+  distance_km: number
+  top_speed_kmh: number
+  sprints: number
+}
+
+export interface PlayerStatsMessage {
+  t_match: number
+  players: PlayerStatsEntry[]
+}
+
 /** Wire messages on WS /ws/matches/{id}?viewer=... */
 export type WireMessage =
   | { type: 'frame'; data: TrackingFrame }
   | { type: 'event'; data: MatchEvent }
   | { type: 'state'; data: StateSnapshot }
   | { type: 'overlay'; data: OverlayEnvelope }
+  | { type: 'player_stats'; data: PlayerStatsMessage }

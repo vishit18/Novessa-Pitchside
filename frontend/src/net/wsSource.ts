@@ -8,7 +8,11 @@ function isWireMessage(x: unknown): x is WireMessage {
   if (typeof x !== 'object' || x === null) return false
   const m = x as { type?: unknown; data?: unknown }
   return (
-    (m.type === 'frame' || m.type === 'event' || m.type === 'state' || m.type === 'overlay') &&
+    (m.type === 'frame' ||
+      m.type === 'event' ||
+      m.type === 'state' ||
+      m.type === 'overlay' ||
+      m.type === 'player_stats') &&
     typeof m.data === 'object' &&
     m.data !== null
   )
