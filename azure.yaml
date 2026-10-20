@@ -1,0 +1,28 @@
+# Azure Developer CLI project. Deploys into the existing resource group:
+#   azd env new pitchside
+#   azd env set AZURE_RESOURCE_GROUP pitchside
+#   azd env set AZURE_LOCATION swedencentral
+#   azd up
+name: novessa-pitchside
+metadata:
+  template: novessa-pitchside@0.1.0
+
+infra:
+  provider: bicep
+  path: infra
+  module: main
+
+services:
+  api:
+    project: .
+    language: python
+    host: containerapp
+    docker:
+      path: ./Dockerfile
+      context: .
+      remoteBuild: true
+  web:
+    project: ./frontend
+    language: ts
+    host: staticwebapp
+    dist: dist

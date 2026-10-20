@@ -74,6 +74,21 @@ Rough total for the whole hackathon plus judging: **$60–120**, inside the $200
 
 Role assignments for the managed identity: `Cognitive Services OpenAI User` + `Azure AI User` on the Foundry resource, `Azure Event Hubs Data Owner` on the namespace, `Cosmos DB Built-in Data Contributor` (data-plane role), `Key Vault Secrets User`, `Cognitive Services User` on Translator/Speech/Content Safety.
 
+### Deploying (infra is written, nothing deployed yet)
+
+`infra/` holds the Bicep (`main.bicep` plus modules for monitoring, platform, data, roles and app). It targets the existing resource group and only references the Foundry resource. It creates Log Analytics, Application Insights, Key Vault, a user-assigned identity, Container Registry Basic, Event Hubs Basic, Cosmos DB (free tier, 1000 RU/s shared), a Container Apps environment with the `api` app, and a free Static Web App, plus the role assignments. `az bicep build` is clean and `az deployment group what-if` succeeded on 20 Oct.
+
+```bash
+azd env new pitchside
+azd env set AZURE_RESOURCE_GROUP pitchside
+azd env set AZURE_LOCATION swedencentral
+azd env set FOUNDRY_PROJECT_ENDPOINT https://novessapitchside1.services.ai.azure.com/api/projects/NovessaPitchside1
+azd provision          # creates the resources (this is the first spend)
+azd deploy api         # builds the Dockerfile in ACR and rolls out the container
+```
+
+Cosmos DB free tier is one per subscription. If Sweden Central will not take a new Cosmos account, deploy it to another region with a `cosmosLocation` parameter. `API_MIN_REPLICAS=1` keeps the api warm for judging.
+
 ## Step 4 — keep it alive for judging (27 Oct – 10 Nov)
 
 - `api` container: **min replicas 1** from 26 Oct until 11 Nov so judges never hit a cold start. Everything else scales to zero.
