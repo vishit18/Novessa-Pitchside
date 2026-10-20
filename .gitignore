@@ -15,3 +15,4 @@ footage/
 .playwright-mcp/
 frontend/test-results/
 frontend/playwright-report/
+data/cache/

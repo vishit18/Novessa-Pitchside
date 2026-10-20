@@ -128,6 +128,7 @@ class StatsItem(TimelineItem):
 class Timeline:
     items: list[TimelineItem] = field(default_factory=list)
     overlays: list[Overlay] = field(default_factory=list)
+    moments: list[Moment] = field(default_factory=list)
 
     def latest(self, kind: str, t: float) -> TimelineItem | None:
         """The latest item of a type at or before `t`."""
@@ -202,10 +203,14 @@ class TimelineBuilder:
                 tl.items.append(TimelineItem(item.t_match, "event", item.model_dump(mode="json")))
                 outs = self.engine.ingest_event(item)
                 for o in outs:
+                    if isinstance(o, Moment):
+                        tl.moments.append(o)
                     tl.overlays.extend(self._to_overlays(o, item))
             elif isinstance(item, TrackingFrame):
                 self._on_pitch = {p.id for p in item.players}
                 for o in self.engine.ingest_frame(item):
+                    if isinstance(o, Moment):
+                        tl.moments.append(o)
                     tl.overlays.extend(self._to_overlays(o, None))
         for ov in tl.overlays:
             tl.items.append(TimelineItem(ov.t_match, "overlay", ov.model_dump(mode="json")))
