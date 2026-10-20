@@ -30,7 +30,10 @@ export default defineConfig({
       command: 'uv run uvicorn backend.app.main:app --host 127.0.0.1 --port 8000',
       cwd: '..',
       env: { PRELOAD: '1' },
-      url: 'http://127.0.0.1:8000/health',
+      // Ready means the showcase match is built, not just that the process answers. The first
+      // request for a match builds its timeline (a few seconds of CPU); asking here keeps that
+      // cost out of the first test, where parallel workers would all wait on it at once.
+      url: 'http://127.0.0.1:8000/matches/derby_01/state?t=1',
       reuseExistingServer: !process.env.CI,
       timeout: 120_000,
     },

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { FeedCard } from '@/components/companion/FeedCard'
 import { CatchUpSheet } from '@/components/companion/CatchUpSheet'
 import { ScoreBug, StatusPill } from '@/components/Hud'
@@ -53,6 +53,7 @@ function CompanionBody({ matchId }: { matchId: string }) {
   const t = useT()
   const [commentary, setCommentary] = useState(false)
   const [sheetOpen, setSheetOpen] = useState(false)
+  const closeSheet = useCallback(() => setSheetOpen(false), [])
   const [open, setOpen] = useState<string | null>(null)
   const player = useAudio()
 
@@ -130,12 +131,7 @@ function CompanionBody({ matchId }: { matchId: string }) {
         </button>
       </div>
 
-      <CatchUpSheet
-        open={sheetOpen}
-        matchId={matchId}
-        session={session}
-        onClose={() => setSheetOpen(false)}
-      />
+      <CatchUpSheet open={sheetOpen} matchId={matchId} session={session} onClose={closeSheet} />
     </main>
   )
 }

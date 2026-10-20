@@ -274,3 +274,12 @@ def test_player_stats_stream_at_one_hertz(client: TestClient) -> None:
             if m["type"] == "player_stats":
                 times.append(m["data"]["t_match"])
     assert times[1:] == [times[1] + i for i in range(5)]
+
+
+def test_story_overlays_carry_the_clock(overlays: list[dict[str, Any]]) -> None:
+    story = [
+        o for o in overlays if o["slot"] == "lower_third" and o["kind"] in ("insight", "milestone")
+    ]
+    assert any(o["kind"] == "milestone" for o in story)
+    for o in story:
+        assert len(o["payload"]["clock"].split(":")) == 2, o["payload"]

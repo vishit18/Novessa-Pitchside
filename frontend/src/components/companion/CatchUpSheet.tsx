@@ -20,41 +20,58 @@ export function CatchUpSheet({ open, matchId, session, onClose }: Props) {
   const t = useT()
   const [load, setLoad] = useState<Load>({ state: 'loading' })
   const closeRef = useRef<HTMLButtonElement>(null)
+  // The parent re-renders every second as the match clock ticks. Reading onClose through a ref
+  // keeps these effects from re-running (and refetching) each time it hands us a new function.
+  const onCloseRef = useRef(onClose)
+  useEffect(() => {
+    onCloseRef.current = onClose
+  })
+  // Only the newest request may write its answer, so a slow earlier one cannot overwrite it.
+  const request = useRef(0)
 
   const fetchNow = useCallback(() => {
+    const mine = ++request.current
     setLoad({ state: 'loading' })
     // The viewer's own render time, not the live edge: that is what makes it spoiler-safe.
     const at = session.clock.now(performance.now())
     getCatchUp(matchId, at)
-      .then((data) => setLoad({ state: 'ready', data }))
-      .catch(() => setLoad({ state: 'failed' }))
+      .then((data) => request.current === mine && setLoad({ state: 'ready', data }))
+      .catch(() => request.current === mine && setLoad({ state: 'failed' }))
   }, [matchId, session])
+
+  // Opening: fetch once, move focus into the sheet, and hand it back to the trigger on close.
+  useEffect(() => {
+    if (!open) return
+    const trigger = document.activeElement as HTMLElement | null
+    fetchNow()
+    closeRef.current?.focus()
+    return () => trigger?.focus?.()
+  }, [open, fetchNow])
 
   useEffect(() => {
     if (!open) return
-    fetchNow()
-    closeRef.current?.focus()
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onCloseRef.current()
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [open, fetchNow, onClose])
+  }, [open])
 
   return (
+    // `invisible` takes a closed sheet out of the tab order and the accessibility tree. A bare
+    // aria-hidden would leave its buttons focusable. Visibility must flip to visible at once on
+    // open, so focus can move in; on close it waits for the fade to finish.
     <div
-      className={`fixed inset-0 z-20 transition-opacity duration-200 ${open ? 'opacity-100' : 'pointer-events-none opacity-0'}`}
-      aria-hidden={!open}
+      className={`fixed inset-0 z-20 ${open ? 'visible opacity-100' : 'pointer-events-none invisible opacity-0'}`}
+      style={{
+        transition: `opacity 200ms cubic-bezier(0.23, 1, 0.32, 1), visibility 0s linear ${open ? '0s' : '200ms'}`,
+      }}
     >
-      <button
-        tabIndex={-1}
-        aria-label={t('missedClose')}
-        className="absolute inset-0 bg-black/60"
-        onClick={onClose}
-      />
+      {/* Click-away area only. The close button below is the accessible way out, as is Escape. */}
+      <div aria-hidden className="absolute inset-0 bg-black/60" onClick={onClose} />
       <section
         role="dialog"
         aria-modal="true"
         aria-labelledby="catchup-h"
-        className={`absolute inset-x-0 bottom-0 mx-auto flex max-h-[85dvh] w-full max-w-[560px] flex-col bg-raised transition-transform duration-200 ease-out ${open ? 'translate-y-0' : 'translate-y-full'}`}
+        className={`absolute inset-x-0 bottom-0 mx-auto flex max-h-[85dvh] w-full max-w-[560px] flex-col bg-raised transition-transform duration-200 ease-out motion-reduce:transition-none ${open ? 'translate-y-0' : 'translate-y-full'}`}
       >
         <div className="overflow-y-auto px-5 pb-4 pt-5">
           <h2 id="catchup-h" className="font-display text-[30px] font-bold leading-none">

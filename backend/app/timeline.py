@@ -171,6 +171,8 @@ class TimelineBuilder:
         self._order: list[str] = []
         self._ids: tuple[str, ...] = ()
         self._on_pitch: set[str] = set()
+        # Match second where the first half ends; the clock shown to viewers depends on it.
+        self._period_break = 0.0
 
     def _overlay(self, **kw: Any) -> Overlay:
         self._n += 1
@@ -189,6 +191,7 @@ class TimelineBuilder:
             (e.t_match for e in events if e.type == EventType.PERIOD_END and e.period == 1),
             events[-1].t_match,
         )
+        self._period_break = period_break
         frames = tracking.iter_frames(ENGINE_FRAME_HZ)
         for item in merge_by_time(events, frames):
             while item.t_match >= next_tick:
@@ -370,6 +373,7 @@ class TimelineBuilder:
                 "tone": "milestone",
                 "milestone": name,
                 "value": value,
+                "clock": display_clock(tr.t_match, self._period_break)[1],
             },
         )
 

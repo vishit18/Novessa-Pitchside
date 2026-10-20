@@ -28,3 +28,28 @@ test('companion feed fills as the match reaches a goal, and catch-up stays spoil
   // Not yet reached at this point of the match: the first red card is near 57'.
   await expect(sheet).not.toContainText('Red card')
 })
+
+test('the catch-up sheet works from the keyboard and asks the gateway once', async ({ page }) => {
+  const catchupCalls: string[] = []
+  page.on('request', (r) => r.url().includes('/catchup') && catchupCalls.push(r.url()))
+  await page.goto('/companion?match=derby_01&t=340&speed=4')
+  await expect(page.getByRole('heading', { name: /Goal/ }).first()).toBeVisible({ timeout: 30_000 })
+
+  // Closed, the sheet is out of the accessibility tree and the tab order.
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+
+  const trigger = page.getByRole('button', { name: 'What did I miss?' })
+  await trigger.focus()
+  await page.keyboard.press('Enter')
+  const sheet = page.getByRole('dialog')
+  await expect(sheet).toBeVisible()
+  // Focus moves into the sheet, and the match clock ticking underneath does not refetch it.
+  await expect(sheet.getByRole('button', { name: 'Back to the match' })).toBeFocused()
+  await page.waitForTimeout(2500)
+  expect(catchupCalls).toHaveLength(1)
+
+  // Escape closes it and hands focus back to the button that opened it.
+  await page.keyboard.press('Escape')
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+  await expect(trigger).toBeFocused()
+})
