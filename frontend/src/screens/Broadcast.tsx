@@ -47,10 +47,19 @@ export function Broadcast({ query }: { query: URLSearchParams }) {
       Phone view
     </button>
   )
+  const recap = (
+    <button
+      className="-my-2 inline-flex min-h-11 items-center px-1 text-[14px] text-muted underline decoration-white/25 underline-offset-4 hover:text-text"
+      onClick={() => navigate(withParams('/recap', { match: session.opts.matchId }))}
+    >
+      Recap
+    </button>
+  )
   const corner = (
     <div className="flex flex-col items-end">
       {change}
       {phone}
+      {recap}
     </div>
   )
 

@@ -3,6 +3,7 @@ import { Broadcast } from '@/screens/Broadcast'
 import { Companion } from '@/screens/Companion'
 import { ControlRoom } from '@/screens/ControlRoom'
 import { Onboarding } from '@/screens/Onboarding'
+import { Recap } from '@/screens/Recap'
 import { Split } from '@/screens/Split'
 import { loadProfile } from '@/state/profile'
 
@@ -12,6 +13,7 @@ import { loadProfile } from '@/state/profile'
  */
 export default function App() {
   const { path, query } = useLocation()
+  if (path.startsWith('/recap')) return <Recap key={query.toString()} query={query} />
   if (path.startsWith('/companion')) return <Companion key={query.toString()} query={query} />
   if (path.startsWith('/control')) return <ControlRoom key={query.toString()} query={query} />
   if (path.startsWith('/split')) return <Split key={query.toString()} query={query} />

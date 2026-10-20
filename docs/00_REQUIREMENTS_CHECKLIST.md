@@ -52,7 +52,7 @@ Priority: **P0** = we fail or score badly without it. **P1** = needed to win. **
 | [ ] | Key narratives | P0 | Narrator agent keeps running storylines ("Ashford can't get out of their own half") |
 | [ ] | Player-performance context | P0 | Player cards with context vs their own baseline and the match |
 | [ ] | Notable milestones | P0 | Milestone detector (first goal, 50th pass, fastest sprint of the match, etc.) |
-| [ ] | Match recaps, automated | P0 | Half-time and full-time recaps per persona and language, plus a short "60-second highlights" script |
+| [x] | Match recaps, automated | P0 | Half-time and full-time recaps per persona and language, plus a short "60-second highlights" script | Built: `/recap` (`frontend/src/screens/Recap.tsx`) over `GET /matches/{id}/recap`; six languages, four personas, highlights script, numbers panel, key moments, share. Falls back to computed numbers when the agents are off.
 | [ ] | Explain **control vs chaos** | P0 | Control/Chaos index from possession stability, turnover rate, shape spread |
 | [ ] | Explain **tactical pressure changes** | P0 | Pressure index + shift detector, explained by Tactical Analyst |
 | [ ] | Explain **game rhythm patterns** | P0 | Rhythm from event tempo and possession length, momentum swings |
