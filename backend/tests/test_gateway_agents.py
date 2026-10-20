@@ -9,6 +9,7 @@ from typing import Any
 import pytest
 from fastapi.testclient import TestClient
 
+from backend.agents.cache import FileCache
 from backend.app.agents_runtime import AgentRuntime
 from backend.app.main import create_app
 from backend.tests.test_agents import ScriptedTransport
@@ -17,12 +18,13 @@ MATCH = "derby_01"
 
 
 @pytest.fixture(scope="module")
-def client() -> Iterator[TestClient]:
+def client(tmp_path_factory: pytest.TempPathFactory) -> Iterator[TestClient]:
     with TestClient(create_app()) as c:
         c.app.state.agents = AgentRuntime(  # type: ignore[attr-defined]
             c.app.state.store,  # type: ignore[attr-defined]
             ScriptedTransport(["good"]),
             enabled=True,
+            cache=FileCache(tmp_path_factory.mktemp("agent-cache")),
         )
         yield c
 

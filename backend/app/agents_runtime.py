@@ -12,7 +12,7 @@ import os
 import time
 from typing import Any
 
-from backend.agents.cache import default_cache
+from backend.agents.cache import AgentCache, default_cache
 from backend.agents.context import MatchContext
 from backend.agents.intel import MatchIntel
 from backend.agents.llm import FoundryTransport, ResilientLLM, Transport
@@ -44,12 +44,16 @@ class AgentRuntime:
     """One shared model client (so the chaos switch and health are global) and a task per match."""
 
     def __init__(
-        self, store: MatchStore, transport: Transport | None = None, enabled: bool | None = None
+        self,
+        store: MatchStore,
+        transport: Transport | None = None,
+        enabled: bool | None = None,
+        cache: AgentCache | None = None,
     ) -> None:
         self.store = store
         self.enabled = agents_enabled() if enabled is None else enabled
         self.llm = ResilientLLM(transport or FoundryTransport()) if self.enabled else None
-        self.cache = default_cache()
+        self.cache = cache or default_cache()
         self.safety = default_safety()
         self._tasks: dict[str, asyncio.Task[None]] = {}
         self._results: dict[str, dict[str, Aired]] = {}
