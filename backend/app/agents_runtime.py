@@ -16,8 +16,11 @@ from backend.agents.cache import AgentCache, default_cache
 from backend.agents.context import MatchContext
 from backend.agents.intel import MatchIntel
 from backend.agents.llm import FoundryTransport, ResilientLLM, Transport
+from backend.agents.localiser import localise
 from backend.agents.models import Aired
 from backend.agents.safety import default_safety
+from backend.agents.services import Speech, Translator, default_speech, default_translator
+from backend.agents.voice import speak
 from backend.agents.workflow import run_batch
 from backend.app.overlay import ALL_PERSONAS, Persona
 from backend.app.store import MatchStore
@@ -49,11 +52,16 @@ class AgentRuntime:
         transport: Transport | None = None,
         enabled: bool | None = None,
         cache: AgentCache | None = None,
+        translator: Translator | None = None,
+        speech: Speech | None = None,
     ) -> None:
         self.store = store
         self.enabled = agents_enabled() if enabled is None else enabled
         self.llm = ResilientLLM(transport or FoundryTransport()) if self.enabled else None
         self.cache = cache or default_cache()
+        self.translator = translator or default_translator()
+        self.speech = speech or default_speech()
+        self._ctx: dict[str, MatchContext] = {}
         self.safety = default_safety()
         self._tasks: dict[str, asyncio.Task[None]] = {}
         self._results: dict[str, dict[str, Aired]] = {}
@@ -71,7 +79,7 @@ class AgentRuntime:
     async def _context(self, match_id: str) -> MatchContext:
         assert self.llm is not None
         loaded = await self.store.get(match_id)
-        return MatchContext(
+        ctx = MatchContext(
             intel=MatchIntel(loaded),
             names=self.store.names,
             llm=self.llm,
@@ -79,7 +87,11 @@ class AgentRuntime:
             safety=self.safety,
             fast_model=os.environ.get("FOUNDRY_DEPLOYMENT_FAST", "chat-fast"),
             strong_model=os.environ.get("FOUNDRY_DEPLOYMENT_STRONG", "chat-strong"),
+            translator=self.translator,
+            speech=self.speech,
         )
+        self._ctx[match_id] = ctx
+        return ctx
 
     async def _run(self, match_id: str) -> None:
         started = time.perf_counter()
@@ -153,18 +165,27 @@ class AgentRuntime:
         if self.llm is not None:
             self.llm.kill(agent, seconds)
 
-    def update_overlay(
-        self, base: dict[str, Any], aired: Aired, persona: Persona
+    async def build_update(
+        self, base: dict[str, Any], aired: Aired, persona: Persona, lang: str
     ) -> dict[str, Any]:
-        """Build the `op: "update"` overlay that adds agent text to an earlier instant overlay."""
+        """Build the `op: "update"` overlay that adds agent text to an earlier instant overlay.
+
+        Text is localised (cached) when the viewer's language is not English.
+        """
+        match_id = str(base["match_id"])
+        variants = aired.variants
+        status, note = "english", ""
+        ctx = self._ctx.get(match_id)
+        if lang != "en" and ctx is not None:
+            loc = await localise(ctx, aired.moment_id, variants, lang)
+            variants, status, note = loc.variants, loc.status, loc.note
         variant = None
         for p in PERSONA_FALLBACK.get(persona, ALL_PERSONAS):
-            variant = aired.variants.get(p)
+            variant = variants.get(p)
             if variant:
                 break
         if variant is None:
             return {}
-        verified = aired.status == "verified"
         evidence = (
             [{"metric": c.metric, "value": c.value, "window": None} for c in aired.analysis.claims]
             if aired.analysis
@@ -172,16 +193,40 @@ class AgentRuntime:
         )
         out = dict(base)
         out["op"] = "update"
-        out["msg_id"] = f"{base['msg_id']}-text"
+        out["msg_id"] = f"{base['msg_id']}-text-{lang}"
+        out["lang"] = lang if status in ("translated", "polished", "llm") else "en"
         out["payload"] = {
             "headline": variant.headline,
             "body": variant.body,
             "commentary": variant.commentary,
             "agent_status": aired.status,
+            "translation": status,
         }
+        if note:
+            out["payload"]["translation_note"] = note
+        if ctx is not None and ctx.speech is not None:
+            out["payload"]["audio_url"] = (
+                f"/matches/{match_id}/audio/{aired.moment_id}?persona={persona}&lang={out['lang']}"
+            )
         out["provenance"] = {
-            "source": "agent:analyst" if verified else "state_engine",
+            "source": "agent:analyst",
             "verified": True,
             "evidence": evidence,
         }
         return out
+
+    async def audio(
+        self, match_id: str, moment_id: str, persona: Persona, lang: str
+    ) -> bytes | None:
+        """MP3 of the commentary line for one moment, persona and language."""
+        ctx = self._ctx.get(match_id)
+        aired = self.results(match_id).get(moment_id)
+        if ctx is None or aired is None or aired.status != "verified":
+            return None
+        variants = aired.variants
+        if lang != "en":
+            variants = (await localise(ctx, moment_id, variants, lang)).variants
+        for p in PERSONA_FALLBACK.get(persona, ALL_PERSONAS):
+            if p in variants:
+                return await speak(ctx, moment_id, p, lang, variants[p].commentary)
+        return None

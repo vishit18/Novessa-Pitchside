@@ -50,3 +50,7 @@ exclude = ["footage/", "frontend/"]
 [tool.pytest.ini_options]
 testpaths = ["backend/tests", "engine"]
 asyncio_mode = "auto"
+
+[tool.ruff.lint.per-file-ignores]
+# Non-Latin digits are the point of these tests.
+"backend/tests/test_localise_voice.py" = ["RUF001"]

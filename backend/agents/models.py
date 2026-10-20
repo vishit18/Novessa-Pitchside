@@ -76,6 +76,21 @@ class NarratorOutput(BaseModel):
     variants: dict[Persona, Variant]
 
 
+class Localised(BaseModel):
+    """Persona variants in one language, and how they were made."""
+
+    lang: str
+    status: Literal["english", "translated", "polished", "llm", "unavailable"]
+    variants: dict[Persona, Variant]
+    note: str = ""
+
+
+class LocalisedLines(BaseModel):
+    """What the model returns when it polishes or translates a list of lines."""
+
+    lines: list[str]
+
+
 class Brief(BaseModel):
     """Message from the Producer to the Analyst (and back, with feedback, after a rejection)."""
 

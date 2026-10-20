@@ -9,6 +9,7 @@ from backend.agents.intel import MatchIntel
 from backend.agents.llm import ResilientLLM
 from backend.agents.models import Aired, ProducerItem
 from backend.agents.safety import Safety
+from backend.agents.services import Speech, Translator
 from backend.app.timeline import NameBook
 
 
@@ -35,6 +36,8 @@ class MatchContext:
     insights: dict[str, Aired] = field(default_factory=dict)
     airtime: list[AirtimeEntry] = field(default_factory=list)
     storylines: list[str] = field(default_factory=list)
+    translator: Translator | None = None
+    speech: Speech | None = None
 
     @property
     def seed(self) -> int:

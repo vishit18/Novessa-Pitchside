@@ -79,7 +79,9 @@ class Session:
         aired = await self.agents.wait_for(self.match.meta.match_id, base["moment_id"], TEXT_WAIT_S)
         if aired is None or aired.status != "verified":
             return
-        update = self.agents.update_overlay(base, aired, self.profile.persona)
+        update = await self.agents.build_update(
+            base, aired, self.profile.persona, self.profile.lang
+        )
         if update:
             update["t_wall_emit"] = datetime.now(UTC).isoformat(timespec="milliseconds")
             await self.send("overlay", update)
@@ -194,6 +196,19 @@ def create_app(data_dir: Path | None = None) -> FastAPI:
         await load(match_id)
         runtime: AgentRuntime = app.state.agents
         return [a.model_dump(mode="json") for a in runtime.results(match_id).values()]
+
+    @app.get("/matches/{match_id}/audio/{moment_id}")
+    async def audio(
+        match_id: str, moment_id: str, persona: str = "casual", lang: str = "en"
+    ) -> Response:
+        """Spoken commentary line (MP3) for one moment, in the viewer's persona and language."""
+        runtime: AgentRuntime = app.state.agents
+        if persona not in ("analyst", "casual", "kids", "accessibility"):
+            raise HTTPException(400, "unknown persona")
+        data = await runtime.audio(match_id, moment_id, persona, lang)  # type: ignore[arg-type]
+        if data is None:
+            raise HTTPException(404, "no audio for that moment")
+        return Response(data, media_type="audio/mpeg")
 
     @app.get("/league")
     async def league() -> League:
