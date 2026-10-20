@@ -55,32 +55,42 @@ export interface OverlayEnvelope {
   provenance: Provenance
 }
 
-/**
- * Per-player match stats from the state engine (PlayerStats in backend/state/models.py).
- * Provisional: shape proposed to the gateway, mirror docs/05 once it lands there.
- */
+/** One player's match stats from the state engine. Mirrors player_stats in docs/05. */
 export interface PlayerStatsEntry {
   player_id: string
   team: string
-  on_pitch?: boolean
+  on_pitch: boolean
   passes: number
   passes_complete: number
+  /** 0-1, or null before their first pass */
   pass_accuracy: number | null
   avg_difficulty: number | null
   longest_pass_m: number
+  /** Highest difficulty among completed passes. */
+  hardest_pass: number
   shots: number
   xg: number
   xa: number
   duels_won: number
   duels_lost: number
+  fouls: number
+  yellows: number
+  reds: number
   distance_km: number
   top_speed_kmh: number
+  top_shot_kmh: number
   sprints: number
 }
 
+/** The four one-number metrics (docs/05 Transport: `metric`). */
+export type OneNumberMetric = 'sprint_speed' | 'shot_speed' | 'pass_difficulty' | 'distance'
+
+/** player_stats, once a second, to every viewer. */
 export interface PlayerStatsMessage {
   t_match: number
   players: PlayerStatsEntry[]
+  /** Current match leader per metric; a metric with no leader yet is omitted. */
+  leaders: Partial<Record<OneNumberMetric, { player_id: string; value: number }>>
 }
 
 /** Wire messages on WS /ws/matches/{id}?viewer=... */
