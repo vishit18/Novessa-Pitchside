@@ -18,12 +18,12 @@
   },
   "passes": {
     "gt": 54,
-    "ours": 13,
-    "matched": 9,
-    "precision": 0.6923,
-    "recall": 0.1667,
-    "f1": 0.2687,
-    "passer_agreement": 0.6667
+    "ours": 12,
+    "matched": 8,
+    "precision": 0.6667,
+    "recall": 0.1481,
+    "f1": 0.2424,
+    "passer_agreement": 0.75
   },
   "shots": {
     "gt": 1,

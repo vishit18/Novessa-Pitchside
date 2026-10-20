@@ -25,6 +25,7 @@ from backend.app.agents_runtime import AgentRuntime
 from backend.app.catchup import build_catchup
 from backend.app.overlay import Overlay, ViewerProfile
 from backend.app.personas import for_viewer
+from backend.app.real import mount_real
 from backend.app.store import LoadedMatch, MatchStore, StaleDataError, UnknownMatchError
 from backend.app.timeline import TimelineItem
 from engine.clock import ReplayClock, merge_by_time, stream
@@ -178,6 +179,7 @@ def create_app(data_dir: Path | None = None) -> FastAPI:
             raise HTTPException(500, str(exc)) from exc
 
     mount_a2a(app, lambda: app.state.agents)
+    mount_real(app)
 
     @app.get("/matches/{match_id}/recap")
     async def recap(

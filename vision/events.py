@@ -29,6 +29,8 @@ MIN_PASS_M = 2.0
 SHOT_SPEED_MS = 20.0  # 72 km/h
 GOAL_HALF_WIDTH_M = 6.0  # a shot is on its way if it would cross the line this close to the posts
 MS_TO_KMH = 3.6
+MAX_PASS_SPEED_MS = 32.0  # 115 km/h: faster between two touches means a tracking jump
+MAX_REPORTED_KMH = 115.0
 
 
 @dataclass
@@ -150,9 +152,13 @@ def build_events(
         ta, tb = by_id[a.track], by_id[b.track]
         start, end = ball.xy[a.end], ball.xy[b.start]
         dist = float(np.hypot(*(end - start)))
+        if dist / (max(b.start - a.end, 1) / FPS) > MAX_PASS_SPEED_MS:
+            continue  # the ball cannot have covered this distance in this time: a tracking jump
         window = slice(a.end, b.start + 1)
         flight = ball.speed_ms[window][ball.valid[window]]
         speed = float(np.percentile(flight, 85)) * MS_TO_KMH if len(flight) else None
+        if speed is not None and speed > MAX_REPORTED_KMH:
+            speed = None  # not believable as a pass; better to show nothing than a wrong number
         if a.team != b.team:
             if dist >= 4.0:
                 add(

@@ -13,6 +13,9 @@ const Onboarding = lazy(() =>
   import('@/screens/Onboarding').then((m) => ({ default: m.Onboarding })),
 )
 const Recap = lazy(() => import('@/screens/Recap').then((m) => ({ default: m.Recap })))
+const RealFootage = lazy(() =>
+  import('@/screens/RealFootage').then((m) => ({ default: m.RealFootage })),
+)
 const Split = lazy(() => import('@/screens/Split').then((m) => ({ default: m.Split })))
 
 const NAME = 'Novessa Pitchside'
@@ -20,6 +23,7 @@ const NAME = 'Novessa Pitchside'
 /** Tab title for a route, so several open tabs can be told apart. */
 export function titleFor(path: string): string {
   const screen = [
+    ['/real', 'Real footage'],
     ['/recap', 'Recap'],
     ['/companion', 'Companion'],
     ['/control', 'Control room'],
@@ -52,6 +56,7 @@ export default function App() {
   }, [path])
 
   const screen = (() => {
+    if (path.startsWith('/real')) return <RealFootage />
     if (path.startsWith('/recap')) return <Recap key={query.toString()} query={query} />
     if (path.startsWith('/companion')) return <Companion key={query.toString()} query={query} />
     if (path.startsWith('/control')) return <ControlRoom key={query.toString()} query={query} />
