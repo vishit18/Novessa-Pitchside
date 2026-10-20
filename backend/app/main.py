@@ -19,6 +19,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import PlainTextResponse, Response
 from pydantic import ValidationError
 
+from backend.app.agents_runtime import AgentRuntime
 from backend.app.overlay import Overlay, ViewerProfile
 from backend.app.personas import for_viewer
 from backend.app.store import LoadedMatch, MatchStore, StaleDataError, UnknownMatchError
@@ -29,6 +30,7 @@ from engine.schema import League, MatchMeta
 FRAME_HZ = 10.0
 BAD_REQUEST = 4400
 NOT_FOUND = 4404
+TEXT_WAIT_S = 90.0  # how long a socket waits for the agents before leaving the fallback card
 
 
 def _store(app: FastAPI) -> MatchStore:
@@ -55,13 +57,32 @@ class Session:
     """One WebSocket viewer: its own clock, its own profile, a shared timeline."""
 
     def __init__(
-        self, ws: WebSocket, match: LoadedMatch, profile: ViewerProfile, speed: float, start: float
+        self,
+        ws: WebSocket,
+        match: LoadedMatch,
+        profile: ViewerProfile,
+        speed: float,
+        start: float,
+        agents: AgentRuntime | None = None,
     ) -> None:
         self.ws = ws
+        self.agents = agents
         self.match = match
         self.profile = profile
         self.clock = ReplayClock(speed=speed, start=start)
         self._task: asyncio.Task[None] | None = None
+        self._text_tasks: set[asyncio.Task[None]] = set()
+
+    async def _attach_text(self, base: dict[str, Any]) -> None:
+        """Wait for the agents' text on this moment and send it as an update overlay."""
+        assert self.agents is not None
+        aired = await self.agents.wait_for(self.match.meta.match_id, base["moment_id"], TEXT_WAIT_S)
+        if aired is None or aired.status != "verified":
+            return
+        update = self.agents.update_overlay(base, aired, self.profile.persona)
+        if update:
+            update["t_wall_emit"] = datetime.now(UTC).isoformat(timespec="milliseconds")
+            await self.send("overlay", update)
 
     def _items(self, start: float) -> Iterator[TimelineItem]:
         times = [i.t_match for i in self.match.timeline.items]
@@ -90,6 +111,10 @@ class Session:
                 data = shown
                 data["t_wall_emit"] = datetime.now(UTC).isoformat(timespec="milliseconds")
             await self.send(item.type, data)
+            if item.type == "overlay" and self.agents and data.get("moment_id"):
+                task = asyncio.create_task(self._attach_text(data))
+                self._text_tasks.add(task)
+                task.add_done_callback(self._text_tasks.discard)
         await self.send("end", {"t_match": self.match.tracking.duration})
 
     def restart(self) -> None:
@@ -98,6 +123,8 @@ class Session:
         self._task = asyncio.create_task(self._run())
 
     async def stop(self) -> None:
+        for t in list(self._text_tasks):
+            t.cancel()
         if self._task:
             self._task.cancel()
             with suppress(asyncio.CancelledError, Exception):
@@ -123,6 +150,7 @@ def create_app(data_dir: Path | None = None) -> FastAPI:
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         app.state.store = MatchStore(data_dir)
+        app.state.agents = AgentRuntime(app.state.store)
         if os.environ.get("PRELOAD") == "1":
             app.state.preload = [
                 asyncio.create_task(app.state.store.get(mid)) for mid in app.state.store.match_ids()
@@ -146,6 +174,26 @@ def create_app(data_dir: Path | None = None) -> FastAPI:
     @app.get("/health")
     async def health() -> dict[str, str]:
         return {"status": "ok"}
+
+    @app.get("/agents/health")
+    async def agents_health() -> dict[str, Any]:
+        """Per-agent calls, failures, fallbacks, latency and breaker state (Control Room)."""
+        runtime: AgentRuntime = app.state.agents
+        return runtime.health()
+
+    @app.post("/agents/{agent}/kill")
+    async def agents_kill(agent: str, seconds: float = Query(30.0, gt=0, le=300)) -> dict[str, Any]:
+        """Chaos switch: make one agent fail for a while so the recovery paths can be shown."""
+        runtime: AgentRuntime = app.state.agents
+        runtime.kill(agent, seconds)
+        return {"agent": agent, "killed_for_s": seconds}
+
+    @app.get("/matches/{match_id}/insights")
+    async def insights(match_id: str) -> list[dict[str, Any]]:
+        """What the agents produced so far, with each moment's verification trail."""
+        await load(match_id)
+        runtime: AgentRuntime = app.state.agents
+        return [a.model_dump(mode="json") for a in runtime.results(match_id).values()]
 
     @app.get("/league")
     async def league() -> League:
@@ -234,7 +282,9 @@ def create_app(data_dir: Path | None = None) -> FastAPI:
         except (UnknownMatchError, StaleDataError):
             await ws.close(code=NOT_FOUND)
             return
-        session = Session(ws, match, profile, speed, max(t, 0.0))
+        runtime: AgentRuntime = app.state.agents
+        runtime.start(match_id)
+        session = Session(ws, match, profile, speed, max(t, 0.0), runtime)
         session.clock.play()
         session.restart()
         try:
