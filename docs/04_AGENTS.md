@@ -139,7 +139,11 @@ Add a **chaos switch** in the Control Room: "kill the Analyst for 30 seconds". I
 - `llm.py` (`ResilientLLM`): timeout, one retry with backoff, JSON validated against the Pydantic model, circuit breaker, OpenTelemetry span, per-agent health, chaos `kill`. A failure raises `AgentUnavailable` and each agent uses its fallback.
 - Cache: `cache.py`, keyed `(seed, moment_id, stage, persona, lang)`. Only verified results are cached. Local runs write `data/cache/agents/`; if that is not writable the temp dir is used.
 - Gateway: `AgentRuntime` runs batches of five candidate moments (significance 50 or more) in the background and each socket attaches the text with `op: "update"` once it is ready. Chaos switch: `POST /agents/{agent}/kill?seconds=30`. Health: `GET /agents/health`. Trails: `GET /matches/{id}/insights`.
-- Not built yet: Story Keeper, Localiser, Voice, Recap Editor and the A2A endpoint.
+- Story Keeper (`storykeeper.py`): rule-based storylines from state (lead, dominance, pressing, bookings, ten men, chaos). The text has no digits on purpose. The Narrator may call back to a storyline; the Recap Editor reads them.
+- Localiser (`localiser.py`): Azure AI Translator (keyless, v3 on the resource's own domain) then a model polish for football wording. After each step numbers and names are compared with the English; a change means that step is thrown away. Fallback order: translator + polish, translator only, model only, English with `translation: unavailable`. Languages: en, es, fr, ar, hi, pt.
+- Voice (`voice.py`): Azure AI Speech neural voices (MP3), made on first request and cached on disk. `GET /matches/{id}/audio/{moment_id}?persona=&lang=`. The update overlay carries `audio_url`. If Speech is down there is simply no audio.
+- Recap Editor (`recap.py`): a fact sheet is computed in code, the model writes the prose, every number must appear in the fact sheet (retry once, then a plain template). `GET /matches/{id}/recap?kind=half_time|full_time&persona=&lang=`.
+- A2A (`backend/a2a/server.py`): agent card at `/.well-known/agent-card.json`, JSON-RPC at `/a2a/jsonrpc`, skill `match_recap`. Requests are plain text ("full-time recap for derby_01 in Spanish, casual tone"), parsed by rules. Demo client: `uv run python -m scripts.a2a_client <base url> "<ask>"`.
 
 ## Prompts
 
