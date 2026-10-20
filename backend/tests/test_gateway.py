@@ -11,6 +11,9 @@ from starlette.websockets import WebSocketDisconnect
 from backend.app.main import create_app
 from backend.app.overlay import Overlay, ViewerProfile
 from backend.app.personas import for_viewer
+from backend.app.store import DEFAULT_DATA_DIR
+from engine.io import read_match_file
+from engine.schema import EventType
 
 MATCH = "derby_01"
 
@@ -233,20 +236,16 @@ def test_player_stats_is_sent_on_connect_with_every_field(client: TestClient) ->
 
 def test_player_stats_agree_with_the_events(client: TestClient) -> None:
     t = 3000
-    events = client.get(f"/matches/{MATCH}/overlays.jsonl")  # warm
-    assert events.status_code == 200
+    warm = client.get(f"/matches/{MATCH}/overlays.jsonl")
+    assert warm.status_code == 200
     data = _stats_at(client, t)
-    # Count passes straight from the raw event stream up to the same tick.
-    with client.websocket_connect(f"/ws/matches/{MATCH}?t=0&speed=2000") as ws:
-        passes = shots = 0
-        while True:
-            m = ws.receive_json()
-            if m["type"] == "event":
-                e = m["data"]
-                if e["t_match"] > t:
-                    break
-                passes += e["type"] == "pass"
-                shots += e["type"] == "shot"
+    # Count passes straight from the match file up to the snapshot's own tick. Reading the file,
+    # not replaying a socket at high speed, keeps the test free of wall-clock timing: a replay
+    # skips whatever the clock passes before the stream starts, which a slow machine makes visible.
+    _, events = read_match_file(DEFAULT_DATA_DIR / "matches" / f"{MATCH}.jsonl")
+    seen = [e for e in events if e.t_match <= data["t_match"]]
+    passes = sum(e.type == EventType.PASS for e in seen)
+    shots = sum(e.type == EventType.SHOT for e in seen)
     assert abs(sum(p["passes"] for p in data["players"]) - passes) <= 3  # tick edge
     assert abs(sum(p["shots"] for p in data["players"]) - shots) <= 1
     for p in data["players"]:

@@ -325,7 +325,11 @@ function NodeCard({ spec, health, lit, tally, onKill, step, compact }: CardProps
         />
         <header className="relative">
           <h3 className="font-display text-[24px] font-semibold leading-none">
-            {step !== undefined && <span className="num me-2 text-muted">{step}</span>}
+            {step !== undefined && (
+              <span aria-hidden className="num me-2 text-muted">
+                {step}
+              </span>
+            )}
             {spec.label}
           </h3>
           <p className="mt-1.5 text-[13px] leading-snug text-muted">{spec.job}</p>
