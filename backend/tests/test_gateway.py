@@ -223,7 +223,8 @@ def test_player_stats_is_sent_on_connect_with_every_field(client: TestClient) ->
     expected = {
         "player_id", "team", "on_pitch", "passes", "passes_complete", "pass_accuracy",
         "avg_difficulty", "longest_pass_m", "hardest_pass", "shots", "xg", "xa", "duels_won",
-        "duels_lost", "distance_km", "top_speed_kmh", "top_shot_kmh", "sprints",
+        "duels_lost", "fouls", "yellows", "reds", "distance_km", "top_speed_kmh", "top_shot_kmh",
+        "sprints",
     }  # fmt: skip
     assert set(p) == expected
     assert sum(1 for q in data["players"] if q["on_pitch"]) == 22

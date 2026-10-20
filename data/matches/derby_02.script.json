@@ -1,26 +1,19 @@
 {
   "score": [
-    2,
-    0
+    1,
+    1
   ],
   "arcs": [
     {
-      "kind": "sub_changes_game",
-      "team": "MIL",
-      "from_s": 3844.8112870508094,
+      "kind": "late_collapse",
+      "team": "SAL",
+      "from_s": 4151.516213409657,
       "to_s": 6000.0,
       "player_id": null
     },
     {
-      "kind": "star_quiet_then_moment",
-      "team": "SAL",
-      "from_s": 3600.0,
-      "to_s": 6000.0,
-      "player_id": "SAL-11"
-    },
-    {
       "kind": "dominate_no_score",
-      "team": "MIL",
+      "team": "SAL",
       "from_s": 0.0,
       "to_s": 2700.0,
       "player_id": null

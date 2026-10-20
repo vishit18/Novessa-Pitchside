@@ -40,6 +40,7 @@ HEADLINES = {
     "control_chaos_flip": ("Match turns", "info"),
     "rhythm_break": ("Tempo change", "info"),
     "card": ("Booking", "info"),
+    "penalty": ("Penalty", "chance"),
     "standout_action": ("Standout pass", "chance"),
 }
 MILESTONE_HEADLINES = {
@@ -55,10 +56,20 @@ MILESTONE_HEADLINES = {
 # about 5,700 ticks and 25 players, and dicts for all of that would cost hundreds of MB.
 STAT_COLUMNS = (
     "passes", "passes_complete", "difficulty_sum", "longest_pass_m", "hardest_pass", "shots",
-    "xg", "xa", "duels_won", "duels_lost", "distance_km", "top_speed_kmh", "top_shot_kmh",
-    "sprints",
+    "xg", "xa", "duels_won", "duels_lost", "fouls", "yellows", "reds", "distance_km",
+    "top_speed_kmh", "top_shot_kmh", "sprints",
 )  # fmt: skip
-INT_COLUMNS = {"passes", "passes_complete", "shots", "duels_won", "duels_lost", "sprints"}
+INT_COLUMNS = {
+    "passes",
+    "passes_complete",
+    "shots",
+    "duels_won",
+    "duels_lost",
+    "fouls",
+    "yellows",
+    "reds",
+    "sprints",
+}
 HIDDEN_COLUMNS = {"difficulty_sum"}
 # One-number mode metric id -> the column whose maximum is the match leader.
 LEADER_COLUMNS = {
@@ -140,6 +151,7 @@ class NameBook:
     def __init__(self, league: League) -> None:
         self.players = {p.id: p.name for c in league.clubs for p in c.players}
         self.clubs = {c.code: c.name for c in league.clubs}
+        self.managers = {c.code: c.manager for c in league.clubs}
 
     def humanise(self, text: str) -> str:
         """Swap player ids in a fact sentence for names."""
@@ -356,12 +368,34 @@ class TimelineBuilder:
             },
         )
 
+    def _insight_payload(self, m: Moment, headline: str, tone: str) -> dict[str, Any]:
+        body = self.names.humanise(m.summary)
+        if m.kind == "card" and m.staff and m.team and m.card:
+            who = self.names.managers.get(m.team) or "The manager"
+            club = self.names.clubs.get(m.team, m.team)
+            body = f"{who}, {club} manager, was shown a {m.card} card."
+        payload: dict[str, Any] = {
+            "headline": headline,
+            "body": body,
+            "team": m.team,
+            "tone": tone,
+            "moment_kind": m.kind,
+            "significance": m.significance,
+        }
+        if m.card:
+            payload["card"] = m.card
+            payload["staff"] = m.staff
+        return payload
+
     def _insight(self, m: Moment) -> Overlay:
         headline, tone = HEADLINES[m.kind]
         if m.kind == "control_chaos_flip":
             headline = f"Match turns {m.snapshot.control_chaos.label}"
-        elif m.kind == "card":
-            headline = "Booking"
+        elif m.kind == "card" and m.card:
+            if m.staff:
+                headline = "Manager sent off" if m.card == "red" else "Manager booked"
+            else:
+                headline = "Red card" if m.card == "red" else "Yellow card"
         anchor = Anchor(type="player", id=m.player_ids[0]) if m.player_ids else None
         return self._overlay(
             slot="lower_third",
@@ -376,14 +410,7 @@ class TimelineBuilder:
                 verified=True,
                 evidence=[EvidenceRef(**e.model_dump()) for e in m.evidence],
             ),
-            payload={
-                "headline": headline,
-                "body": self.names.humanise(m.summary),
-                "team": m.team,
-                "tone": tone,
-                "moment_kind": m.kind,
-                "significance": m.significance,
-            },
+            payload=self._insight_payload(m, headline, tone),
         )
 
 

@@ -345,6 +345,18 @@ def _make_player(
     )
 
 
+def _manager_names(seed: int, taken: set[str]) -> list[str]:
+    """Invented manager names. Own generator, so adding managers never changes the squads."""
+    rng = random.Random(seed * 7919 + 13)
+    names: list[str] = []
+    while len(names) < len(CLUBS):
+        nat = rng.choice(list(FIRST))
+        name = f"{rng.choice(FIRST[nat])} {rng.choice(LAST[nat])}"
+        if name not in taken and name not in names and not is_denied(name):
+            names.append(name)
+    return names
+
+
 def generate_league(seed: int = DEFAULT_SEED) -> League:
     """Build the eight clubs and their squads from a fixed seed."""
     rng = random.Random(seed)
@@ -374,6 +386,8 @@ def generate_league(seed: int = DEFAULT_SEED) -> League:
                 players=players,
             )
         )
+    for club, manager in zip(clubs, _manager_names(seed, used), strict=True):
+        club.manager = manager
     return League(name=LEAGUE_NAME, seed=seed, clubs=clubs)
 
 

@@ -10,6 +10,7 @@ from __future__ import annotations
 import math
 from collections import deque
 from collections.abc import Iterable
+from typing import Literal
 
 from backend.state.config import Thresholds, load_thresholds
 from backend.state.models import (
@@ -20,6 +21,7 @@ from backend.state.models import (
     PlayerStats,
     Rhythm,
     StateSnapshot,
+    TeamStats,
     Trigger,
 )
 from engine.schema import EventType, MatchEvent, MatchMeta, TrackingFrame
@@ -88,6 +90,8 @@ class StateEngine:
 
         self.players: dict[str, PlayerStats] = {}
         self.team_passes = {t: 0 for t in self.teams}
+        self.team_stats = {t: TeamStats() for t in self.teams}
+        self.sent_off = {t: 0 for t in self.teams}
         self._goals_by: dict[str, int] = {}
         self._pending_key: dict[str, str] = {}
         self._longest_pass = 0.0
@@ -200,6 +204,7 @@ class StateEngine:
             pressure=self.pressure(),
             control_chaos=self.control_chaos(),
             rhythm=self.rhythm(),
+            team_stats={t: s.model_copy() for t, s in self.team_stats.items()},
         )
 
     # ---- moments -------------------------------------------------------------------------
@@ -213,6 +218,8 @@ class StateEngine:
         players: list[str] | None = None,
         evidence: list[Evidence] | None = None,
         cooldown: bool = True,
+        card: Literal["yellow", "red"] | None = None,
+        staff: bool = False,
     ) -> Moment | None:
         key = (kind, team)
         last = self._last_moment.get(key)
@@ -230,6 +237,8 @@ class StateEngine:
             player_ids=players or [],
             summary=summary,
             evidence=evidence or [],
+            card=card,
+            staff=staff,
             snapshot=self.snapshot(),
         )
 
@@ -349,6 +358,7 @@ class StateEngine:
             EventType.INTERCEPTION: self._on_win_ball,
             EventType.PRESSURE: self._on_pressure,
             EventType.CORNER: self._on_corner,
+            EventType.FREE_KICK: self._on_free_kick,
             EventType.FOUL: self._on_foul,
             EventType.CARD: self._on_card,
         }.get(ev.type)
@@ -497,20 +507,78 @@ class StateEngine:
     def _on_corner(self, ev: MatchEvent) -> list[Output]:
         if ev.team:
             self._momentum[ev.team] += 1.5
+            self.team_stats[ev.team].corners += 1
         return []
+
+    def _on_free_kick(self, ev: MatchEvent) -> list[Output]:
+        if not ev.team:
+            return []
+        if "penalty" not in ev.tags:
+            self.team_stats[ev.team].free_kicks += 1
+            return []
+        self.team_stats[ev.team].penalties += 1
+        self._momentum[ev.team] += 6.0
+        mo = self._moment(
+            "penalty",
+            75,
+            f"{ev.player_id} steps up to take a penalty for {ev.team}.",
+            team=ev.team,
+            players=[ev.player_id] if ev.player_id else [],
+            evidence=[Evidence(metric="penalties", value=self.team_stats[ev.team].penalties)],
+            cooldown=False,
+        )
+        return [mo] if mo else []
 
     def _on_foul(self, ev: MatchEvent) -> list[Output]:
         self._fouls.append(ev.t_match)
+        if ev.team:
+            self.team_stats[ev.team].fouls += 1
+        if ev.player_id:
+            self.player(ev.player_id).fouls += 1
         return []
 
     def _on_card(self, ev: MatchEvent) -> list[Output]:
+        if not ev.team:
+            return []
+        card: Literal["yellow", "red"] = "red" if ev.outcome == "red" else "yellow"
+        staff = "manager" in ev.tags
+        second_yellow = "second_yellow" in ev.tags
+        if not staff:
+            stats = self.team_stats[ev.team]
+            if card == "yellow":
+                stats.yellows += 1
+            else:
+                stats.reds += 1
+                self.sent_off[ev.team] += 1
+            if ev.player_id:
+                p = self.player(ev.player_id)
+                if card == "yellow":
+                    p.yellows += 1
+                else:
+                    p.reds += 1
+        if second_yellow and card == "yellow":
+            return []  # the red that follows is the moment
+        if staff:
+            summary = f"{ev.team} manager was shown a {card} card."
+            significance = 45.0 if card == "yellow" else 70.0
+        elif card == "red":
+            men = 11 - self.sent_off[ev.team]
+            how = "a second yellow" if second_yellow else "a straight red"
+            summary = f"{ev.player_id} was sent off for {how}. {ev.team} are down to {men} men."
+            significance = 85.0
+        else:
+            summary = f"{ev.player_id} was shown a yellow card."
+            significance = 50.0
         mo = self._moment(
             "card",
-            50 if ev.outcome == "yellow" else 80,
-            f"{ev.player_id} was shown a {ev.outcome} card.",
+            significance,
+            summary,
             team=ev.team,
             players=[ev.player_id] if ev.player_id else [],
+            evidence=[Evidence(metric="men_on_pitch", value=11 - self.sent_off[ev.team])],
             cooldown=False,
+            card=card,
+            staff=staff,
         )
         return [mo] if mo else []
 
@@ -522,6 +590,7 @@ class StateEngine:
         xg = ev.xg or 0.0
         p.shots += 1
         p.xg += xg
+        self.team_stats[ev.team].shots += 1
         passer = self._pending_key.pop(ev.player_id, None)
         if passer:
             self.player(passer).xa += xg

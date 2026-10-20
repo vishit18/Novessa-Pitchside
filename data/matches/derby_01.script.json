@@ -1,27 +1,27 @@
 {
   "score": [
-    2,
-    2
+    3,
+    0
   ],
   "arcs": [
     {
-      "kind": "late_collapse",
-      "team": "KES",
-      "from_s": 4242.472163488644,
-      "to_s": 6000.0,
-      "player_id": null
-    },
-    {
       "kind": "star_quiet_then_moment",
-      "team": "ASH",
+      "team": "KES",
       "from_s": 3600.0,
       "to_s": 6000.0,
-      "player_id": "ASH-07"
+      "player_id": "KES-09"
     },
     {
       "kind": "sub_changes_game",
       "team": "KES",
-      "from_s": 3703.375630407636,
+      "from_s": 4192.220358660849,
+      "to_s": 6000.0,
+      "player_id": null
+    },
+    {
+      "kind": "late_collapse",
+      "team": "ASH",
+      "from_s": 4204.962803593249,
       "to_s": 6000.0,
       "player_id": null
     }

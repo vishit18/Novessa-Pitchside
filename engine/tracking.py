@@ -31,6 +31,8 @@ class TrackingData:
     ball: list[tuple[float, float]] = field(default_factory=list)
     peak: list[float] = field(default_factory=list)  # ball apex height over the segment ending here
     hold: list[bool] = field(default_factory=list)
+    # (2, 11) bool per snapshot: False once a player has been sent off.
+    active: list[np.ndarray] = field(default_factory=list)
 
     def add(
         self,
@@ -40,6 +42,7 @@ class TrackingData:
         ball: tuple[float, float],
         peak: float = 0.0,
         hold: bool = False,
+        active: np.ndarray | None = None,
     ) -> None:
         self.times.append(t)
         self.positions.append(pos.copy())
@@ -47,6 +50,7 @@ class TrackingData:
         self.ball.append(ball)
         self.peak.append(peak)
         self.hold.append(hold)
+        self.active.append(np.ones((2, 11), dtype=bool) if active is None else active.copy())
 
     @property
     def duration(self) -> float:
@@ -63,6 +67,7 @@ class TrackingData:
             bx, by = self.ball[i]
             z = BALL_RADIUS
             nxt = i
+            shown = self.active[i]
         else:
             nxt = i + 1
             span = times[nxt] - times[i]
@@ -73,6 +78,8 @@ class TrackingData:
             bx = b0[0] + (b1[0] - b0[0]) * f
             by = b0[1] + (b1[1] - b0[1]) * f
             z = BALL_RADIUS + self.peak[nxt] * 4.0 * f * (1.0 - f)
+            # A player sent off disappears as soon as the segment that removes him starts.
+            shown = self.active[i] & self.active[nxt]
         if vel_scale:
             speed = np.linalg.norm(self.positions[nxt] - self.positions[i], axis=2) * vel_scale
         else:
@@ -86,6 +93,7 @@ class TrackingData:
             )
             for team in (0, 1)
             for s in range(11)
+            if shown[team, s]
         ]
         return TrackingFrame(
             match_id=self.match_id,
@@ -108,8 +116,11 @@ class TrackingData:
             if self.hold[i + 1]:
                 continue
             step = np.linalg.norm(self.positions[i + 1] - self.positions[i], axis=2)
+            shown = self.active[i] & self.active[i + 1]
             for team in (0, 1):
                 for s in range(11):
+                    if not shown[team, s]:
+                        continue
                     pid = self.ids[i][team][s]
                     totals[pid] = totals.get(pid, 0.0) + float(step[team, s])
         return {k: v / 1000.0 for k, v in totals.items()}

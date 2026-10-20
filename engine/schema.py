@@ -147,6 +147,7 @@ class Club(BaseModel):
     primary_color: str
     secondary_color: str
     ground: str
+    manager: str = ""
     strength: float
     identity: TacticalIdentity
     players: list[Player] = Field(default_factory=list)

@@ -66,7 +66,11 @@ The client may send `{"op": "play"|"pause"}`, `{"op": "speed", "value": 4}` and 
 
 ## player_stats
 
-Sent to every viewer regardless of profile, once a second. `players` has one entry for every player who has been on the pitch (22 plus any substitutes who came on). Each entry: `player_id`, `team`, `on_pitch`, `passes`, `passes_complete`, `pass_accuracy` (0-1 or null), `avg_difficulty` (or null), `longest_pass_m`, `hardest_pass` (highest difficulty among completed passes), `shots`, `xg`, `xa`, `duels_won`, `duels_lost`, `distance_km`, `top_speed_kmh`, `top_shot_kmh`, `sprints`. `leaders` maps each one-number metric to the current match leader, `{metric: {player_id, value}}`, for `sprint_speed` (top speed km/h), `shot_speed` (hardest shot km/h), `pass_difficulty` (`hardest_pass`) and `distance` (km). A metric with no leader yet is omitted. All numbers come from the state engine; the UI computes nothing.
+Sent to every viewer regardless of profile, once a second. `players` has one entry for every player who has been on the pitch (22 plus any substitutes who came on). Each entry: `player_id`, `team`, `on_pitch`, `passes`, `passes_complete`, `pass_accuracy` (0-1 or null), `avg_difficulty` (or null), `longest_pass_m`, `hardest_pass` (highest difficulty among completed passes), `shots`, `xg`, `xa`, `duels_won`, `duels_lost`, `fouls`, `yellows`, `reds`, `distance_km`, `top_speed_kmh`, `top_shot_kmh`, `sprints`. `leaders` maps each one-number metric to the current match leader, `{metric: {player_id, value}}`, for `sprint_speed` (top speed km/h), `shot_speed` (hardest shot km/h), `pass_difficulty` (`hardest_pass`) and `distance` (km). A metric with no leader yet is omitted. All numbers come from the state engine; the UI computes nothing.
+
+## team_stats (inside `state`)
+
+The `state` message carries `team_stats`: `{TEAM: {fouls, yellows, reds, corners, free_kicks, penalties, shots}}` for both teams, so the UI can show a discipline and set-piece panel without counting events itself.
 
 ## Payloads the renderer relies on
 
@@ -74,6 +78,7 @@ Sent to every viewer regardless of profile, once a second. `players` has one ent
 - `shot_speed`: slot `lower_third`, anchored to the shooter. Payload: `speed_kmh`, `xg`, `outcome`, `player_id`.
 - `speed_burst`: slot `player_tag`, anchored to the player. Payload: `speed_kmh`, `rank_in_match`.
 - `distance_milestone`: slot `player_tag`. Payload: `km`.
+- Cards, penalties and red cards arrive as `insight` overlays (`moment_kind` `card` or `penalty`, `tone` `info` or `chance`). The payload adds `card` (`yellow` or `red`) for cards and `staff: true` for a manager. A second yellow gives one overlay saying so.
 - `milestone` and `insight`: slot `lower_third`. Payload: `headline`, `body`, `team`, `tone` (`goal`, `chance`, `swing`, `milestone`, `info`), optional `moment_kind`.
 - `op: "update"` with the same `moment_id` merges its payload into the earlier overlay. Agent text arrives this way after the instant overlay.
 - `momentum_bar` is not sent as an overlay in v1. The renderer reads `state.momentum`.

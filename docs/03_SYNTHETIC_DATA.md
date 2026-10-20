@@ -47,7 +47,15 @@ Every event, from the engine or from vision:
 }
 ```
 
-Red cards are not simulated in v1 (yellow cards only). Add them once the state engine can handle a side playing with ten.
+### Discipline and set pieces
+
+- **Fouls** come from tackles and from off-the-ball contact on a pressured player. Each foul gives a `foul` event (by the offender), then a `free_kick` for the other side. Target: about 20 to 24 fouls a match.
+- **Cards** are `card` events. `outcome` is `yellow` or `red`. A second yellow is a `yellow` event followed by a `red` event tagged `second_yellow`. Straight reds are rare. Target: about 3 to 4 yellows a match, a red in roughly one match in ten.
+- **A red card means ten men.** The player leaves the pitch (he drops out of the tracking frames), nobody replaces him, and the side keeps its formation minus that slot.
+- **Penalties.** A foul by a defender inside his own box gives a `free_kick` event tagged `penalty` at the spot, then a `shot` tagged `penalty` (xG 0.76). There is no separate event type.
+- **Manager cards.** A `card` event with `tags: ["manager"]`, `player_id` null and `team` set. Rare: managers are booked about once in ten matches and sent off far less often.
+- **Corners** follow saved or blocked shots, deflected clearances and overhit attacking passes. Target: about 9 to 11 a match.
+- `Club.manager` is the manager's name (invented).
 
 Event types (minimum): `kick_off, pass, carry, dribble, shot, save, goal, tackle, interception, clearance, block, foul, card, corner, free_kick, throw_in, offside, possession_change, pressure, substitution, period_start, period_end, injury_stoppage`.
 

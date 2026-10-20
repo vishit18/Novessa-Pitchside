@@ -8,6 +8,7 @@
       "primary_color": "#C8372D",
       "secondary_color": "#F2EDE4",
       "ground": "Millbrook Lane",
+      "manager": "Lucien Lavigne",
       "strength": -3.6,
       "identity": {
         "label": "high press",
@@ -24,6 +25,7 @@
       "primary_color": "#1F6FB5",
       "secondary_color": "#F5C542",
       "ground": "Harbour Road",
+      "manager": "Callum Fenwick",
       "strength": -2.8,
       "identity": {
         "label": "possession",
@@ -40,6 +42,7 @@
       "primary_color": "#2B8A5A",
       "secondary_color": "#FFFFFF",
       "ground": "The Weir",
+      "manager": "Wilf Ashdown",
       "strength": 6.5,
       "identity": {
         "label": "direct",
@@ -56,6 +59,7 @@
       "primary_color": "#6B3FA0",
       "secondary_color": "#E8E8E8",
       "ground": "Crown Fields",
+      "manager": "Rui Falcao",
       "strength": 3.8,
       "identity": {
         "label": "deep block",
@@ -72,6 +76,7 @@
       "primary_color": "#14788C",
       "secondary_color": "#F28C28",
       "ground": "Quayside Park",
+      "manager": "Nacho Orbaiz",
       "strength": -3.9,
       "identity": {
         "label": "possession",
@@ -88,6 +93,7 @@
       "primary_color": "#8E2A2A",
       "secondary_color": "#222222",
       "ground": "Heather Ground",
+      "manager": "Lucien Soulier",
       "strength": 0.9,
       "identity": {
         "label": "direct",
@@ -104,6 +110,7 @@
       "primary_color": "#3A3F8F",
       "secondary_color": "#DDE6F0",
       "ground": "Tidewater Stadium",
+      "manager": "Lucho Cardenal",
       "strength": -0.8,
       "identity": {
         "label": "high press",
@@ -120,6 +127,7 @@
       "primary_color": "#B8A02D",
       "secondary_color": "#1B1B1B",
       "ground": "Bramble Park",
+      "manager": "Obinna Balogun",
       "strength": -4.4,
       "identity": {
         "label": "deep block",

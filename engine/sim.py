@@ -34,6 +34,8 @@ from engine.tracking import TrackingData
 
 HALF = 2700.0
 Vec = np.ndarray
+# Where a sent-off player is parked, far from every distance calculation.
+OFF_PITCH = np.array([-100.0, -100.0])
 
 Slot = tuple[Position, float, float]
 
@@ -152,6 +154,8 @@ class MatchSimulator:
         self.aerial = False
         self.last_pass: tuple[int, str | None, float] | None = None  # (event index, receiver, t)
         self.yellows: set[str] = set()
+        self.active = np.ones((2, 11), dtype=bool)  # False once a player is sent off
+        self.manager_cards = [0, 0]
         self.pending_subs: list[list[float]] = [
             sorted(self.r.uniform(3300, 4900, size=int(self.r.integers(2, 4)))) for _ in (0, 1)
         ]
@@ -366,7 +370,7 @@ class MatchSimulator:
         tgt = self._targets()
         for team in (0, 1):
             for s in range(11):
-                if (team, s) in exclude:
+                if (team, s) in exclude or not self.active[team, s]:
                     continue
                 cur = self.pos[team, s]
                 delta = tgt[team, s] - cur
@@ -386,7 +390,13 @@ class MatchSimulator:
 
     def _snapshot(self, peak: float = 0.0, hold: bool = False) -> None:
         self.tracking.add(
-            self.t, self.pos, self._ids(), (float(self.ball[0]), float(self.ball[1])), peak, hold
+            self.t,
+            self.pos,
+            self._ids(),
+            (float(self.ball[0]), float(self.ball[1])),
+            peak,
+            hold,
+            self.active,
         )
 
     def _finish(self, dt: float, involved: set[tuple[int, int]], peak: float = 0.0) -> None:
@@ -433,7 +443,15 @@ class MatchSimulator:
                 u = min(bu * PITCH_LENGTH, 50.0)
                 yy = by if self.dir[team] == 1 else PITCH_WIDTH - by
                 self.pos[team, s] = (self._x(team, u), yy)
-        fwd = [s for s in range(11) if self.group[kick_team][s] == "FWD"]
+        for team in (0, 1):
+            for s in range(11):
+                if not self.active[team, s]:
+                    self.pos[team, s] = OFF_PITCH
+        fwd = [
+            s for s in range(11) if self.group[kick_team][s] == "FWD" and self.active[kick_team, s]
+        ] or [
+            s for s in range(11) if self.group[kick_team][s] != "GK" and self.active[kick_team, s]
+        ]
         kicker = fwd[len(fwd) // 2]
         self.pos[kick_team, kicker] = (52.5, 34.0)
         self.ball = np.array([52.5, 34.0])
@@ -460,10 +478,9 @@ class MatchSimulator:
 
     def _nearest(self, team: int, point: Vec, skip_gk: bool = True) -> tuple[int, float]:
         d = np.linalg.norm(self.pos[team] - point, axis=1)
-        if skip_gk:
-            for s in range(11):
-                if self.group[team][s] == "GK":
-                    d[s] = 1e9
+        for s in range(11):
+            if not self.active[team, s] or (skip_gk and self.group[team][s] == "GK"):
+                d[s] = 1e9
         s = int(np.argmin(d))
         return s, float(d[s])
 
@@ -471,7 +488,9 @@ class MatchSimulator:
         for team in (0, 1):
             while self.pending_subs[team] and self.t >= self.pending_subs[team][0]:
                 self.pending_subs[team].pop(0)
-                cands = [s for s in range(11) if self.group[team][s] != "GK"]
+                cands = [
+                    s for s in range(11) if self.group[team][s] != "GK" and self.active[team, s]
+                ]
                 off = max(
                     cands, key=lambda s: (1 - self._fatigue(team, s)) + self.r.random() * 0.05
                 )
@@ -553,6 +572,14 @@ class MatchSimulator:
                 tags=[f"on:{self._pid(team, slot)}"],
             )
 
+        # Contact off the ball and in the build-up: the nearest presser brings the man down.
+        careful = 0.25 if u > 85 else 1.0  # defenders take care inside their own box
+        if pres > 0.25 and self.r.random() < (
+            0.047 * pres * (0.5 + self.clubs[opp].identity.press) * careful
+        ):
+            self._foul(opp, int(order[0]), team, cpos)
+            return
+
         is_gk = self.group[team][slot] == "GK"
         w = {"pass": 1.0 + 0.5 * pres, "carry": 0.0, "dribble": 0.0, "shot": 0.0, "clear": 0.0}
         if is_gk:
@@ -568,7 +595,7 @@ class MatchSimulator:
                 ang = 1 - 0.8 * float(np.clip((abs(cpos[1] - 34) - 12) / 22, 0, 1))
                 sf = self._attr(team, slot, "finishing") / 70
                 inv, _ = self._star_factor(self._pid(team, slot))
-                w["shot"] = ((u - 66) / 39) ** 1.8 * 0.24 * ang * sf * (inv if inv > 1 else 1.0)
+                w["shot"] = ((u - 66) / 39) ** 1.8 * 0.21 * ang * sf * (inv if inv > 1 else 1.0)
                 if self.aerial and u > 85:
                     w["shot"] *= 3.0
         keys = list(w)
@@ -636,7 +663,7 @@ class MatchSimulator:
         pref = 8 + 14 * ident.directness + (16 if gk_carry and ident.directness > 0.5 else 0)
         fw = 0.3 + 0.6 * ident.directness
         for s in range(11):
-            if s == slot:
+            if s == slot or not self.active[team, s]:
                 continue
             rp = self.pos[team, s]
             d = float(np.linalg.norm(rp - cpos))
@@ -767,6 +794,12 @@ class MatchSimulator:
             self._finish(dt, {(team, slot)}, peak)
             self._restart(opp, spot, EventType.THROW_IN, 4.0)
             return
+        if not corner and self._u(team, end[0]) > 92 and self.r.random() < 0.12:
+            # Overhit or deflected behind the goal line.
+            self.ball = self._clip(end)
+            self._finish(dt, {(team, slot)}, peak)
+            self._corner(team)
+            return
         # Loose ball: the defender nearest the pass line gets there.
         icept = self._interceptor(team, cpos, end)
         target = self._closest_on_segment(self.pos[opp, icept], cpos, end)
@@ -783,6 +816,8 @@ class MatchSimulator:
         opp = 1 - team
         best, best_d = 0, 1e9
         for s in range(11):
+            if not self.active[opp, s]:
+                continue
             if self.group[opp][s] == "GK" and self._u(team, end[0]) < 90:
                 continue
             q = self._closest_on_segment(self.pos[opp, s], start, end)
@@ -850,7 +885,8 @@ class MatchSimulator:
             )
             self._emit(EventType.TACKLE, opp, d_slot, x=_r(cpos[0]), y=_r(cpos[1]), outcome="won")
             self._reach(opp, d_slot, cpos, 1.0)
-            if self.r.random() < 0.11:
+            box = 0.3 if self._u(team, cpos[0]) > 85 else 1.0
+            if self.r.random() < 0.22 * box:
                 self._foul(opp, d_slot, team, cpos)
                 return
             self._finish(1.0, {(team, slot), (opp, d_slot)})
@@ -876,14 +912,69 @@ class MatchSimulator:
         self._finish(dist / float(self.r.uniform(3.2, 5.0)) + 0.5, {(team, slot)})
 
     def _foul(self, fouler_team: int, fouler: int, victim_team: int, spot: Vec) -> None:
+        """A foul: the card decision, then a penalty if it was in the box, else a free kick."""
         self._emit(
             EventType.FOUL, fouler_team, fouler, x=_r(spot[0]), y=_r(spot[1]), outcome="foul"
         )
-        pid = self._pid(fouler_team, fouler)
-        if self.r.random() < 0.18 and pid not in self.yellows:
-            self.yellows.add(pid)
-            self._emit(EventType.CARD, fouler_team, fouler, outcome="yellow")
+        self._discipline(fouler_team, fouler)
+        self._maybe_manager_card()
+        in_box = self._u(victim_team, spot[0]) > 88.5 and abs(spot[1] - 34) < 20.16
+        if in_box and self.r.random() < 0.85:
+            self._penalty(victim_team)
+            return
         self._free_kick(victim_team, spot)
+
+    def _discipline(self, team: int, slot: int) -> None:
+        """Maybe book or send off the player who just fouled."""
+        pid = self._pid(team, slot)
+        roll = self.r.random()
+        can_send_off = self.group[team][slot] != "GK" and int(self.active[team].sum()) > 8
+        if roll < 0.003 and can_send_off:
+            self._emit(EventType.CARD, team, slot, outcome="red", tags=["straight_red"])
+            self._send_off(team, slot)
+        elif roll < 0.203:
+            if pid in self.yellows and can_send_off and self.r.random() < 0.4:
+                self._emit(EventType.CARD, team, slot, outcome="yellow", tags=["second_yellow"])
+                self._emit(EventType.CARD, team, slot, outcome="red", tags=["second_yellow"])
+                self._send_off(team, slot)
+            elif pid not in self.yellows:
+                self.yellows.add(pid)
+                self._emit(EventType.CARD, team, slot, outcome="yellow")
+
+    def _send_off(self, team: int, slot: int) -> None:
+        """The player leaves; nobody replaces him, so the side plays one short."""
+        self.active[team, slot] = False
+        self.pos[team, slot] = OFF_PITCH
+        self.vel[team, slot] = 0
+
+    def _maybe_manager_card(self) -> None:
+        """Managers are booked now and then too. One card each, mostly yellow."""
+        if self.r.random() >= 0.0045:
+            return
+        team = int(self.r.integers(0, 2))
+        if self.manager_cards[team]:
+            return
+        self.manager_cards[team] = 1
+        outcome = "red" if self.r.random() < 0.08 else "yellow"
+        self._emit(EventType.CARD, team, None, outcome=outcome, tags=["manager"])
+
+    def _penalty(self, team: int) -> None:
+        """Spot kick by the side's best finisher. A foul in the box always ends up here."""
+        taker = max(
+            (s for s in range(11) if self.active[team, s] and self.group[team][s] != "GK"),
+            key=lambda s: self._attr(team, s, "finishing") + self._attr(team, s, "composure"),
+        )
+        spot = np.array([self._x(team, 94.0), 34.0])
+        delay = self._walk_delay(team, taker, spot, 10.0)
+        self.pos[team, taker] = spot
+        self.ball = spot.copy()
+        self.carrier = (team, taker)
+        self.just_received = False
+        self.aerial = False
+        self._emit(EventType.FREE_KICK, team, taker, x=_r(spot[0]), y=_r(spot[1]), tags=["penalty"])
+        self._maybe_subs()
+        self._finish(delay, {self.carrier})
+        self._do_shot(team, taker, spot, 0.0, False, [], penalty=True)
 
     def _free_kick(self, team: int, spot: Vec) -> None:
         spot = self._clip(spot)
@@ -926,6 +1017,10 @@ class MatchSimulator:
         roll = self.r.random()
         self.ball = land
         flight = float(np.linalg.norm(land - cpos)) / 18.0
+        if u < 18 and 0.15 <= roll < 0.22:
+            self._finish(flight, {(team, slot)}, 8.0)
+            self._corner(opp)
+            return
         if roll < 0.15:
             spot = land.copy()
             spot[1] = 0.0 if land[1] < 34 else PITCH_WIDTH
@@ -953,6 +1048,7 @@ class MatchSimulator:
         under: bool,
         by: list[str],
         free_kick: bool = False,
+        penalty: bool = False,
     ) -> None:
         opp = 1 - team
         gx = PITCH_LENGTH if self.dir[team] == 1 else 0.0
@@ -962,10 +1058,10 @@ class MatchSimulator:
         v2 = np.array([gx - cpos[0], gy + 3.66 - cpos[1]])
         theta = abs(math.atan2(v1[0] * v2[1] - v1[1] * v2[0], float(v1 @ v2)))
         head = self.aerial and self.r.random() < 0.7
-        z = -0.85 - 0.14 * dist + 1.4 * theta - 0.6 * pres - (0.7 if head else 0.0)
+        z = -1.1 - 0.14 * dist + 1.4 * theta - 0.6 * pres - (0.7 if head else 0.0)
         if free_kick:
             z -= 0.5
-        xg = _sigmoid(z)
+        xg = 0.76 if penalty else _sigmoid(z)
         pid = self._pid(team, slot)
         _, fin_star = self._star_factor(pid)
         fin = self._attr(team, slot, "finishing") / 70 * self._mods(team).finish * fin_star
@@ -980,9 +1076,13 @@ class MatchSimulator:
         )
         flight = dist / (speed / 3.6)
         roll = self.r.random()
-        p_block = 0.22 + 0.15 * pres
-        p_off = float(
-            np.clip(0.45 - 0.2 * (self._attr(team, slot, "finishing") - 60) / 40, 0.2, 0.6)
+        p_block = 0.0 if penalty else 0.22 + 0.15 * pres
+        p_off = (
+            0.1
+            if penalty
+            else float(
+                np.clip(0.45 - 0.2 * (self._attr(team, slot, "finishing") - 60) / 40, 0.2, 0.6)
+            )
         )
         rest = 1 - p_goal
         if roll < p_goal:
@@ -995,7 +1095,9 @@ class MatchSimulator:
             outcome = "saved"
         player = self.on_pitch[team][slot]
         foot = "right_foot" if player.foot == "right" else "left_foot"
-        tags = ["free_kick"] if free_kick else ["header"] if head else []
+        tags = (
+            ["penalty"] if penalty else ["free_kick"] if free_kick else ["header"] if head else []
+        )
         if self.last_pass and self.last_pass[1] == pid and self.t - self.last_pass[2] < 8:
             self.events[self.last_pass[0]].tags.append("key_pass")
         end_y = (
@@ -1098,7 +1200,11 @@ class MatchSimulator:
         # Attackers and defenders crowd the box.
         opp = 1 - team
         movers = sorted(
-            (s for s in range(11) if s != slot and self.group[team][s] != "GK"),
+            (
+                s
+                for s in range(11)
+                if s != slot and self.group[team][s] != "GK" and self.active[team, s]
+            ),
             key=lambda s: -self._u(team, self.pos[team, s, 0]),
         )[:4]
         for k, s in enumerate(movers):
@@ -1106,7 +1212,7 @@ class MatchSimulator:
                 np.array([gx - self.dir[team] * float(self.r.uniform(5, 14)), 34 + (k - 1.5) * 4.5])
             )
         defenders = sorted(
-            (s for s in range(11) if self.group[opp][s] != "GK"),
+            (s for s in range(11) if self.group[opp][s] != "GK" and self.active[opp, s]),
             key=lambda s: abs(self.pos[opp, s, 0] - gx),
         )[:5]
         for k, s in enumerate(defenders):
@@ -1157,7 +1263,11 @@ class MatchSimulator:
                 self._step()
             self._emit(EventType.PERIOD_END, outcome=f"period_{period}")
         self.tracking.add(
-            self.t + 0.1, self.pos, self._ids(), (float(self.ball[0]), float(self.ball[1]))
+            self.t + 0.1,
+            self.pos,
+            self._ids(),
+            (float(self.ball[0]), float(self.ball[1])),
+            active=self.active,
         )
         home, away = self.sheets
         meta = MatchMeta(

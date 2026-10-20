@@ -22,6 +22,7 @@ MomentKind = Literal[
     "control_chaos_flip",
     "rhythm_break",
     "card",
+    "penalty",
     "standout_action",
 ]
 
@@ -55,6 +56,18 @@ class Rhythm(BaseModel):
     broken: bool = False
 
 
+class TeamStats(BaseModel):
+    """Discipline and set-piece counts for one team so far."""
+
+    fouls: int = 0
+    yellows: int = 0
+    reds: int = 0
+    corners: int = 0
+    free_kicks: int = 0
+    penalties: int = 0
+    shots: int = 0
+
+
 class StateSnapshot(BaseModel):
     """Everything the agents may ask about the match right now."""
 
@@ -68,6 +81,7 @@ class StateSnapshot(BaseModel):
     pressure: dict[str, float]
     control_chaos: ControlChaos
     rhythm: Rhythm
+    team_stats: dict[str, TeamStats] = Field(default_factory=dict)
 
 
 class Moment(BaseModel):
@@ -82,6 +96,8 @@ class Moment(BaseModel):
     player_ids: list[str] = Field(default_factory=list)
     summary: str = Field(description="Plain fact, not prose. The Analyst writes the prose.")
     evidence: list[Evidence] = Field(default_factory=list)
+    card: Literal["yellow", "red"] | None = None
+    staff: bool = False
     snapshot: StateSnapshot
 
 
@@ -98,6 +114,9 @@ class PlayerStats(BaseModel):
     xa: float = 0.0
     duels_won: int = 0
     duels_lost: int = 0
+    fouls: int = 0
+    yellows: int = 0
+    reds: int = 0
     distance_km: float = 0.0
     top_speed_kmh: float = 0.0
     top_shot_kmh: float = 0.0

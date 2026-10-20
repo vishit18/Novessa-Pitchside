@@ -12,11 +12,12 @@ from engine.league import DEFAULT_SEED, generate_league, save_league
 from engine.sim import simulate_match
 
 ROOT = Path(__file__).resolve().parent.parent
-# (match_id, home, away, seed). Seeds were picked by eye for a decent story, not tuned.
+# (match_id, home, away, seed). Seeds picked to show discipline: derby_01 has a penalty, a second
+# yellow and a manager booking; derby_02 a red card and a penalty; derby_03 a penalty.
 DEMO_MATCHES = [
-    ("derby_01", "ASH", "KES", 9),
-    ("derby_02", "SAL", "MIL", 8),
-    ("derby_03", "POR", "HAR", 10),
+    ("derby_01", "ASH", "KES", 24),
+    ("derby_02", "SAL", "MIL", 7),
+    ("derby_03", "POR", "HAR", 6),
 ]
 
 
