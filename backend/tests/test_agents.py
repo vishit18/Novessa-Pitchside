@@ -316,3 +316,11 @@ def test_cache_survives_an_unwritable_directory(tmp_path: Path) -> None:
     )
     cache.put("5:mom-1:analyst:*:en", first)
     assert cache.get("5:mom-1:analyst:*:en", AnalystOutput) == first
+
+
+def test_verifier_allows_a_claims_own_time_window(intel: MatchIntel, moment: Moment) -> None:
+    analysis = true_analysis(intel, moment)
+    analysis.why += (
+        f" At {moment.t_match:.2f} seconds, about {round(moment.t_match / 60)} minutes in."
+    )
+    assert verify(intel, moment, analysis).overall == "approved"

@@ -65,6 +65,11 @@ def allowed_numbers(moment: Moment, analysis: AnalystOutput) -> list[float]:
     for c in analysis.claims:
         if c.t_from is not None and c.t_to is not None:
             allowed.append(round((c.t_to - c.t_from) / 60.0))
+        # A claim's own time window is true by construction (it was the question), so the
+        # edges, and the same times in minutes, may appear in the prose.
+        for t in (c.t_from, c.t_to):
+            if t is not None:
+                allowed += [t, round(t / 60.0)]
     return allowed
 
 
