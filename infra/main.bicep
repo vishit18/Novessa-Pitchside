@@ -10,6 +10,9 @@ param environmentName string
 @description('Region for everything except the static web app.')
 param location string = resourceGroup().location
 
+@description('Cosmos DB sometimes refuses new accounts in a busy region; set this to deploy it elsewhere.')
+param cosmosLocation string = location
+
 @description('Static Web Apps are only offered in a few regions.')
 param swaLocation string = 'westeurope'
 
@@ -52,7 +55,7 @@ module platform 'modules/platform.bicep' = {
 
 module data 'modules/data.bicep' = {
   name: 'data'
-  params: { location: location, token: token, tags: tags }
+  params: { location: location, cosmosLocation: cosmosLocation, token: token, tags: tags }
 }
 
 resource foundry 'Microsoft.CognitiveServices/accounts@2024-10-01' existing = {

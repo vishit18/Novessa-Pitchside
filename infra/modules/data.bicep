@@ -1,5 +1,7 @@
 // Event Hubs (the event bus) and Cosmos DB for NoSQL (matches, moments, profiles, cache).
 param location string
+@description('Region for the Cosmos DB account.')
+param cosmosLocation string = location
 @minLength(13)
 @description('Unique suffix from main.bicep, always 13 characters.')
 param token string
@@ -30,7 +32,7 @@ resource matchEvents 'Microsoft.EventHub/namespaces/eventhubs@2024-01-01' = {
 
 resource cosmos 'Microsoft.DocumentDB/databaseAccounts@2024-05-15' = {
   name: 'cosmos-${token}'
-  location: location
+  location: cosmosLocation
   tags: tags
   kind: 'GlobalDocumentDB'
   properties: {
@@ -39,7 +41,7 @@ resource cosmos 'Microsoft.DocumentDB/databaseAccounts@2024-05-15' = {
     disableLocalAuth: true
     consistencyPolicy: { defaultConsistencyLevel: 'Session' }
     locations: [
-      { locationName: location, failoverPriority: 0, isZoneRedundant: false }
+      { locationName: cosmosLocation, failoverPriority: 0, isZoneRedundant: false }
     ]
   }
 }
