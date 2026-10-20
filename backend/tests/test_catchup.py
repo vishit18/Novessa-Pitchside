@@ -26,9 +26,9 @@ def test_catchup_stops_at_the_viewers_time(client: TestClient) -> None:
 
 
 def test_goal_appears_only_after_it_happens(client: TestClient) -> None:
-    # derby_01: the first goal airs at about 367 s.
-    before = client.get(f"/matches/{MATCH}/catchup", params={"t": 360}).json()
-    after = client.get(f"/matches/{MATCH}/catchup", params={"t": 600}).json()
+    # derby_01: the first goal, Tobias Wragg's penalty, airs at about 1607 s.
+    before = client.get(f"/matches/{MATCH}/catchup", params={"t": 1600}).json()
+    after = client.get(f"/matches/{MATCH}/catchup", params={"t": 1800}).json()
     assert all(m["kind"] != "goal" for m in before["moments"])
     assert any(m["kind"] == "goal" for m in after["moments"])
     assert sum(after["score"].values()) == 1
@@ -50,7 +50,7 @@ def test_bad_requests(client: TestClient) -> None:
 
 
 def test_bodies_name_the_club_not_its_code(client: TestClient) -> None:
-    out = client.get(f"/matches/{MATCH}/catchup", params={"t": 700}).json()
+    out = client.get(f"/matches/{MATCH}/catchup", params={"t": 1800}).json()
     goal = next(m for m in out["moments"] if m["kind"] == "goal")
     assert "Ashford Rovers" in goal["body"]
     assert " ASH" not in goal["body"]

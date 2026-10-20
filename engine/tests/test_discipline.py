@@ -11,14 +11,14 @@ from engine.sim import Match, simulate_match
 
 @pytest.fixture(scope="module")
 def drama(league: League) -> Match:
-    """ASH v KES, seed 24: a penalty, a second yellow, a red and a manager booking."""
-    return simulate_match(league, "ASH", "KES", seed=24, match_id="t24")
+    """ASH v KES, seed 195: a penalty, a second yellow, a red and a manager booking."""
+    return simulate_match(league, "ASH", "KES", seed=195, match_id="t195")
 
 
 @pytest.fixture(scope="module")
 def straight_red(league: League) -> Match:
-    """ASH v KES, seed 23: contains a straight red card."""
-    return simulate_match(league, "ASH", "KES", seed=23, match_id="t23")
+    """ASH v KES, seed 5: contains a straight red card."""
+    return simulate_match(league, "ASH", "KES", seed=5, match_id="t5")
 
 
 def of_type(m: Match, t: EventType) -> list[MatchEvent]:

@@ -19,7 +19,7 @@ from engine.sim import simulate_match
 
 @pytest.fixture(scope="module")
 def drama() -> StateRun:
-    m = simulate_match(generate_league(), "ASH", "KES", seed=24, match_id="s24")
+    m = simulate_match(generate_league(), "ASH", "KES", seed=195, match_id="s195")
     return run_state(m)
 
 
@@ -88,8 +88,9 @@ def test_manager_card_is_a_staff_moment_with_no_player(drama: StateRun) -> None:
 
 def test_penalty_moment(drama: StateRun) -> None:
     pens = moments(drama, "penalty")
-    assert len(pens) == 1 and pens[0].significance == 75
-    assert pens[0].player_ids
+    taken = sum(e.type == EventType.SHOT and "penalty" in e.tags for e in drama.match.events)
+    assert pens and len(pens) == taken
+    assert all(p.significance == 75 and p.player_ids for p in pens)
 
 
 # ---- through the gateway --------------------------------------------------------------------
@@ -103,7 +104,8 @@ def client() -> Any:
 
 @pytest.fixture(scope="module")
 def overlays(client: TestClient) -> list[dict[str, Any]]:
-    text = client.get("/matches/derby_01/overlays.jsonl").text
+    # derby_02 has the manager booking, the straight red and a penalty.
+    text = client.get("/matches/derby_02/overlays.jsonl").text
     return [json.loads(line) for line in text.splitlines()]
 
 
@@ -149,7 +151,7 @@ def test_state_message_carries_team_stats(client: TestClient) -> None:
         "shots",
         "offsides",
     } == set(s["team_stats"]["ASH"])
-    assert s["team_stats"]["ASH"]["reds"] == 1  # the second-yellow red happens at 57:06
+    assert s["team_stats"]["ASH"]["reds"] == 1  # the second-yellow red happens at 71:45
 
 
 def test_team_stats_only_ever_go_up(client: TestClient) -> None:

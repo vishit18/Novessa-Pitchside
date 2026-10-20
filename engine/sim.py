@@ -33,6 +33,26 @@ from engine.schema import (
 from engine.tracking import TrackingData
 
 HALF = 2700.0
+# Top running speed in m/s is VMAX_BASE + VMAX_PACE * pace (1-99). Tuned by scripts/calibrate.py.
+VMAX_BASE = 6.24
+VMAX_PACE = 0.027
+# Share of in-the-box fouls that are given as penalties.
+PENALTY_GIVEN = 0.26
+# Weight of a carry against a pass when a player on the ball chooses what to do.
+CARRY_WEIGHT = 0.50
+# How eager players are to shoot once in range.
+SHOT_WEIGHT = 0.19
+# Chance a through ball is flagged offside.
+OFFSIDE_ON_THROUGH_BALL = 0.07
+# Positional jitter on players, in m/s. It adds to top speeds, so it is kept small.
+WANDER_NOISE = 0.37
+# Share of fouls that earn a booking.
+YELLOW_PER_FOUL = 0.185
+# Reds: a straight red per foul, and a second yellow for a player already booked.
+STRAIGHT_RED = 0.002
+SECOND_YELLOW = 0.15
+# Intercept of the shot-quality model: lower means fewer shots become goals.
+XG_INTERCEPT = -1.21
 Vec = np.ndarray
 # Where a sent-off player is parked, far from every distance calculation.
 OFF_PITCH = np.array([-100.0, -100.0])
@@ -375,12 +395,16 @@ class MatchSimulator:
                 cur = self.pos[team, s]
                 delta = tgt[team, s] - cur
                 dist = float(np.linalg.norm(delta))
-                vmax = (6.5 + 0.03 * self._attr(team, s, "pace")) * self._fatigue(team, s)
+                vmax = (VMAX_BASE + VMAX_PACE * self._attr(team, s, "pace")) * self._fatigue(
+                    team, s
+                )
                 step = np.zeros(2)
                 if dist > 1e-6:
                     speed = min(vmax, dist / 2.2)
                     step = delta / dist * min(speed * dt, dist)
-                self.wander[team, s] = 0.75 * self.wander[team, s] + self.r.normal(0, 0.45, 2)
+                self.wander[team, s] = 0.75 * self.wander[team, s] + self.r.normal(
+                    0, WANDER_NOISE, 2
+                )
                 new = self._clip(cur + step + self.wander[team, s] * dt)
                 self.vel[team, s] = (new - cur) / max(dt, 1e-6)
                 self.pos[team, s] = new
@@ -416,7 +440,7 @@ class MatchSimulator:
         cur = self.pos[team, slot]
         delta = target - cur
         dist = float(np.linalg.norm(delta))
-        vmax = (6.5 + 0.03 * self._attr(team, slot, "pace")) * self._fatigue(team, slot)
+        vmax = (VMAX_BASE + VMAX_PACE * self._attr(team, slot, "pace")) * self._fatigue(team, slot)
         reach = vmax * self._scaled(dt) * 0.9
         new = target.copy() if dist <= reach else cur + delta / dist * reach
         self.pos[team, slot] = new
@@ -587,7 +611,7 @@ class MatchSimulator:
         else:
             ft = self._attr(team, slot, "first_touch")
             pace = self._attr(team, slot, "pace")
-            w["carry"] = 0.32 * (1 - 0.5 * pres)
+            w["carry"] = CARRY_WEIGHT * (1 - 0.5 * pres)
             w["dribble"] = (0.03 + 0.16 * pres) * (0.5 + (ft + pace) / 200) if u > 35 else 0.02
             if u < 25:
                 w["clear"] = 0.9 * pres + 0.03
@@ -595,7 +619,9 @@ class MatchSimulator:
                 ang = 1 - 0.8 * float(np.clip((abs(cpos[1] - 34) - 12) / 22, 0, 1))
                 sf = self._attr(team, slot, "finishing") / 70
                 inv, _ = self._star_factor(self._pid(team, slot))
-                w["shot"] = ((u - 66) / 39) ** 1.8 * 0.21 * ang * sf * (inv if inv > 1 else 1.0)
+                w["shot"] = (
+                    ((u - 66) / 39) ** 1.8 * SHOT_WEIGHT * ang * sf * (inv if inv > 1 else 1.0)
+                )
                 if self.aerial and u > 85:
                     w["shot"] *= 3.0
         keys = list(w)
@@ -747,7 +773,7 @@ class MatchSimulator:
             ptags.append("switch")
         player = self.on_pitch[team][slot]
         foot = "right_foot" if player.foot == "right" else "left_foot"
-        offside = "through_ball" in ptags and self.r.random() < 0.05
+        offside = "through_ball" in ptags and self.r.random() < OFFSIDE_ON_THROUGH_BALL
         outcome = "complete" if complete and not offside else "incomplete"
         idx = self._emit(
             EventType.PASS,
@@ -919,7 +945,7 @@ class MatchSimulator:
         self._discipline(fouler_team, fouler)
         self._maybe_manager_card()
         in_box = self._u(victim_team, spot[0]) > 88.5 and abs(spot[1] - 34) < 20.16
-        if in_box and self.r.random() < 0.85:
+        if in_box and self.r.random() < PENALTY_GIVEN:
             self._penalty(victim_team)
             return
         self._free_kick(victim_team, spot)
@@ -929,11 +955,11 @@ class MatchSimulator:
         pid = self._pid(team, slot)
         roll = self.r.random()
         can_send_off = self.group[team][slot] != "GK" and int(self.active[team].sum()) > 8
-        if roll < 0.003 and can_send_off:
+        if roll < STRAIGHT_RED and can_send_off:
             self._emit(EventType.CARD, team, slot, outcome="red", tags=["straight_red"])
             self._send_off(team, slot)
-        elif roll < 0.203:
-            if pid in self.yellows and can_send_off and self.r.random() < 0.4:
+        elif roll < YELLOW_PER_FOUL:
+            if pid in self.yellows and can_send_off and self.r.random() < SECOND_YELLOW:
                 self._emit(EventType.CARD, team, slot, outcome="yellow", tags=["second_yellow"])
                 self._emit(EventType.CARD, team, slot, outcome="red", tags=["second_yellow"])
                 self._send_off(team, slot)
@@ -1058,7 +1084,7 @@ class MatchSimulator:
         v2 = np.array([gx - cpos[0], gy + 3.66 - cpos[1]])
         theta = abs(math.atan2(v1[0] * v2[1] - v1[1] * v2[0], float(v1 @ v2)))
         head = self.aerial and self.r.random() < 0.7
-        z = -1.1 - 0.14 * dist + 1.4 * theta - 0.6 * pres - (0.7 if head else 0.0)
+        z = XG_INTERCEPT - 0.14 * dist + 1.4 * theta - 0.6 * pres - (0.7 if head else 0.0)
         if free_kick:
             z -= 0.5
         xg = 0.76 if penalty else _sigmoid(z)

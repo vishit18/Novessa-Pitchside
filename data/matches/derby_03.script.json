@@ -1,20 +1,27 @@
 {
   "score": [
-    2,
-    1
+    3,
+    0
   ],
   "arcs": [
     {
-      "kind": "star_quiet_then_moment",
+      "kind": "dominate_no_score",
       "team": "HAR",
-      "from_s": 3600.0,
-      "to_s": 6000.0,
-      "player_id": "HAR-11"
+      "from_s": 0.0,
+      "to_s": 2700.0,
+      "player_id": null
     },
     {
       "kind": "late_collapse",
-      "team": "HAR",
-      "from_s": 4061.486187443595,
+      "team": "POR",
+      "from_s": 4302.072927281965,
+      "to_s": 6000.0,
+      "player_id": null
+    },
+    {
+      "kind": "sub_changes_game",
+      "team": "POR",
+      "from_s": 4298.658208553786,
       "to_s": 6000.0,
       "player_id": null
     }

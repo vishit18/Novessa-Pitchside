@@ -22,6 +22,7 @@ dependencies = [
     "azure-eventhub>=5.15.1",
     "azure-cosmos>=4.17.1",
     "aiohttp>=3.14.5",
+    "pyarrow>=26.0.0",
 ]
 
 [dependency-groups]
@@ -32,6 +33,7 @@ dev = [
     "ruff>=0.6",
     "mypy>=1.11",
     "types-PyYAML",
+    "matplotlib>=3.11.2",
 ]
 
 # Offline auto-eventing on real footage (vision/). Kept out of the default install so the
@@ -77,13 +79,23 @@ exclude = ["footage/", "frontend/"]
 
 [[tool.mypy.overrides]]
 # Heavy vision-only packages without complete type information.
-module = ["cv2.*", "scipy.*", "torch.*", "torchvision.*", "transformers.*", "ijson.*"]
+module = [
+  "cv2.*",
+  "scipy.*",
+  "torch.*",
+  "torchvision.*",
+  "transformers.*",
+  "ijson.*",
+  "pyarrow.*",
+]
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
 # OpenCV, SciPy and PyTorch return untyped arrays. The rest of the repo stays strict.
 module = ["vision.*", "scripts.prepare_footage"]
 warn_return_any = false
+# torch decorators such as inference_mode are untyped.
+disable_error_code = ["untyped-decorator"]
 warn_unused_ignores = false
 
 [tool.pytest.ini_options]

@@ -3,18 +3,18 @@ import { expect, test } from '@playwright/test'
 /**
  * derby_01 (ASH v KES) is the showcase match. Times below come from its overlay export
  * (GET /matches/derby_01/overlays.jsonl): Tobias Wragg (ASH-17) scores a penalty at show_at
- * 366.9 s, and Zakaria Tazi (ASH-06) is sent off for a second yellow at 3564.5 s.
+ * 1607.6 s, and Tunde Balogun (ASH-16) is sent off for a second yellow at 4493.4 s.
  * If the demo seeds change, update these from the export.
  */
-const PENALTY_GOAL_T = 362
-const RED_CARD_T = 3558
+const PENALTY_GOAL_T = 1602
+const RED_CARD_T = 4488
 
 test('broadcast view shows the pitch, the score and the goal overlay', async ({ page }) => {
   await page.goto(`/watch?match=derby_01&t=${PENALTY_GOAL_T}&speed=1`)
 
   // The pitch canvas is up and the score bug has data.
   await expect(page.locator('canvas')).toBeVisible()
-  await expect(page.getByLabel('Match clock')).toHaveText(/^0[56]:\d\d$/, { timeout: 20_000 })
+  await expect(page.getByLabel('Match clock')).toHaveText(/^26:\d\d$/, { timeout: 20_000 })
 
   // The goal card arrives over the socket and wipes in as a lower third.
   const lowerThird = page.locator('[aria-live="polite"]')
@@ -41,8 +41,8 @@ test('player focus follows one player and shows their live stats', async ({ page
 })
 
 test('following a player who is sent off shows it on the card', async ({ page }) => {
-  await page.goto(`/watch?match=derby_01&t=${RED_CARD_T}&speed=1&player=ASH-06`)
+  await page.goto(`/watch?match=derby_01&t=${RED_CARD_T}&speed=1&player=ASH-16`)
   await expect(page.locator('[aria-live="polite"]')).toContainText('Red card', { timeout: 20_000 })
-  const card = page.getByRole('region', { name: /Zakaria Tazi/ })
+  const card = page.getByRole('region', { name: /Tunde Balogun/ })
   await expect(card.getByRole('status')).toHaveText('Sent off', { timeout: 20_000 })
 })
