@@ -43,7 +43,7 @@ Priority: **P0** = we fail or score badly without it. **P1** = needed to win. **
 | [ ] | **Speed metrics**: ball speed | P0 | Per pass and shot |
 | [ ] | **Speed metrics**: shot speed | P0 | Per shot, with overlay |
 | [ ] | **Auto-eventing**: a model over an incoming video feed generates the pass and speed metrics automatically | P1 | `vision/` pipeline on SoccerTrack v2 footage (CC BY 4.0, `docs/06`) emits the same event schema, scored against ground truth |
-| [ ] | Responsive enough for live play | P0 | Deterministic overlays < 150ms, LLM explanations < 4s, measured and shown in Control Room |
+| [ ] | Responsive enough for live play | P0 | Deterministic overlays < 150ms, LLM explanations < 4s, measured and shown in Control Room Control Room (`/control`) shows LLM p50/p95 per agent against 4 s. Not met yet: agent p95 is 4 to 6 s on Foundry, and instant-overlay latency is not measured. |
 
 ## D. Narrative, explainability, data, language (brief §(iii)–(vi))
 
@@ -110,7 +110,7 @@ Priority: **P0** = we fail or score badly without it. **P1** = needed to win. **
 ### F4. User Experience & Presentation (20%)
 - [ ] Well-designed, intuitive UX → `docs/07`
 - [ ] Demo video clearly communicates the value → `docs/09`
-- [ ] Balanced frontend and backend → both visible in the video (Control Room shows the backend working)
+- [ ] Balanced frontend and backend → both visible in the video (Control Room shows the backend working) (screen built: `frontend/src/screens/ControlRoom.tsx`; tick once recorded)
 
 ### F5. Adherence to Hackathon Category (20%)
 - [ ] Fits the challenge brief → this whole checklist
