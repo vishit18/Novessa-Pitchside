@@ -346,3 +346,41 @@ export function StatusPill() {
     </div>
   )
 }
+
+/**
+ * Shown over the pitch while the feed connects. The pitch behind it is lit and lined up, so the
+ * screen reads as "about to start" rather than broken. After a few seconds it says why it is slow.
+ */
+export function KickOffCard({ compact = false }: { compact?: boolean }) {
+  const meta = useSessionState((s) => s.meta)
+  const t = useT()
+  const [slow, setSlow] = useState(false)
+  useEffect(() => {
+    const id = window.setTimeout(() => setSlow(true), 6000)
+    return () => window.clearTimeout(id)
+  }, [])
+  const home = meta ? CLUBS[meta.home.code]?.name : null
+  const away = meta ? CLUBS[meta.away.code]?.name : null
+  return (
+    <div
+      className={`pointer-events-none absolute inset-x-0 bottom-[22%] flex justify-center px-4 ${compact ? 'hud-compact' : ''}`}
+    >
+      <div className="plate-shadow w-[min(100%,580px)]" role="status">
+        <div className="plate overflow-hidden" style={{ ['--cut' as string]: '14px' }}>
+          <div className="px-6 pb-4 pt-4">
+            {home && away && (
+              <p className="font-display text-[30px] font-bold leading-none sm:text-[36px]">
+                {home} <span className="text-muted">v</span> {away}
+              </p>
+            )}
+            <p className="mt-2 text-[16px] text-text/90">{t('settingUp')}</p>
+            {slow && <p className="mt-1 text-[14px] text-muted">{t('warmingUp')}</p>}
+          </div>
+          <div className="relative h-[3px] overflow-hidden bg-black/40" aria-hidden="true">
+            <div className="kickoff-bar absolute inset-y-0 w-1/3 bg-amber" />
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}

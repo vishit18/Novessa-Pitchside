@@ -35,6 +35,17 @@ body,
   overflow-x: clip;
 }
 
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+}
+p,
+li,
+dd {
+  text-wrap: pretty;
+}
+
 body {
   background: var(--color-ink);
   color: var(--color-text);
@@ -127,6 +138,19 @@ body {
   animation: tag-in 0.2s var(--ease-out) both;
 }
 
+/* Indeterminate progress: a short bar sweeping across. Transform only. */
+@keyframes kickoff-sweep {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(300%);
+  }
+}
+.kickoff-bar {
+  animation: kickoff-sweep 1.4s var(--ease-out) infinite;
+}
+
 @keyframes pulse-soft {
   50% {
     opacity: 0.45;
@@ -162,8 +186,13 @@ button:not(:disabled):active {
       tag-out 0.15s linear both;
     animation-delay: 0s, calc(var(--life, 4s) - 0.15s);
   }
-  .pulse-soft {
+  .pulse-soft,
+  .kickoff-bar {
     animation: none;
+  }
+  .kickoff-bar {
+    width: 100%;
+    opacity: 0.5;
   }
   * {
     scroll-behavior: auto !important;
@@ -189,4 +218,16 @@ button:not(:disabled):active {
 }
 .plate-shadow {
   filter: drop-shadow(0 8px 14px rgb(0 0 0 / 0.5));
+}
+
+/* A small chip in the plate shape: one corner cut, so it belongs with the score bug. */
+.plate-chip {
+  clip-path: polygon(
+    0 0,
+    calc(100% - 10px) 0,
+    100% 10px,
+    100% 100%,
+    10px 100%,
+    0 calc(100% - 10px)
+  );
 }

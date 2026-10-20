@@ -1,9 +1,7 @@
 import { useMemo } from 'react'
-import { CommentaryToggle } from '@/components/CommentaryToggle'
+import { ViewerChrome } from '@/components/ViewerChrome'
 import { PlayerCard } from '@/components/PlayerCard'
-import { CLUBS, PLAYERS } from '@/data/league'
-import { navigate, withParams } from '@/router'
-import { defaultProfile, LANGS, loadProfile, PERSONAS } from '@/state/profile'
+import { defaultProfile, loadProfile } from '@/state/profile'
 import { SessionContext, useLiveSession } from '@/state/useSession'
 import { BroadcastPane } from './BroadcastPane'
 
@@ -24,46 +22,7 @@ export function Broadcast({ query }: { query: URLSearchParams }) {
     startAt: Number(query.get('t') ?? 0),
     speed: Number(query.get('speed') ?? 1),
   })
-  const persona = PERSONAS.find((p) => p.id === profile.persona)?.label ?? profile.persona
-  const lang = LANGS.find((l) => l.id === profile.lang)?.label ?? profile.lang
-  const who = profile.player
-    ? PLAYERS[profile.player]?.name
-    : profile.club
-      ? CLUBS[profile.club]?.name
-      : null
-
-  const change = (
-    <button
-      className="-my-2 inline-flex min-h-11 items-center px-1 text-[14px] text-muted underline decoration-white/25 underline-offset-4 hover:text-text"
-      onClick={() => navigate(withParams('/', { match: session.opts.matchId }))}
-    >
-      {[persona, lang, who].filter(Boolean).join(', ')}. Change
-    </button>
-  )
-  const phone = (
-    <button
-      className="-my-2 inline-flex min-h-11 items-center px-1 text-[14px] text-muted underline decoration-white/25 underline-offset-4 hover:text-text"
-      onClick={() => navigate(withParams('/companion', { match: session.opts.matchId }))}
-    >
-      Phone view
-    </button>
-  )
-  const recap = (
-    <button
-      className="-my-2 inline-flex min-h-11 items-center px-1 text-[14px] text-muted underline decoration-white/25 underline-offset-4 hover:text-text"
-      onClick={() => navigate(withParams('/recap', { match: session.opts.matchId }))}
-    >
-      Recap
-    </button>
-  )
-  const corner = (
-    <div className="flex flex-col items-end">
-      {change}
-      {phone}
-      {recap}
-      <CommentaryToggle />
-    </div>
-  )
+  const corner = <ViewerChrome />
 
   if (!profile.player) {
     return (

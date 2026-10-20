@@ -2,7 +2,9 @@ import { useEffect, useRef, useState } from 'react'
 import { CLUBS } from '@/data/league'
 import { makeTilt, type Tilt } from '@/core/tilt'
 import { isGoal } from '@/core/overlays'
+import { preKickFrame } from '@/core/formation'
 import { frameAt } from '@/core/timeline'
+import type { TrackingFrame } from '@/types/schema'
 import { useSession, useSessionState } from '@/state/useSession'
 import { PitchRenderer } from './pitch/PitchRenderer'
 import { TagLayer, type TagRegistry, resolveTagPoint } from './TagLayer'
@@ -22,6 +24,8 @@ export function Stage() {
   const hostRef = useRef<HTMLDivElement>(null)
   const tiltRef = useRef<HTMLDivElement>(null)
   const registry = useRef<TagRegistry>(new Map())
+  // Both teams lined up, drawn until the first real frame arrives.
+  const kickoff = useRef<TrackingFrame | null>(null)
   const session = useSession()
   const [renderer, setRenderer] = useState<PitchRenderer | null>(null)
   const meta = useSessionState((s) => s.meta)
@@ -57,7 +61,7 @@ export function Stage() {
         }
         r.layout(w, h)
         const t = session.tick(now)
-        const frame = frameAt(session.buffers.frames, t)
+        const frame = frameAt(session.buffers.frames, t) ?? kickoff.current
         const active = session.store.getState().active
         r.draw(frame, active, t)
         if (frame) {
@@ -98,6 +102,7 @@ export function Stage() {
       if (c) looks[code] = { primary: c.primary_color, secondary: c.secondary_color }
     }
     renderer.setLooks(looks)
+    kickoff.current = preKickFrame(meta)
     renderer.layout(hostRef.current?.clientWidth ?? 0, hostRef.current?.clientHeight ?? 0, true)
   }, [renderer, meta])
 

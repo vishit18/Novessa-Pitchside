@@ -3,7 +3,8 @@ import { fallbackTime } from '@/core/recap'
 import { ApiError, getCatchUp, getRecap, type CatchUp, type Recap, type RecapKind } from '@/net/api'
 
 export type RecapState =
-  | { status: 'loading'; slow: boolean }
+  /** `preview` is the computed score and key moments, which arrive before the story does. */
+  | { status: 'loading'; slow: boolean; preview: CatchUp | null }
   /** The Recap Editor answered. `catchUp` is the key-moments timeline up to the recap's time. */
   | { status: 'ready'; recap: Recap; catchUp: CatchUp | null }
   /** The gateway has its agents switched off. Only the computed catch-up is available. */
@@ -20,19 +21,26 @@ export function useRecap(
   persona: string,
   lang: string,
 ): { state: RecapState; retry: () => void } {
-  const [state, setState] = useState<RecapState>({ status: 'loading', slow: false })
+  const [state, setState] = useState<RecapState>({
+    status: 'loading',
+    slow: false,
+    preview: null,
+  })
   const [nonce, setNonce] = useState(0)
 
   useEffect(() => {
     let live = true
     const slowTimer = window.setTimeout(
-      () =>
-        live && setState((s) => (s.status === 'loading' ? { status: 'loading', slow: true } : s)),
+      () => live && setState((s) => (s.status === 'loading' ? { ...s, slow: true } : s)),
       SLOW_AFTER_MS,
     )
     const run = async () => {
-      setState({ status: 'loading', slow: false })
+      setState({ status: 'loading', slow: false, preview: null })
       const moments = (t: number) => getCatchUp(matchId, t).catch(() => null)
+      // The score and key moments need no model, so show them while the story is written.
+      void moments(fallbackTime(kind)).then(
+        (preview) => live && setState((s) => (s.status === 'loading' ? { ...s, preview } : s)),
+      )
       try {
         const recap = await getRecap(matchId, kind, persona, lang)
         const catchUp = await moments(recap.t_match)

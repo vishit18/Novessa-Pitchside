@@ -127,6 +127,14 @@ export function Onboarding({ query }: { query: URLSearchParams }) {
 
           {step === 'persona' && (
             <Question title="How do you watch?" hint={fixture ? fixtureLine(fixture) : undefined}>
+              {saved && (
+                <Choice selected={false} onClick={() => finish(saved)}>
+                  <span className="font-display text-[26px] font-semibold leading-none text-amber">
+                    Same as last time
+                  </span>
+                  <span className="mt-1 block text-[14px] text-text/80">{savedLine(saved)}</span>
+                </Choice>
+              )}
               {PERSONAS.map((p) => (
                 <Choice
                   key={p.id}
@@ -207,6 +215,14 @@ export function Onboarding({ query }: { query: URLSearchParams }) {
       </div>
     </main>
   )
+}
+
+/** "Casual, English, Port Calder": what a returning viewer chose last time. */
+function savedLine(p: ViewerProfile): string {
+  const persona = PERSONAS.find((x) => x.id === p.persona)?.label ?? p.persona
+  const lang = LANGS.find((x) => x.id === p.lang)?.label ?? p.lang
+  const who = p.player ? PLAYERS[p.player]?.name : p.club ? CLUBS[p.club]?.name : null
+  return [persona, lang, who].filter(Boolean).join(', ')
 }
 
 function fixtureLine(m: MatchSummary): string {

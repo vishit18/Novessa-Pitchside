@@ -16,3 +16,6 @@ footage/
 frontend/test-results/
 frontend/playwright-report/
 data/cache/
+
+# design tool snapshots
+.impeccable/

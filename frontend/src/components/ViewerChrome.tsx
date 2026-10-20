@@ -1,0 +1,68 @@
+import { CHROME_BUTTON } from '@/components/chromeStyles'
+import { CommentaryToggle } from '@/components/CommentaryToggle'
+import { CLUBS, PLAYERS } from '@/data/league'
+import { navigate, withParams } from '@/router'
+import { LANGS, PERSONAS } from '@/state/profile'
+import { useSession, useSessionState, useT } from '@/state/useSession'
+import { useWake } from '@/state/useWake'
+
+/**
+ * Top-right of the broadcast. The chip says who is watching and how, always. Companion, recap
+ * and commentary fade in when the pointer moves or focus lands, and out again after three seconds.
+ */
+export function ViewerChrome() {
+  const session = useSession()
+  const t = useT()
+  const profile = useSessionState((s) => s.profile)
+  const { shown, wake } = useWake()
+  const matchId = session.opts.matchId
+
+  const persona = PERSONAS.find((p) => p.id === profile.persona)?.label ?? profile.persona
+  const lang = LANGS.find((l) => l.id === profile.lang)?.label ?? profile.lang
+  const who = profile.player
+    ? PLAYERS[profile.player]?.name
+    : profile.club
+      ? CLUBS[profile.club]?.name
+      : null
+
+  return (
+    <div className="flex flex-col items-end gap-2" onFocusCapture={wake}>
+      <button
+        className="plate-chip group flex items-center gap-3 bg-raised/90 py-2 pl-4 pr-3 text-start hover:bg-[#1d242d]"
+        onClick={() => navigate(withParams('/', { match: matchId }))}
+        aria-label={`${persona}, ${lang}${who ? `, ${who}` : ''}. ${t('changeHow')}`}
+      >
+        <span className="flex flex-col">
+          <span className="font-display text-[20px] font-semibold leading-none">{persona}</span>
+          <span className="mt-1 text-[14px] leading-none text-text/80">
+            {[lang, who].filter(Boolean).join(', ')}
+          </span>
+        </span>
+        <svg viewBox="0 0 12 12" className="size-3 text-muted group-hover:text-text" aria-hidden>
+          <path d="M2 4.5 6 8.5 10 4.5" fill="none" stroke="currentColor" strokeWidth="1.6" />
+        </svg>
+      </button>
+      <div
+        className={`flex gap-1.5 transition-opacity duration-200 ${
+          shown
+            ? 'opacity-100'
+            : 'pointer-events-none opacity-0 focus-within:pointer-events-auto focus-within:opacity-100'
+        }`}
+      >
+        <button
+          className={CHROME_BUTTON}
+          onClick={() => navigate(withParams('/companion', { match: matchId }))}
+        >
+          {t('openCompanion')}
+        </button>
+        <button
+          className={CHROME_BUTTON}
+          onClick={() => navigate(withParams('/recap', { match: matchId }))}
+        >
+          {t('openRecap')}
+        </button>
+        <CommentaryToggle />
+      </div>
+    </div>
+  )
+}

@@ -1,3 +1,4 @@
+import { CHROME_BUTTON } from '@/components/chromeStyles'
 import { useCommentary } from '@/state/useCommentary'
 import { useT } from '@/state/useSession'
 
@@ -6,11 +7,7 @@ export function CommentaryToggle() {
   const t = useT()
   const { on, toggle } = useCommentary()
   return (
-    <button
-      className="-my-2 inline-flex min-h-11 items-center px-1 text-[14px] text-muted underline decoration-white/25 underline-offset-4 hover:text-text aria-pressed:text-amber"
-      aria-pressed={on}
-      onClick={toggle}
-    >
+    <button className={CHROME_BUTTON} aria-pressed={on} onClick={toggle}>
       {t(on ? 'commentaryOn' : 'commentaryOff')}
     </button>
   )

@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { Controls, LowerThird, ScoreBug, StatusPill, Wordmark } from '@/components/Hud'
+import { Controls, KickOffCard, LowerThird, ScoreBug, StatusPill, Wordmark } from '@/components/Hud'
 import { Stage } from '@/components/Stage'
 import { isRtl } from '@/state/profile'
 import type { Session } from '@/state/session'
@@ -33,7 +33,6 @@ function PaneBody({ compact, transport, corner }: Omit<Props, 'session'>) {
   const detail = useSessionState((s) => s.statusDetail)
   const meta = useSessionState((s) => s.meta)
   const snapshot = useSessionState((s) => s.snapshot)
-  const t = useT()
   const failed = status === 'error' && !snapshot
 
   return (
@@ -71,14 +70,7 @@ function PaneBody({ compact, transport, corner }: Omit<Props, 'session'>) {
         </div>
       </div>
 
-      {(!meta || !snapshot) && !failed && (
-        <div className="absolute inset-0 grid place-items-center bg-ink/80">
-          <div className="text-center">
-            <Wordmark />
-            <p className="pulse-soft mt-3 text-sm text-muted">{t('waiting')}</p>
-          </div>
-        </div>
-      )}
+      {(!meta || !snapshot) && !failed && <KickOffCard compact={compact} />}
       {failed && <FeedDown detail={detail} />}
     </div>
   )

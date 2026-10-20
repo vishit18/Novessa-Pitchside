@@ -19,6 +19,9 @@ const LANGUAGES = [
   { id: 'pt', label: 'Português' },
 ]
 
+/** Story column, then the numbers. Centred as a pair so wide screens have no empty middle. */
+const LAYOUT = 'lg:grid-cols-[minmax(0,68ch)_minmax(0,480px)] lg:justify-center'
+
 const KINDS: RecapKind[] = ['half_time', 'full_time']
 
 const TRANSLATION_NOTE: Record<string, string> = {
@@ -59,44 +62,48 @@ export function Recap({ query }: { query: URLSearchParams }) {
   const catchUp = state.status === 'ready' || state.status === 'off' ? state.catchUp : null
 
   return (
-    <main className="stage-bg mx-auto flex min-h-dvh w-full max-w-[1500px] flex-col gap-8 px-4 py-5 sm:px-8">
-      <header className="flex flex-wrap items-center justify-between gap-x-8 gap-y-3">
-        <div className="flex flex-wrap items-baseline gap-x-5 gap-y-1">
-          <Wordmark />
-          <h1 className="font-display text-[26px] font-semibold leading-none">
-            {KIND_LABEL[kind]} recap
-          </h1>
-        </div>
-        <button
-          className="inline-flex min-h-11 items-center text-[14px] text-muted underline decoration-white/25 underline-offset-4 hover:text-text"
-          onClick={() => navigate(withParams('/watch', { match: matchId }))}
-        >
-          Back to the match
-        </button>
-      </header>
-
-      <Toolbar kind={kind} persona={persona} lang={lang} onChange={go} />
-
-      <div lang={lang} dir={rtl ? 'rtl' : 'ltr'} className="contents">
-        {state.status === 'loading' && <Loading slow={state.slow} />}
-        {state.status === 'failed' && (
-          <div role="alert" className="max-w-[60ch]">
-            <p className="text-[16px]">The recap did not load.</p>
-            <p className="mt-1 text-[14px] text-muted">
-              The gateway may still be starting. Try again in a few seconds.
-            </p>
-            <button
-              className="mt-3 h-11 border border-amber px-4 text-[15px] font-medium text-amber"
-              onClick={retry}
-            >
-              Try again
-            </button>
+    <div className="stage-bg min-h-dvh">
+      <main className="mx-auto flex min-h-dvh w-full max-w-[1280px] flex-col gap-8 px-4 py-5 sm:px-8">
+        <header className="flex flex-wrap items-center justify-between gap-x-8 gap-y-3">
+          <div className="flex flex-wrap items-baseline gap-x-5 gap-y-1">
+            <Wordmark />
+            <h1 className="font-display text-[26px] font-semibold leading-none">
+              {KIND_LABEL[kind]} recap
+            </h1>
           </div>
-        )}
-        {state.status === 'off' && <AgentsOff catchUp={state.catchUp} codes={codes} />}
-        {recap && <Written recap={recap} catchUp={catchUp} codes={codes} />}
-      </div>
-    </main>
+          <button
+            className="inline-flex min-h-11 items-center text-[14px] text-muted underline decoration-white/25 underline-offset-4 hover:text-text"
+            onClick={() => navigate(withParams('/watch', { match: matchId }))}
+          >
+            Back to the match
+          </button>
+        </header>
+
+        <Toolbar kind={kind} persona={persona} lang={lang} onChange={go} />
+
+        <div lang={lang} dir={rtl ? 'rtl' : 'ltr'} className="contents">
+          {state.status === 'loading' && (
+            <Loading slow={state.slow} preview={state.preview} codes={codes} />
+          )}
+          {state.status === 'failed' && (
+            <div role="alert" className="max-w-[60ch]">
+              <p className="text-[16px]">The recap did not load.</p>
+              <p className="mt-1 text-[14px] text-muted">
+                The gateway may still be starting. Try again in a few seconds.
+              </p>
+              <button
+                className="mt-3 h-11 border border-amber px-4 text-[15px] font-medium text-amber"
+                onClick={retry}
+              >
+                Try again
+              </button>
+            </div>
+          )}
+          {state.status === 'off' && <AgentsOff catchUp={state.catchUp} codes={codes} />}
+          {recap && <Written recap={recap} catchUp={catchUp} codes={codes} />}
+        </div>
+      </main>
+    </div>
   )
 }
 
@@ -204,34 +211,48 @@ function ShareButton({ text, title }: { text: string; title: string }) {
   )
 }
 
-function Loading({ slow }: { slow: boolean }) {
+function Loading({
+  slow,
+  preview,
+  codes,
+}: {
+  slow: boolean
+  preview: CatchUp | null
+  codes: Codes
+}) {
   return (
-    <div className="flex flex-col gap-4" role="status">
-      <p className="font-display text-[34px] font-semibold leading-none">Writing the recap</p>
-      <div className="flex max-w-[62ch] flex-col gap-3" aria-hidden>
-        {[92, 100, 84, 96, 60].map((w, i) => (
-          <span
-            key={i}
-            className="pulse-soft block h-4 bg-white/[0.07]"
-            style={{ width: `${w}%` }}
-          />
-        ))}
+    <>
+      {preview && <Scoreline codes={codes} score={preview.score} clock={preview.clock} />}
+      <div className={`grid gap-10 ${LAYOUT}`}>
+        <div className="flex flex-col gap-4" role="status">
+          <p className="font-display text-[34px] font-semibold leading-none">Writing the recap</p>
+          <div className="flex max-w-[62ch] flex-col gap-3" aria-hidden>
+            {[92, 100, 84, 96, 60].map((w, i) => (
+              <span
+                key={i}
+                className="pulse-soft block h-4 bg-white/[0.07]"
+                style={{ width: `${w}%` }}
+              />
+            ))}
+          </div>
+          {slow && (
+            <p className="max-w-[62ch] text-[14px] text-muted">
+              The first recap for a match takes about 15 seconds while the Verifier checks every
+              number. After that it opens straight away.
+            </p>
+          )}
+        </div>
+        {preview && <MomentsTimeline catchUp={preview} />}
       </div>
-      {slow && (
-        <p className="max-w-[62ch] text-[14px] text-muted">
-          The first recap for a match takes about 15 seconds while the Verifier checks every number.
-          After that it opens straight away.
-        </p>
-      )}
-    </div>
+    </>
   )
 }
 
 function AgentsOff({ catchUp, codes }: { catchUp: CatchUp | null; codes: Codes }) {
   return (
-    <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_480px]">
+    <div className={`grid gap-10 ${LAYOUT}`}>
       <div className="flex max-w-[62ch] flex-col gap-4">
-        <p role="status" className="border-s-2 border-amber bg-amber/10 px-3 py-2 text-[14px]">
+        <p role="status" className="bg-amber/10 px-3 py-2 text-[14px]">
           The agents are switched off on this gateway, so there is no written recap. This is what
           the numbers say.
         </p>
@@ -279,8 +300,8 @@ function Written({
         }
       />
 
-      <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_480px] lg:gap-14">
-        <article className="flex max-w-[64ch] flex-col gap-6">
+      <div className={`grid gap-10 lg:gap-14 ${LAYOUT}`}>
+        <article className="flex flex-col gap-6">
           <h2 className="font-display text-[40px] font-bold leading-[0.98] sm:text-[56px]">
             {output.headline}
           </h2>
@@ -291,7 +312,7 @@ function Written({
           </div>
 
           <section aria-labelledby="hl-h" className="mt-2 flex flex-col gap-3">
-            <h3 id="hl-h" className="font-display text-[26px] font-semibold leading-none">
+            <h3 id="hl-h" className="font-display text-[30px] font-semibold leading-none">
               Highlights in 60 seconds
             </h3>
             <ol className="flex list-decimal flex-col gap-2.5 ps-6 text-[17px] leading-snug marker:font-display marker:text-amber">
@@ -318,7 +339,7 @@ function Written({
 function Leaders({ recap }: { recap: RecapData }) {
   return (
     <section aria-labelledby="leaders-h" className="flex flex-col gap-3">
-      <h2 id="leaders-h" className="font-display text-[26px] font-semibold leading-none">
+      <h2 id="leaders-h" className="font-display text-[30px] font-semibold leading-none">
         Match leaders
       </h2>
       <dl className="grid grid-cols-[1fr_auto] gap-x-4 gap-y-2">

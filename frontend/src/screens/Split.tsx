@@ -15,7 +15,6 @@ import { useLiveSession } from '@/state/useSession'
 import { BroadcastPane } from './BroadcastPane'
 
 const SPEEDS = [1, 4, 10]
-const DELAYS = [0, 20]
 
 /**
  * "Same match. Your story." Two viewers on the same match, each with their own profile and
@@ -56,10 +55,10 @@ export function Split({ query }: { query: URLSearchParams }) {
     }))
 
   return (
-    <main className="flex min-h-dvh w-full flex-col gap-4 bg-ink px-4 py-4 sm:px-6 sm:py-5">
+    <main className="flex min-h-dvh w-full flex-col gap-3 bg-ink px-4 py-4 sm:px-6 sm:py-5">
       <header className="flex flex-col gap-3 sm:grid sm:grid-cols-[1fr_auto_1fr] sm:items-center sm:gap-4">
         <Wordmark />
-        <h1 className="font-display text-[34px] font-bold leading-none sm:text-[52px] sm:whitespace-nowrap">
+        <h1 className="font-display text-[32px] font-bold leading-none sm:text-[44px] sm:whitespace-nowrap">
           Same match. Your story.
         </h1>
         <button
@@ -70,7 +69,7 @@ export function Split({ query }: { query: URLSearchParams }) {
         </button>
       </header>
 
-      <div className="flex flex-1 flex-col justify-center gap-6">
+      <div className="flex flex-1 flex-col gap-5">
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-2 lg:gap-8">
           <Column session={a} profile={left.profile} onChange={change(a, setLeft)} />
           <Column session={b} profile={right.profile} onChange={change(b, setRight)} />
@@ -118,7 +117,7 @@ export function Split({ query }: { query: URLSearchParams }) {
 }
 
 function chip(on: boolean): string {
-  return `h-8 min-w-9 border px-2.5 text-[15px] font-medium transition-colors ${
+  return `h-9 min-w-9 border px-2.5 text-[15px] font-medium transition-colors ${
     on ? 'border-amber text-amber' : 'border-white/30 text-muted hover:text-text'
   }`
 }
@@ -135,31 +134,44 @@ function Column({
   const [delay, setDelay] = useState(0)
   return (
     <section className="flex min-w-0 flex-col gap-3" aria-label={`${profile.persona} viewer`}>
-      <div className="aspect-video w-full overflow-hidden lg:aspect-[16/10]">
+      <div className="h-[44dvh] min-h-[280px] w-full overflow-hidden lg:h-[min(62dvh,660px)]">
         <BroadcastPane session={session} compact transport={false} />
       </div>
-      <div className="flex flex-wrap items-center gap-x-6 gap-y-2.5">
+      <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2.5">
         <Picker
           label="Watching as"
           options={PERSONAS.map((p) => ({ id: p.id, label: p.label }))}
           value={profile.persona}
           onPick={(id) => onChange({ persona: id as Persona })}
         />
-        <Picker
-          label="Language"
-          options={LANGS.map((l) => ({ id: l.id, label: l.label }))}
-          value={profile.lang}
-          onPick={(id) => onChange({ lang: id as Lang })}
-        />
-        <Picker
-          label="Stream delay"
-          options={DELAYS.map((d) => ({ id: String(d), label: `${d}s` }))}
-          value={String(delay)}
-          onPick={(id) => {
-            setDelay(Number(id))
-            session.setDelay(Number(id))
-          }}
-        />
+        <div className="flex items-center gap-2">
+          <label className="flex items-center gap-2 text-[13px] text-muted">
+            Language
+            <select
+              className="h-9 border border-white/30 bg-ink px-2 text-[15px] font-medium text-text"
+              value={profile.lang}
+              onChange={(e) => onChange({ lang: e.target.value as Lang })}
+            >
+              {LANGS.map((l) => (
+                <option key={l.id} value={l.id}>
+                  {l.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <button
+            className={chip(delay > 0)}
+            aria-pressed={delay > 0}
+            title="Stream delay: the same moment arrives later for this viewer"
+            onClick={() => {
+              const next = delay === 0 ? 20 : 0
+              setDelay(next)
+              session.setDelay(next)
+            }}
+          >
+            {delay > 0 ? `Delayed ${delay}s` : 'Delay 0s'}
+          </button>
+        </div>
       </div>
     </section>
   )
