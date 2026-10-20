@@ -28,7 +28,7 @@ Priority: **P0** = we fail or score badly without it. **P1** = needed to win. **
 | [ ] | Player-focused mode, following one player throughout the match | P0 | Camera follow on the 2D pitch, live player card, every insight framed around them |
 | [ ] | Language preference | P0 | Narrative and voice in at least 5 languages (EN, ES, FR, AR, HI; plus PT if cheap) |
 | [ ] | Single performance metric a viewer cares about | P0 | "One-number mode": viewer picks e.g. pressing intensity or sprint speed, the whole overlay layer reorganises around it |
-| [ ] | "Welcome many more ideas" | P1 | Spoiler-safe catch-up ("I joined at 60', what did I miss?"), second-screen companion on mobile |
+| [x] | "Welcome many more ideas" | P1 | Spoiler-safe catch-up ("I joined at 60', what did I miss?"), second-screen companion on mobile | Built: `/companion` (`frontend/src/screens/Companion.tsx`), catch-up from `GET /matches/{id}/catchup` (`backend/app/catchup.py`), spoiler test in `backend/tests/test_catchup.py`. Catch-up text is English only for now.
 
 ## C. Real-time match intelligence (brief §(ii))
 
@@ -58,7 +58,7 @@ Priority: **P0** = we fail or score badly without it. **P1** = needed to win. **
 | [ ] | Explain **game rhythm patterns** | P0 | Rhythm from event tempo and possession length, momentum swings |
 | [ ] | **Data innovation**: create or extend a synthetic football-realistic dataset (passes, shots, tackles, possession changes, pressure events, metadata) | P0 | Our engine + published dataset of generated matches with a datasheet (`data/README.md`) |
 | [ ] | **Multi-language storytelling** for global studio/streaming | P0 | Localiser agent + Azure AI Translator + Azure AI Speech voices |
-| [ ] | Suitable for studio, broadcast **and** streaming | P0 | Broadcast view (studio), Companion view (streaming/second screen), Control Room (producer) |
+| [x] | Suitable for studio, broadcast **and** streaming | P0 | Broadcast view (studio), Companion view (streaming/second screen), Control Room (producer) | All three exist: `/watch`, `/companion`, `/control`.
 
 ## E. Submission requirements (rules §4.4) — all P0
 

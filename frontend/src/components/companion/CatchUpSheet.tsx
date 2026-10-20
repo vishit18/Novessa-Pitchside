@@ -79,7 +79,9 @@ export function CatchUpSheet({ open, matchId, session, onClose }: Props) {
           )}
           {load.state === 'ready' && (
             <>
-              <p className="mt-3 text-[16px] leading-relaxed">{load.data.summary}</p>
+              <p dir="auto" className="mt-3 text-[16px] leading-relaxed">
+                {load.data.summary}
+              </p>
               {load.data.moments.length > 0 && (
                 <ol className="mt-4 flex flex-col divide-y divide-white/10 border-y border-white/10">
                   {load.data.moments.map((m) => (
@@ -88,10 +90,16 @@ export function CatchUpSheet({ open, matchId, session, onClose }: Props) {
                         {m.clock}
                       </span>
                       <span>
-                        <span className="block font-display text-[20px] font-semibold leading-none">
+                        <span
+                          dir="auto"
+                          className="block font-display text-[20px] font-semibold leading-none"
+                        >
                           {m.headline}
                         </span>
-                        <span className="mt-1 block text-[14px] leading-snug text-text/80">
+                        <span
+                          dir="auto"
+                          className="mt-1 block text-[14px] leading-snug text-text/80"
+                        >
                           {m.body}
                         </span>
                       </span>

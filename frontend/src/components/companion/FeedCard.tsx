@@ -45,8 +45,14 @@ export function FeedCard({ item, open, onToggle, onListen }: Props) {
               </span>
             )}
           </div>
-          <h3 className="mt-1.5 font-display text-[26px] font-bold leading-[1]">{item.headline}</h3>
-          {item.body && <p className="mt-1.5 text-[15px] leading-snug text-text/85">{item.body}</p>}
+          <h3 dir="auto" className="mt-1.5 font-display text-[26px] font-bold leading-[1]">
+            {item.headline}
+          </h3>
+          {item.body && (
+            <p dir="auto" className="mt-1.5 text-[15px] leading-snug text-text/85">
+              {item.body}
+            </p>
+          )}
 
           <div className="mt-2 flex flex-wrap items-center gap-x-4">
             <button
