@@ -43,6 +43,28 @@ def agents_enabled() -> bool:
     )
 
 
+# Placeholder list prices in USD per million tokens (input, output). Override with
+# COST_PER_M_TOKENS="chat-fast=0.4:1.6,chat-strong=0.25:2.0". The Control Room says "estimate".
+DEFAULT_RATES = {"chat-fast": (0.4, 1.6), "chat-strong": (0.25, 2.0)}
+
+
+def _rates(deployment: str) -> tuple[float, float]:
+    for part in os.environ.get("COST_PER_M_TOKENS", "").split(","):
+        name, _, pair = part.partition("=")
+        if name.strip() == deployment and ":" in pair:
+            a, b = pair.split(":", 1)
+            return float(a), float(b)
+    return DEFAULT_RATES.get(deployment, (0.0, 0.0))
+
+
+def _percentile(sorted_values: list[float], pct: float) -> float:
+    """Nearest-rank percentile of an already sorted list; 0 when empty."""
+    if not sorted_values:
+        return 0.0
+    rank = max(1, round(pct / 100 * len(sorted_values)))
+    return sorted_values[rank - 1]
+
+
 class AgentRuntime:
     """One shared model client (so the chaos switch and health are global) and a task per match."""
 
@@ -151,20 +173,42 @@ class AgentRuntime:
         return got if got.status != "dropped" else None
 
     def health(self) -> dict[str, Any]:
+        """Per-agent counters and latency percentiles, plus token totals and a cost estimate."""
         agents = {}
         if self.llm is not None:
             for name, h in self.llm.health.items():
-                lat = h.latencies_ms
+                lat = sorted(h.latencies_ms)
                 agents[name] = {
                     "calls": h.calls,
                     "failures": h.failures,
                     "fallbacks": h.fallbacks,
                     "last_latency_ms": round(h.last_latency_ms),
                     "avg_latency_ms": round(sum(lat) / len(lat)) if lat else 0,
+                    "p50_latency_ms": round(_percentile(lat, 50)),
+                    "p95_latency_ms": round(_percentile(lat, 95)),
                     "breaker_open": h.breaker_open,
+                    "breaker_for_s": round(h.breaker_for_s, 1),
                     "killed": h.killed,
+                    "killed_for_s": round(h.killed_for_s, 1),
                 }
-        return {"enabled": self.enabled, "agents": agents, "matches": self.progress}
+        return {
+            "enabled": self.enabled,
+            "agents": agents,
+            "matches": self.progress,
+            "usage": self._usage(),
+        }
+
+    def _usage(self) -> dict[str, Any]:
+        """Tokens so far and what they cost at the per-million rates in COST_PER_M_TOKENS."""
+        used = getattr(getattr(self.llm, "transport", None), "usage", None) or {}
+        models = {}
+        total = 0.0
+        for deployment, tokens in used.items():
+            rate_in, rate_out = _rates(deployment)
+            usd = (tokens["prompt"] * rate_in + tokens["completion"] * rate_out) / 1_000_000
+            total += usd
+            models[deployment] = {**tokens, "usd": round(usd, 4)}
+        return {"models": models, "usd": round(total, 4), "estimate": True}
 
     def kill(self, agent: str, seconds: float) -> None:
         """Chaos switch."""

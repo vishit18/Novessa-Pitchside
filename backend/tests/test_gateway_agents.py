@@ -69,13 +69,31 @@ def test_agent_text_arrives_as_an_update(client: TestClient) -> None:
 def test_health_and_chaos_switch(client: TestClient) -> None:
     assert client.get("/agents/health").json()["enabled"] is True
     assert client.post("/agents/analyst/kill?seconds=5").json()["killed_for_s"] == 5
-    assert client.get("/agents/health").json()["agents"]["analyst"]["killed"] is True
+    analyst = client.get("/agents/health").json()["agents"]["analyst"]
+    assert analyst["killed"] is True
+    assert 0 < analyst["killed_for_s"] <= 5
+
+
+def test_health_reports_percentiles_and_usage() -> None:
+    from backend.app.agents_runtime import _percentile, _rates
+
+    assert _percentile([], 95) == 0.0
+    assert _percentile([10, 20, 30, 40], 50) == 20
+    assert _percentile([10, 20, 30, 40], 95) == 40
+    assert _rates("chat-fast") == (0.4, 1.6)
+    assert _rates("unknown") == (0.0, 0.0)
 
 
 def test_insights_endpoint_lists_trails(client: TestClient) -> None:
     out = client.get(f"/matches/{MATCH}/insights").json()
     assert out
     assert all("trail" in a for a in out)
+    assert all({"clock", "kind", "summary"} <= a["moment"].keys() for a in out)
+
+
+def test_agents_can_be_started_without_a_viewer(client: TestClient) -> None:
+    assert client.post(f"/matches/{MATCH}/agents/start").json()["enabled"] is True
+    assert client.post("/matches/nope/agents/start").status_code == 404
 
 
 def test_text_arrives_in_the_viewers_language_with_audio(client: TestClient) -> None:

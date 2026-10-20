@@ -49,6 +49,8 @@ class FoundryTransport:
         self._credential: DefaultAzureCredential | None = None
         self._token: tuple[str, float] | None = None
         self._client = httpx.AsyncClient()
+        # Running token totals per deployment, read by the Control Room for the cost estimate.
+        self.usage: dict[str, dict[str, int]] = {}
 
     async def _bearer(self) -> str:
         if self._token and self._token[1] - time.time() > 120:
@@ -81,7 +83,11 @@ class FoundryTransport:
             timeout=timeout_s,
         )
         resp.raise_for_status()
-        content: str = resp.json()["choices"][0]["message"]["content"]
+        data = resp.json()
+        used = self.usage.setdefault(deployment, {"prompt": 0, "completion": 0})
+        used["prompt"] += int(data.get("usage", {}).get("prompt_tokens", 0))
+        used["completion"] += int(data.get("usage", {}).get("completion_tokens", 0))
+        content: str = data["choices"][0]["message"]["content"]
         return content
 
 
@@ -105,6 +111,14 @@ class AgentHealth:
     @property
     def killed(self) -> bool:
         return time.monotonic() < self.killed_until
+
+    @property
+    def killed_for_s(self) -> float:
+        return max(0.0, self.killed_until - time.monotonic())
+
+    @property
+    def breaker_for_s(self) -> float:
+        return max(0.0, self.breaker_open_until - time.monotonic())
 
 
 class ResilientLLM:

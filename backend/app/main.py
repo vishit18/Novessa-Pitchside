@@ -215,7 +215,28 @@ def create_app(data_dir: Path | None = None) -> FastAPI:
         """What the agents produced so far, with each moment's verification trail."""
         await load(match_id)
         runtime: AgentRuntime = app.state.agents
-        return [a.model_dump(mode="json") for a in runtime.results(match_id).values()]
+        out = []
+        for aired in runtime.results(match_id).values():
+            row = aired.model_dump(mode="json")
+            moment = (await runtime.context(match_id)).intel.get_moment(aired.moment_id)
+            row["moment"] = {
+                "kind": moment.kind,
+                "clock": moment.clock,
+                "t_match": moment.t_match,
+                "team": moment.team,
+                "summary": moment.summary,
+                "significance": moment.significance,
+            }
+            out.append(row)
+        return out
+
+    @app.post("/matches/{match_id}/agents/start")
+    async def agents_start(match_id: str) -> dict[str, Any]:
+        """Start the agents on a match without a viewer (the Control Room's start button)."""
+        await load(match_id)
+        runtime: AgentRuntime = app.state.agents
+        runtime.start(match_id)
+        return {"enabled": runtime.enabled, "progress": runtime.progress.get(match_id)}
 
     @app.get("/matches/{match_id}/audio/{moment_id}")
     async def audio(
