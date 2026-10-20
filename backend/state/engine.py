@@ -361,6 +361,7 @@ class StateEngine:
             EventType.FREE_KICK: self._on_free_kick,
             EventType.FOUL: self._on_foul,
             EventType.CARD: self._on_card,
+            EventType.OFFSIDE: self._on_offside,
         }.get(ev.type)
         if handler:
             out.extend(handler(ev))
@@ -502,6 +503,12 @@ class StateEngine:
     def _on_pressure(self, ev: MatchEvent) -> list[Output]:
         if ev.team:
             self._press_actions[ev.team].append(ev.t_match)
+        return []
+
+    def _on_offside(self, ev: MatchEvent) -> list[Output]:
+        """Count it against the team that was caught offside."""
+        if ev.team:
+            self.team_stats[ev.team].offsides += 1
         return []
 
     def _on_corner(self, ev: MatchEvent) -> list[Output]:

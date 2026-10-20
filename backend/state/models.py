@@ -66,6 +66,7 @@ class TeamStats(BaseModel):
     free_kicks: int = 0
     penalties: int = 0
     shots: int = 0
+    offsides: int = 0
 
 
 class StateSnapshot(BaseModel):

@@ -114,3 +114,11 @@ def test_distance_and_speed_from_frames(state_run: StateRun) -> None:
 def test_deterministic(state_run: StateRun) -> None:
     again = run_state(state_run.match)
     assert [o.model_dump() for o in again.outputs] == [o.model_dump() for o in state_run.outputs]
+
+
+def test_offsides_are_counted_per_team(state_run: StateRun) -> None:
+    flagged = [e for e in state_run.match.events if e.type == EventType.OFFSIDE]
+    counted = sum(s.offsides for s in state_run.engine.team_stats.values())
+    assert counted == len(flagged)
+    for team, stats in state_run.engine.team_stats.items():
+        assert stats.offsides == sum(1 for e in flagged if e.team == team)

@@ -70,7 +70,7 @@ Sent to every viewer regardless of profile, once a second. `players` has one ent
 
 ## team_stats (inside `state`)
 
-The `state` message carries `team_stats`: `{TEAM: {fouls, yellows, reds, corners, free_kicks, penalties, shots}}` for both teams, so the UI can show a discipline and set-piece panel without counting events itself.
+The `state` message carries `team_stats`: `{TEAM: {fouls, yellows, reds, corners, free_kicks, penalties, shots, offsides}}` for both teams, so the UI can show a discipline and set-piece panel without counting events itself.
 
 ## Payloads the renderer relies on
 
