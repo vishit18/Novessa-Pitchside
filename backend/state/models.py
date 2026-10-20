@@ -12,6 +12,7 @@ TriggerKind = Literal[
     "pass_difficulty",
     "shot_speed",
     "milestone",
+    "offside",
 ]
 
 MomentKind = Literal[

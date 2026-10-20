@@ -506,10 +506,11 @@ class StateEngine:
         return []
 
     def _on_offside(self, ev: MatchEvent) -> list[Output]:
-        """Count it against the team that was caught offside."""
-        if ev.team:
-            self.team_stats[ev.team].offsides += 1
-        return []
+        """Count it against the team that was caught offside, and flag it on screen."""
+        if not ev.team:
+            return []
+        self.team_stats[ev.team].offsides += 1
+        return [Trigger(kind="offside", t_match=ev.t_match, team=ev.team, player_id=ev.player_id)]
 
     def _on_corner(self, ev: MatchEvent) -> list[Output]:
         if ev.team:

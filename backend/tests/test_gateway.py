@@ -283,3 +283,15 @@ def test_story_overlays_carry_the_clock(overlays: list[dict[str, Any]]) -> None:
     assert any(o["kind"] == "milestone" for o in story)
     for o in story:
         assert len(o["payload"]["clock"].split(":")) == 2, o["payload"]
+
+
+async def test_every_offside_flag_becomes_a_lower_third() -> None:
+    from backend.app.store import MatchStore
+    from engine.schema import EventType
+
+    for match_id in ("derby_01", "derby_02", "derby_03"):
+        m = await MatchStore().get(match_id)
+        flags = [e for e in m.events if e.type == EventType.OFFSIDE]
+        shown = [o for o in m.timeline.overlays if o.payload.get("milestone") == "offside"]
+        assert len(shown) == len(flags)
+        assert all(o.payload["headline"] == "Offside" for o in shown)

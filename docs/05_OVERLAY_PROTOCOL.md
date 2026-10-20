@@ -78,6 +78,7 @@ The `state` message carries `team_stats`: `{TEAM: {fouls, yellows, reds, corners
 - `shot_speed`: slot `lower_third`, anchored to the shooter. Payload: `speed_kmh`, `xg`, `outcome`, `player_id`.
 - `speed_burst`: slot `player_tag`, anchored to the player. Payload: `speed_kmh`, `rank_in_match`.
 - `distance_milestone`: slot `player_tag`. Payload: `km`.
+- An offside flag arrives as an instant `milestone` overlay (`payload.milestone` is `offside`, headline "Offside", body the player and club, `tone` `milestone`). It is a trigger, not a moment, so it never reaches the agents and never shifts a moment id.
 - Cards, penalties and red cards arrive as `insight` overlays (`moment_kind` `card` or `penalty`, `tone` `info` or `chance`). The payload adds `card` (`yellow` or `red`) for cards and `staff: true` for a manager. A second yellow gives one overlay saying so.
 - `milestone` and `insight`: slot `lower_third`. Payload: `headline`, `body`, `team`, `tone` (`goal`, `chance`, `swing`, `milestone`, `info`), optional `moment_kind`, and `clock` on both kinds (the match clock as shown on the score bug, e.g. `60:38`).
 - `op: "update"` with the same `moment_id` merges its payload into the earlier overlay. Agent text arrives this way after the instant overlay.

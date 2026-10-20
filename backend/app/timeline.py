@@ -329,7 +329,30 @@ class TimelineBuilder:
             ]
         if tr.kind == "milestone":
             return [self._milestone(tr, anchor, prov)]
+        if tr.kind == "offside":
+            return [self._offside(tr, anchor, prov)]
         return []
+
+    def _offside(self, tr: Trigger, anchor: Anchor | None, prov: Provenance) -> Overlay:
+        who = self.names.player(tr.player_id)
+        club = self.names.clubs.get(tr.team or "", tr.team or "")
+        return self._overlay(
+            slot="lower_third",
+            kind="milestone",
+            priority=45,
+            t_match=tr.t_match,
+            duration_s=4.5,
+            anchor=anchor,
+            provenance=prov,
+            payload={
+                "headline": "Offside",
+                "body": f"{who}, {club}",
+                "team": tr.team,
+                "tone": "milestone",
+                "milestone": "offside",
+                "clock": display_clock(tr.t_match, self._period_break)[1],
+            },
+        )
 
     def _pass_overlay(self, tr: Trigger, ev: MatchEvent) -> Overlay:
         factors = [f.model_dump() for f in ev.difficulty_factors or []]
