@@ -38,6 +38,10 @@ export function Gauges({
           The bar runs to the {LLM_BUDGET_MS / 1000} second budget. Bright is the typical answer,
           pale is the slowest 1 in 20.
         </p>
+        <p className="text-[12px] text-muted">
+          Instant overlays air first. Agent text attaches to the same moment when it is ready, so a
+          slow answer never holds up the picture.
+        </p>
       </div>
 
       <dl className="grid grid-cols-2 gap-x-4 gap-y-4">
@@ -76,11 +80,11 @@ function Gauge({ id, h }: { id: string; h: AgentHealth }) {
         aria-label={`${name}: typical ${seconds(h.p50_latency_ms)}, slowest 1 in 20 ${seconds(h.p95_latency_ms)}, budget ${LLM_BUDGET_MS / 1000} s`}
       >
         <span
-          className={`absolute inset-y-0 start-0 transition-[width] duration-300 ease-out ${slowTail ? 'bg-chaos/40' : 'bg-control/30'}`}
+          className={`absolute inset-y-0 start-0 transition-[width] duration-200 ease-out ${slowTail ? 'bg-chaos/40' : 'bg-control/30'}`}
           style={{ width: `${budgetFraction(h.p95_latency_ms) * 100}%` }}
         />
         <span
-          className={`absolute inset-y-0 start-0 transition-[width] duration-300 ease-out ${over ? 'bg-chaos' : 'bg-control'}`}
+          className={`absolute inset-y-0 start-0 transition-[width] duration-200 ease-out ${over ? 'bg-chaos' : 'bg-control'}`}
           style={{ width: `${budgetFraction(h.p50_latency_ms) * 100}%` }}
         />
       </span>

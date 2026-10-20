@@ -46,7 +46,7 @@ export function ControlRoom({ query }: { query: URLSearchParams }) {
             <select
               value={matchId}
               onChange={(e) => navigate(withParams('/control', { match: e.target.value }))}
-              className="border border-hairline bg-raised px-2 py-1.5 text-[14px] text-text"
+              className="border border-white/35 bg-raised px-2 py-1.5 text-[14px] text-text"
             >
               {(matches.length ? matches.map((m) => m.match_id) : [matchId]).map((id) => (
                 <option key={id} value={id}>
@@ -66,7 +66,7 @@ export function ControlRoom({ query }: { query: URLSearchParams }) {
           <button
             type="button"
             onClick={() => navigate(withParams('/watch', { match: matchId }))}
-            className="border border-hairline px-3 py-1.5 text-[14px] text-text hover:border-amber"
+            className="border border-white/35 px-3 py-1.5 text-[14px] text-text hover:border-amber"
           >
             Open the broadcast
           </button>

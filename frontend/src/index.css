@@ -21,6 +21,7 @@
   --font-display: 'Barlow Condensed', 'Arial Narrow', sans-serif;
   --font-sans: 'Inter Variable', system-ui, sans-serif;
   --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
 }
 
 html,
@@ -107,9 +108,9 @@ body {
 }
 .tag {
   animation:
-    tag-in 0.2s var(--ease-out-quart) both,
-    tag-out 0.25s ease-in both;
-  animation-delay: 0s, calc(var(--life, 4s) - 0.25s);
+    tag-in 0.2s var(--ease-out) both,
+    tag-out 0.2s var(--ease-out) both;
+  animation-delay: 0s, calc(var(--life, 4s) - 0.2s);
 }
 
 @keyframes pulse-soft {
@@ -121,7 +122,23 @@ body {
   animation: pulse-soft 1.6s ease-in-out infinite;
 }
 
+/*
+ * Every button answers a press: a small scale-down on the press, a quick settle on release.
+ * Unlayered on purpose so it wins over Tailwind's transition utilities on the same buttons.
+ */
+button {
+  transition-property: color, background-color, border-color, opacity, scale;
+  transition-duration: 160ms;
+  transition-timing-function: var(--ease-out);
+}
+button:not(:disabled):active {
+  scale: 0.97;
+}
+
 @media (prefers-reduced-motion: reduce) {
+  button:not(:disabled):active {
+    scale: 1;
+  }
   .tag {
     animation:
       tag-fade-in 0.15s linear both,

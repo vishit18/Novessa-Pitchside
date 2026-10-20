@@ -33,7 +33,7 @@ export function Broadcast({ query }: { query: URLSearchParams }) {
 
   const change = (
     <button
-      className="text-[13px] text-muted underline decoration-white/25 underline-offset-4 hover:text-text"
+      className="-my-2 inline-flex min-h-11 items-center px-1 text-[14px] text-muted underline decoration-white/25 underline-offset-4 hover:text-text"
       onClick={() => navigate(withParams('/', { match: session.opts.matchId }))}
     >
       {[persona, lang, who].filter(Boolean).join(', ')}. Change

@@ -68,7 +68,7 @@ function Row({
         aria-expanded={open}
         aria-controls={panel}
         onClick={onToggle}
-        className="grid w-full grid-cols-[3.5rem_1fr] items-center gap-x-3 gap-y-1 px-1 py-3 text-start transition-colors hover:bg-white/[0.03] sm:grid-cols-[3.5rem_minmax(0,1fr)_8.5rem_9.5rem]"
+        className="grid w-full grid-cols-[5.25rem_1fr] items-center gap-x-3 gap-y-1 px-1 py-3 text-start transition-colors hover:bg-white/[0.03] sm:grid-cols-[5.25rem_minmax(0,1fr)_8.5rem_9.5rem]"
       >
         <span className="num text-[22px] leading-none text-amber">{i.moment.clock}</span>
         <span className="min-w-0">
@@ -85,7 +85,7 @@ function Row({
         </span>
       </button>
       {open && (
-        <div id={panel} className="grid gap-3 px-1 pb-4 ps-[4.25rem] text-[13px] leading-relaxed">
+        <div id={panel} className="grid gap-3 px-1 pb-4 ps-[6rem] text-[13px] leading-relaxed">
           {i.item.brief && (
             <p>
               <span className="text-muted">Producer asked: </span>

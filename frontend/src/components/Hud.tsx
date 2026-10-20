@@ -261,7 +261,7 @@ export function Controls({ transport = true }: { transport?: boolean }) {
     }
   }, [])
   const btn =
-    'num h-8 min-w-9 border border-white/15 px-2.5 text-[16px] font-semibold text-muted transition-colors hover:text-text aria-pressed:border-amber aria-pressed:text-amber'
+    'num h-8 min-w-9 border border-white/30 px-2.5 text-[16px] font-semibold text-muted transition-colors hover:text-text aria-pressed:border-amber aria-pressed:text-amber'
   return (
     <div
       onFocusCapture={wake}

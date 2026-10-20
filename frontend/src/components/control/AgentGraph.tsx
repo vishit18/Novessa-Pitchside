@@ -68,6 +68,12 @@ export function AgentGraph({ agents, tally, lit, onKill }: GraphProps) {
         ))}
       </ol>
 
+      <FlowArcs
+        rejected={tally.rejected}
+        fallbackCards={tally.fallbackCards}
+        down={broken.length > 0}
+      />
+
       <p className="max-w-[78ch] text-[13px] leading-relaxed text-muted">
         When the Verifier rejects a claim, the Analyst gets one retry with the measured number
         {tally.rejected > 0 && (
@@ -100,6 +106,94 @@ export function AgentGraph({ agents, tally, lit, onKill }: GraphProps) {
         ))}
       </ul>
     </section>
+  )
+}
+
+/**
+ * The two routes that are not a straight line, drawn under the plates (wide screens only; on a
+ * phone the plates stack and the sentence below says the same). The loop sends a rejected claim
+ * back to the Analyst. The dashed route is the numbers-only card, lit while an agent is down.
+ * Columns are a fifth of the width each, so a plate's centre sits at 10, 30, 50, 70 and 90 per cent.
+ */
+function FlowArcs({
+  rejected,
+  fallbackCards,
+  down,
+}: {
+  rejected: number
+  fallbackCards: number
+  down: boolean
+}) {
+  const loopOn = rejected > 0
+  const bypassOn = down || fallbackCards > 0
+  return (
+    <div aria-hidden className="relative -mt-1 hidden h-[84px] lg:block" dir="ltr">
+      <svg
+        className="absolute inset-0 size-full overflow-visible"
+        viewBox="0 0 100 84"
+        preserveAspectRatio="none"
+      >
+        <path
+          d="M50 0 V22 Q50 30 44 30 H36 Q30 30 30 22 V6"
+          fill="none"
+          stroke={loopOn ? 'var(--color-amber)' : 'var(--color-hairline)'}
+          strokeWidth="2"
+          vectorEffect="non-scaling-stroke"
+          className="transition-colors duration-200"
+        />
+        <path
+          d="M30 36 V66 Q30 74 36 74 H84 Q90 74 90 66 V6"
+          fill="none"
+          stroke={bypassOn ? 'var(--color-chaos)' : 'var(--color-hairline)'}
+          strokeWidth="2"
+          strokeDasharray="6 5"
+          vectorEffect="non-scaling-stroke"
+          className="transition-colors duration-200"
+        />
+      </svg>
+      <Arrowhead left="30%" top={0} on={loopOn} tone="amber" />
+      <Arrowhead left="90%" top={0} on={bypassOn} tone="chaos" />
+      <span
+        className={`absolute top-[34px] -translate-x-1/2 text-[12px] ${loopOn ? 'text-amber' : 'text-muted'}`}
+        style={{ left: '40%' }}
+      >
+        Rejected claim goes back, once{loopOn && ` (${rejected} so far)`}
+      </span>
+      <span
+        className={`absolute top-[78px] -translate-x-1/2 bg-ink px-2 text-[12px] ${bypassOn ? 'text-chaos' : 'text-muted'}`}
+        style={{ left: '60%' }}
+      >
+        Numbers-only card when a step is down or a claim fails
+        {fallbackCards > 0 && ` (${fallbackCards} so far)`}
+      </span>
+    </div>
+  )
+}
+
+/** A small triangle pointing up into a plate. Positioned in CSS so it never stretches. */
+function Arrowhead({
+  left,
+  top,
+  on,
+  tone,
+}: {
+  left: string
+  top: number
+  on: boolean
+  tone: 'amber' | 'chaos'
+}) {
+  return (
+    <span
+      className={`absolute -translate-x-1/2 transition-colors duration-200 ${on ? (tone === 'amber' ? 'text-amber' : 'text-chaos') : 'text-hairline'}`}
+      style={{
+        left,
+        top,
+        width: 0,
+        height: 0,
+        borderInline: '5px solid transparent',
+        borderBottom: '8px solid currentColor',
+      }}
+    />
   )
 }
 
@@ -155,7 +249,8 @@ function OnDemand({
           {health && (
             <>
               {', '}
-              <span className="num text-[15px] text-text">{health.calls}</span> calls
+              <span className="num text-[15px] text-text">{health.calls}</span>{' '}
+              {health.calls === 1 ? 'call' : 'calls'}
             </>
           )}
         </p>
@@ -179,7 +274,7 @@ function KillButton({
       type="button"
       disabled={down}
       onClick={() => onKill(id)}
-      className="relative border border-hairline px-3 py-1.5 text-[13px] text-text transition-colors hover:border-chaos hover:text-chaos disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-hairline disabled:hover:text-text"
+      className="relative border border-white/35 px-3 py-1.5 text-[13px] text-text transition-colors hover:border-chaos hover:text-chaos disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-white/35 disabled:hover:text-text"
     >
       {down ? 'Recovering' : `Switch off for ${KILL_SECONDS} s`}
     </button>

@@ -119,7 +119,7 @@ export function Split({ query }: { query: URLSearchParams }) {
 
 function chip(on: boolean): string {
   return `h-8 min-w-9 border px-2.5 text-[15px] font-medium transition-colors ${
-    on ? 'border-amber text-amber' : 'border-white/15 text-muted hover:text-text'
+    on ? 'border-amber text-amber' : 'border-white/30 text-muted hover:text-text'
   }`
 }
 
