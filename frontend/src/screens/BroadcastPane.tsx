@@ -1,5 +1,13 @@
 import type { ReactNode } from 'react'
-import { Controls, KickOffCard, LowerThird, ScoreBug, StatusPill, Wordmark } from '@/components/Hud'
+import {
+  Controls,
+  KickOffCard,
+  LowerThird,
+  MetricReadout,
+  ScoreBug,
+  StatusPill,
+  Wordmark,
+} from '@/components/Hud'
 import { Stage } from '@/components/Stage'
 import { isRtl } from '@/state/profile'
 import type { Session } from '@/state/session'
@@ -46,7 +54,10 @@ function PaneBody({ compact, transport, corner }: Omit<Props, 'session'>) {
       <div
         className={`pointer-events-none absolute inset-x-0 top-0 flex flex-col items-start gap-2 p-4 sm:flex-row sm:justify-between sm:gap-3 sm:p-6 ${compact ? 'hud-compact' : ''}`}
       >
-        <ScoreBug showMatchLine={!compact} />
+        <div className="flex w-[min(100%,380px)] flex-col gap-3">
+          <ScoreBug showMatchLine={!compact} />
+          <MetricReadout />
+        </div>
         <div className="flex flex-col items-end gap-2">
           <StatusPill />
           {corner && <div className="pointer-events-auto">{corner}</div>}

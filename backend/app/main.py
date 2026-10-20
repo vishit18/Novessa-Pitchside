@@ -28,6 +28,7 @@ from backend.app.overlay import Overlay, ViewerProfile
 from backend.app.personas import for_viewer
 from backend.app.real import mount_real
 from backend.app.store import LoadedMatch, MatchStore, StaleDataError, UnknownMatchError
+from backend.app.telemetry import setup_telemetry
 from backend.app.timeline import TimelineItem
 from backend.bus import default_bus
 from engine.clock import ReplayClock, merge_by_time, stream
@@ -158,6 +159,7 @@ def create_app(data_dir: Path | None = None) -> FastAPI:
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+        setup_telemetry()
         app.state.store = MatchStore(data_dir)
         app.state.agents = AgentRuntime(app.state.store)
         app.state.bus = default_bus()

@@ -2,7 +2,7 @@ import { CHROME_BUTTON } from '@/components/chromeStyles'
 import { CommentaryToggle } from '@/components/CommentaryToggle'
 import { CLUBS, PLAYERS } from '@/data/league'
 import { navigate, withParams } from '@/router'
-import { LANGS, PERSONAS } from '@/state/profile'
+import { LANGS, METRICS, PERSONAS } from '@/state/profile'
 import { useSession, useSessionState, useT } from '@/state/useSession'
 import { useWake } from '@/state/useWake'
 
@@ -17,7 +17,9 @@ export function ViewerChrome() {
   const { shown, wake } = useWake()
   const matchId = session.opts.matchId
 
-  const persona = PERSONAS.find((p) => p.id === profile.persona)?.label ?? profile.persona
+  const persona = profile.metric
+    ? (METRICS.find((m) => m.id === profile.metric)?.label ?? profile.metric)
+    : (PERSONAS.find((p) => p.id === profile.persona)?.label ?? profile.persona)
   const lang = LANGS.find((l) => l.id === profile.lang)?.label ?? profile.lang
   const who = profile.player
     ? PLAYERS[profile.player]?.name

@@ -23,6 +23,7 @@ dependencies = [
     "azure-cosmos>=4.17.1",
     "aiohttp>=3.14.5",
     "pyarrow>=26.0.0",
+    "azure-monitor-opentelemetry>=1.8.11",
 ]
 
 [dependency-groups]
@@ -48,6 +49,10 @@ vision = [
     "ijson>=3.3",
     "pillow>=10.4",
 ]
+
+# Microsoft Foundry evaluators for scripts/eval_single_vs_multi.py. Heavy, so not installed by
+# default. Install with: uv sync --group eval
+eval = ["azure-ai-evaluation>=1.0"]
 
 [tool.uv]
 package = false
@@ -87,6 +92,7 @@ module = [
   "transformers.*",
   "ijson.*",
   "pyarrow.*",
+  "azure.ai.evaluation.*",
 ]
 ignore_missing_imports = true
 
@@ -97,6 +103,11 @@ warn_return_any = false
 # torch decorators such as inference_mode are untyped.
 disable_error_code = ["untyped-decorator"]
 warn_unused_ignores = false
+
+[[tool.mypy.overrides]]
+# The Foundry evaluator classes are untyped.
+module = ["scripts.eval_single_vs_multi"]
+disallow_untyped_calls = false
 
 [tool.pytest.ini_options]
 testpaths = ["backend/tests", "engine", "vision/tests"]

@@ -384,3 +384,52 @@ export function KickOffCard({ compact = false }: { compact?: boolean }) {
     </div>
   )
 }
+
+const READOUT: Record<string, { label: string; unit: string; digits: number }> = {
+  sprint_speed: { label: 'Fastest sprint', unit: 'km/h', digits: 1 },
+  shot_speed: { label: 'Hardest shot', unit: 'km/h', digits: 1 },
+  pass_difficulty: { label: 'Hardest pass', unit: 'out of 100', digits: 0 },
+  distance: { label: 'Furthest run', unit: 'km', digits: 2 },
+}
+
+/**
+ * One-number mode: the viewer's chosen measure, always on screen. Overlays for that measure
+ * come and go as they happen; this is the running leader, so there is a number to look at in
+ * between.
+ */
+export function MetricReadout() {
+  const metric = useSessionState((s) => s.profile.metric)
+  const stats = useSessionState((s) => s.playerStats)
+  if (!metric || !READOUT[metric]) return null
+  const spec = READOUT[metric]
+  const lead = stats?.leaders[metric as keyof typeof stats.leaders]
+  const team = lead ? lead.player_id.split('-')[0] : ''
+  return (
+    <div className="w-[min(100%,380px)] select-none" role="group" aria-label={spec.label}>
+      <div className="plate-shadow">
+        <div className="plate flex items-stretch" style={{ ['--cut' as string]: '10px' }}>
+          <span
+            className="w-[6px] shrink-0"
+            style={{ background: team ? colour(team) : 'transparent' }}
+          />
+          <div className="min-w-0 py-2.5 pl-3 pr-4">
+            <p className="text-[14px] text-muted">{spec.label} so far</p>
+            {lead ? (
+              <>
+                <p className="num text-[44px] font-bold leading-[0.95] text-amber" dir="ltr">
+                  {lead.value.toFixed(spec.digits)}
+                  <span className="ml-2 text-[16px] font-medium text-muted">{spec.unit}</span>
+                </p>
+                <p className="mt-1 text-[16px] text-text/90">
+                  {PLAYERS[lead.player_id]?.name ?? lead.player_id}
+                </p>
+              </>
+            ) : (
+              <p className="mt-1 text-[16px] text-muted">Waiting for the first one</p>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}

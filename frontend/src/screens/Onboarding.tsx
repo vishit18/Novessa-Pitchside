@@ -8,6 +8,7 @@ import {
   defaultProfile,
   LANGS,
   loadProfile,
+  METRICS,
   PERSONAS,
   saveProfile,
   type ViewerProfile,
@@ -15,7 +16,19 @@ import {
 import { SessionContext, useLiveSession } from '@/state/useSession'
 import type { MatchMeta } from '@/types/schema'
 
-type Step = 'match' | 'persona' | 'club' | 'player' | 'lang'
+type Step = 'match' | 'persona' | 'metric' | 'club' | 'player' | 'lang'
+
+/** The questions this viewer still has to answer. One-number mode skips following a player. */
+function stepsFor(p: ViewerProfile): Step[] {
+  return [
+    'match',
+    'persona',
+    ...(p.metric ? (['metric'] as const) : []),
+    'club',
+    ...(p.club && !p.metric ? (['player'] as const) : []),
+    'lang',
+  ]
+}
 
 const clubName = (code: string) => CLUBS[code]?.name ?? code
 const kit = (code: string) => CLUBS[code]?.primary_color ?? '#9aa5b1'
@@ -48,17 +61,12 @@ export function Onboarding({ query }: { query: URLSearchParams }) {
   }, [matchId])
 
   const fixture = matches?.find((m) => m.match_id === matchId) ?? null
-  const steps: Step[] = profile.club
-    ? ['match', 'persona', 'club', 'player', 'lang']
-    : ['match', 'persona', 'club', 'lang']
+  const steps = stepsFor(profile)
   const index = steps.indexOf(step)
 
   const next = (p: ViewerProfile = profile) => {
-    const order: Step[] = p.club
-      ? ['match', 'persona', 'club', 'player', 'lang']
-      : ['match', 'persona', 'club', 'lang']
-    const i = order.indexOf(step)
-    const after = order[i + 1]
+    const order = stepsFor(p)
+    const after = order[order.indexOf(step) + 1]
     if (after) setStep(after)
     else finish(p)
   }
@@ -139,12 +147,47 @@ export function Onboarding({ query }: { query: URLSearchParams }) {
                 <Choice
                   key={p.id}
                   selected={p.id === profile.persona}
-                  onClick={() => choose({ persona: p.id })}
+                  onClick={() => choose({ persona: p.id, metric: null })}
                 >
                   <span className="font-display text-[26px] font-semibold leading-none">
                     {p.label}
                   </span>
                   <span className="mt-1 block text-[14px] text-muted">{p.hint}</span>
+                </Choice>
+              ))}
+              <Choice
+                selected={profile.metric !== null}
+                onClick={() => {
+                  setProfile({
+                    ...profile,
+                    persona: 'analyst',
+                    metric: profile.metric ?? METRICS[0]?.id ?? null,
+                  })
+                  setStep('metric')
+                }}
+              >
+                <span className="font-display text-[26px] font-semibold leading-none">
+                  Just one number
+                </span>
+                <span className="mt-1 block text-[14px] text-muted">
+                  Pick one measure and the broadcast shows only that, and the goals
+                </span>
+              </Choice>
+            </Question>
+          )}
+
+          {step === 'metric' && (
+            <Question title="Which number?" hint="Everything else is left out.">
+              {METRICS.map((m) => (
+                <Choice
+                  key={m.id}
+                  selected={profile.metric === m.id}
+                  onClick={() => choose({ metric: m.id })}
+                >
+                  <span className="font-display text-[26px] font-semibold leading-none">
+                    {m.label}
+                  </span>
+                  <span className="mt-1 block text-[14px] text-muted">{m.hint}</span>
                 </Choice>
               ))}
             </Question>
@@ -219,7 +262,9 @@ export function Onboarding({ query }: { query: URLSearchParams }) {
 
 /** "Casual, English, Port Calder": what a returning viewer chose last time. */
 function savedLine(p: ViewerProfile): string {
-  const persona = PERSONAS.find((x) => x.id === p.persona)?.label ?? p.persona
+  const persona = p.metric
+    ? (METRICS.find((x) => x.id === p.metric)?.label ?? p.metric)
+    : (PERSONAS.find((x) => x.id === p.persona)?.label ?? p.persona)
   const lang = LANGS.find((x) => x.id === p.lang)?.label ?? p.lang
   const who = p.player ? PLAYERS[p.player]?.name : p.club ? CLUBS[p.club]?.name : null
   return [persona, lang, who].filter(Boolean).join(', ')

@@ -23,6 +23,14 @@ export const PERSONAS: { id: Persona; label: string; hint: string }[] = [
   { id: 'accessibility', label: 'Audio-described', hint: 'Spoken commentary with captions' },
 ]
 
+/** One-number mode: the measures the gateway can reorganise the broadcast around. */
+export const METRICS: { id: string; label: string; hint: string }[] = [
+  { id: 'sprint_speed', label: 'Sprint speed', hint: 'Every burst past 30 km/h, and who' },
+  { id: 'shot_speed', label: 'Shot speed', hint: 'How hard every shot is struck' },
+  { id: 'pass_difficulty', label: 'Pass difficulty', hint: 'The hardest passes, and why' },
+  { id: 'distance', label: 'Distance covered', hint: 'A marker each time a player runs further' },
+]
+
 export const LANGS: { id: Lang; label: string }[] = [
   { id: 'en', label: 'English' },
   { id: 'es', label: 'Español' },

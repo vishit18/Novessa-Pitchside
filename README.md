@@ -42,6 +42,7 @@ Places worth a look:
 | Companion | `/companion?match=derby_01&speed=10` | The phone view. Tap "What did I miss?" for a spoiler-safe catch-up. |
 | Control Room | `/control?match=derby_01` | The agents at work, the Verifier rejecting a claim, and the chaos switch that kills an agent mid-match. |
 | Recap | `/recap?match=derby_01&kind=full_time` | Half-time and full-time recaps in six languages. |
+| One number | pick "Just one number" in onboarding | Choose sprint speed, shot speed, pass difficulty or distance. The broadcast keeps that number on screen and shows only that, plus goals. |
 | Real footage | `/real` | The same overlays on a real amateur match, measured from video. |
 
 ## What it does
@@ -80,14 +81,14 @@ real footage ──▶ vision pipeline ──▶ same event schema ──▶ sam
 
 | Microsoft technology | Where it is used |
 |---|---|
-| Microsoft Foundry | Two chat models: a small one for the high-volume agents, a larger one for recaps only |
+| Microsoft Foundry | Two chat models: a small one for the high-volume agents, a larger one for recaps only. Foundry's evaluators (`azure-ai-evaluation`) score the output in `scripts/eval_single_vs_multi.py` |
 | Microsoft Agent Framework | The Producer, Analyst, Verifier, Narrator and Gate workflow (`backend/agents/workflow.py`) |
 | Azure AI Translator, Speech, Content Safety | Localiser, Voice and the QA gate, all on the Foundry resource |
 | Azure Event Hubs | The live feed from engine to gateway (`backend/bus/`) |
 | Azure Cosmos DB | Shared cache of agent output per match, moment, persona and language |
 | Azure Container Apps and Container Registry | The gateway and agents |
 | Azure Static Web Apps | The frontend |
-| Application Insights and OpenTelemetry | A span on every model call |
+| Application Insights and OpenTelemetry | A span on every model call, with agent, model, latency and outcome. Checked arriving in Application Insights |
 | Managed identity and Key Vault | Keyless access between services |
 | Bicep and the Azure Developer CLI | Every resource is code (`infra/`, `azure.yaml`) |
 | Azure MCP server | Used while building, to inspect and manage the resources |
@@ -100,10 +101,11 @@ Decisions and their costs are in [`docs/adr/`](docs/adr/README.md). A plain-lang
 
 These are measured, not hoped for.
 
-- **Tests:** 152 Python, 61 frontend unit, 8 browser end-to-end. Lint and types run in CI.
+- **Tests:** 154 Python, 61 frontend unit, 10 browser end-to-end. Lint and types run in CI.
 - **Cost:** running the agents over all three demo matches (94 moments) cost about $0.09 in model tokens. The results are cached per match, moment, persona and language, so a replay costs nothing.
 - **Synthetic data:** 200 simulated matches (545,639 events) measured against typical top-flight ranges. Of 16 measures with a reference range, 14 are inside it and 2 (goals and red cards per match) are just outside by less than the sampling error. The engine was tuned until it got there. Chart and table: [`docs/CALIBRATION.md`](docs/CALIBRATION.md).
 - **Live feed:** 2,190 messages sent through a real Event Hub and read back with none lost. Publish to overlay was 110 ms at the median and 177 ms at the 95th percentile from a laptop, against a 150 ms budget. In memory it is 65 ms at the 95th percentile. We have not yet measured it from inside Azure.
+- **Single agent against the newsroom,** 47 moments, scored by Foundry's groundedness, relevance and fluency evaluators and by a deterministic number check: the single prompt invented a number in 1 moment and the newsroom in none, and the single prompt scored higher on all three quality measures. Full table, with the caveats: [`docs/EVALUATION.md`](docs/EVALUATION.md).
 - **Agent text:** typically 3 to 5 seconds per step. It attaches after the instant overlay, so the picture never waits.
 - **Real footage,** one 100 second window, scored against the dataset's labels (`data/real/117093_w1890/results.json`):
 
@@ -130,7 +132,7 @@ The detector is RT-DETR (Apache 2.0). We do not use Ultralytics YOLO because of 
 
 - Offside is a flag on through balls (one to four a match). The engine has no offside line, and no goal is ever disallowed.
 - The Hindi recap can garble a clock and transliterate a surname. The Verifier checks the English draft, not the translation.
-- Foundry tracing and evaluations, and the single-agent versus multi-agent comparison, are not done.
+- The spans reach Application Insights, but the resource is not yet connected to the Foundry project's Tracing tab. On Foundry's own quality evaluators, one well-fed prompt scored higher than the newsroom on text quality, and was far faster ([`docs/EVALUATION.md`](docs/EVALUATION.md)). The newsroom is there for the guarantee that no number airs unchecked, the audit trail, the four viewer types in six languages, and staying up when an agent fails. It does not write better prose, and we do not claim it does.
 - The ball is found in only half the real-footage frames, and jersey numbers are not read.
 
 ## Repo map
