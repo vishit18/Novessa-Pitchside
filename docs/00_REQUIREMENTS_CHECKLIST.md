@@ -91,7 +91,7 @@ Priority: **P0** = we fail or score badly without it. **P1** = needed to win. **
   - [ ] GitHub CLI (`gh`) + GitHub Actions for CI/CD
   - [ ] Azure Container Apps, Static Web Apps (Azure Apps)
   - [x] Azure AI Translator, Azure AI Speech, Azure AI Content Safety (AI Services)
-  - [ ] Azure Cosmos DB (Azure databases)
+  - [x] Azure Cosmos DB (Azure databases) Verified against the real account; `scripts/push_cache.py`
   - [x] Azure Event Hubs (event-driven backbone) Verified against the deployed hub.
   - [ ] GitHub Copilot Agent Mode → P2: if VJ uses it for any part (e.g. writing tests), note it honestly in the README
   - [ ] Fabric → P2/skip. Costly and not needed. Don't fake it

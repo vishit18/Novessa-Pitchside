@@ -21,7 +21,7 @@ Translator, Speech and Content Safety all live on the same Foundry resource, so 
 | Service | What it is | What we use it for | Where | Status |
 |---|---|---|---|---|
 | **Event Hubs** | A high-throughput message stream. | The live feed: the engine publishes match events and tracking frames, the gateway consumes them. Partitioned by match id so order holds. | `backend/bus/eventhubs.py`, `backend/app/live.py` | Verified 20 Oct: 2,190 messages sent and received, none lost. Publish to overlay was p95 177 ms from a laptop, over the 150 ms budget. To be measured again from inside Azure. |
-| **Cosmos DB (NoSQL)** | A managed document database, free tier. | Shared cache of agent output keyed by match seed, moment, persona and language. | `backend/agents/cache.py` | Code and tests done. Not yet run against the real account (data-plane role pending). |
+| **Cosmos DB (NoSQL)** | A managed document database, free tier. | Shared cache of agent output keyed by match seed, moment, persona and language. | `backend/agents/cache.py` | Verified 20 Oct against the real account: a value written through `CosmosCache` was read back by a fresh instance. The warmed demo cache (54 entries) is loaded with `scripts/push_cache.py`. |
 
 ## Running the app
 
