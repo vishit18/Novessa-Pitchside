@@ -95,6 +95,8 @@ If the marketplace isn't registered yet: `/plugin marketplace add anthropics/cla
 
 **Always use the frontend-design skill for any UI work.** Read `docs/07_FRONTEND_DESIGN.md` alongside it — that doc is our specific art direction and overrides generic defaults.
 
+Extra design skills are installed in `~/.claude/skills` and are part of this project's UI workflow: `emil-design-eng` (and its animation review skills: `review-animations`, `improve-animations`, `animation-performance`, `animation-vocabulary`), `impeccable` (critique, polish, audit) and `taste-skill`. Use them on every meaningful UI change: build with `frontend-design` + `taste-skill`, tune motion with `emil-design-eng`, then run `impeccable` critique/audit before calling a screen done. `docs/07` still wins where they disagree. Keep overlay motion under 300ms and respect `prefers-reduced-motion`.
+
 ### CLIs VJ will have installed (see docs/02)
 `az` (Azure CLI), `azd` (Azure Developer CLI), `gh` (GitHub CLI), `docker`, `node` 22+, `python` 3.12, `uv`.
 
