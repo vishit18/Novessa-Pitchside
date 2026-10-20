@@ -9,12 +9,15 @@ import asyncio
 import sys
 import uuid
 
-from a2a.client import create_client
+import httpx
+from a2a.client import ClientConfig, create_client
 from a2a.types import Message, Part, Role, SendMessageRequest
 
 
 async def main(base_url: str, text: str) -> None:
-    client = await create_client(base_url)
+    # The first recap for a match can take 15 seconds while the agents write and check it.
+    config = ClientConfig(streaming=False, httpx_client=httpx.AsyncClient(timeout=120))
+    client = await create_client(base_url, client_config=config)
     request = SendMessageRequest(
         message=Message(role=Role.ROLE_USER, message_id=str(uuid.uuid4()), parts=[Part(text=text)])
     )
