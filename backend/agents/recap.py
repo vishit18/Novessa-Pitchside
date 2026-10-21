@@ -145,6 +145,19 @@ def in_match_order(lines: list[str]) -> list[str]:
     return out
 
 
+MODEL_TERMS = re.compile(r"\bxG\b|\bxA\b|expected goals|pressure index|momentum (?:of|at) \d")
+
+
+def jargon_problems(out: RecapOutput, persona: Persona) -> list[str]:
+    """Model numbers are for analysts. Anyone else gets them in words or not at all."""
+    if persona == "analyst":
+        return []
+    text = " ".join([out.headline, *out.paragraphs, *out.highlights])
+    if MODEL_TERMS.search(text):
+        return ["Leave out xG, expected goals and index figures for this viewer; say it in words"]
+    return []
+
+
 def _stray(out: RecapOutput, facts: dict[str, Any]) -> list[float]:
     allowed = numbers_in(json.dumps(facts))
     text = " ".join([out.headline, *out.paragraphs, *out.highlights])
@@ -204,6 +217,7 @@ async def make_recap(ctx: MatchContext, kind: Kind, persona: Persona, lang: str 
             break
         stray = _stray(out, facts)
         timing = goal_time_problems(" ".join([*out.paragraphs, *out.highlights]), facts["goals"])
+        timing += jargon_problems(out, persona)
         if not stray and not timing:
             output = out.model_copy(update={"highlights": in_match_order(out.highlights)})
             trail.append(

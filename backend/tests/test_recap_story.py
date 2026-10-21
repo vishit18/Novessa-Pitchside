@@ -9,8 +9,10 @@ from typing import Any
 
 from backend.agents import storykeeper
 from backend.agents.cache import FileCache
+from backend.agents.models import RecapOutput
 from backend.agents.recap import (
     in_match_order,
+    jargon_problems,
     make_recap,
     recap_facts,
     recap_time,
@@ -121,3 +123,16 @@ def test_highlights_are_put_back_in_match_order() -> None:
         "45+2:10: Kestrel go close.",
         "A tense end to the half.",
     ]
+
+
+def test_model_terms_are_for_analysts_only() -> None:
+    out = RecapOutput(
+        headline="Ashford lead",
+        paragraphs=["Ashford had 0.96 xG."],
+        highlights=["26:47: Wragg scores a penalty.", "Kestrel keep the ball.", "Half-time."],
+    )
+    assert jargon_problems(out, "casual")
+    assert jargon_problems(out, "kids")
+    assert not jargon_problems(out, "analyst")
+    plain = out.model_copy(update={"paragraphs": ["Ashford had the better chances."]})
+    assert not jargon_problems(plain, "casual")
