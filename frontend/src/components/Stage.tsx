@@ -120,7 +120,7 @@ export function Stage() {
         <div ref={hostRef} className="absolute inset-0" />
       </div>
       <div
-        className="pointer-events-none absolute inset-0 transition-opacity duration-500"
+        className="pointer-events-none absolute inset-0 transition-opacity duration-250 ease-[var(--ease-out)]"
         style={{
           opacity: goalOn ? 1 : 0,
           background: 'radial-gradient(75% 75% at 50% 50%, transparent 35%, rgb(0 0 0 / 0.5))',

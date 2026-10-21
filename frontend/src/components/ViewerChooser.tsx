@@ -99,7 +99,14 @@ export function ViewerChooser({ persona, lang, onChange, align = 'start' }: Prop
             style={
               phoneTop === null
                 ? { transformOrigin: align === 'end' ? 'top right' : 'top left' }
-                : { position: 'fixed', top: phoneTop, left: 16, right: 16, width: 'auto' }
+                : {
+                    position: 'fixed',
+                    top: phoneTop,
+                    left: 16,
+                    right: 16,
+                    width: 'auto',
+                    transformOrigin: 'top center',
+                  }
             }
             className={`absolute top-full z-30 mt-1.5 grid w-[min(92vw,460px)] grid-cols-2 gap-3 border border-white/15 bg-ink p-2 shadow-2xl ${
               align === 'end' ? 'end-0' : 'start-0'

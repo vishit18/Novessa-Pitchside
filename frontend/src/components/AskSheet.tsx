@@ -102,7 +102,7 @@ export function AskSheet({
           }
           initial={reduce ? { opacity: 0 } : side ? { x: 24, opacity: 0 } : { y: 40, opacity: 0 }}
           animate={{ x: 0, y: 0, opacity: 1 }}
-          exit={{ opacity: 0 }}
+          exit={{ opacity: 0, transition: { duration: 0.15 } }}
           transition={{ duration: 0.22, ease: [0.25, 1, 0.5, 1] }}
         >
           <div className="plate-shadow flex min-h-0 flex-1 flex-col">

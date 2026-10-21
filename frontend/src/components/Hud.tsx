@@ -51,11 +51,13 @@ export function ScoreBug({ showMatchLine = true }: { showMatchLine?: boolean }) 
             dir="ltr"
           >
             <div className="absolute inset-y-0 left-1/2 w-px bg-white/30" />
+            {/* Half the bar each way from the centre line, scaled rather than resized. */}
             <div
-              className="absolute inset-y-0 transition-[left,width] duration-500 ease-out"
+              className="absolute inset-y-0 w-1/2 transition-transform duration-300 ease-[var(--ease-out)]"
               style={{
-                left: m >= 0 ? `${50 - m / 2}%` : '50%',
-                width: `${Math.abs(m) / 2}%`,
+                left: m >= 0 ? '0%' : '50%',
+                transformOrigin: m >= 0 ? 'right' : 'left',
+                transform: `scaleX(${Math.abs(m) / 100})`,
                 background: lead ? colour(lead) : 'transparent',
                 boxShadow: lead ? `0 0 10px ${colour(lead)}` : 'none',
               }}
@@ -120,7 +122,7 @@ function Digit({ value }: { value: number }) {
           initial={{ y: reduce ? 0 : 40, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: reduce ? 0 : -40, opacity: 0 }}
-          transition={{ duration: reduce ? 0.1 : 0.35, ease: [0.25, 1, 0.5, 1] }}
+          transition={{ duration: reduce ? 0.1 : 0.28, ease: [0.25, 1, 0.5, 1] }}
         >
           {value}
         </motion.span>
@@ -141,8 +143,8 @@ export function LowerThird() {
             key={`${o.moment_id}-${o.kind}`}
             initial={{ clipPath: 'inset(-20px 100% -20px 0)', opacity: reduce ? 0 : 1 }}
             animate={{ clipPath: 'inset(-20px -20px -20px 0)', opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: reduce ? 0.12 : 0.3, ease: [0.25, 1, 0.5, 1] }}
+            exit={{ opacity: 0, transition: { duration: reduce ? 0.12 : 0.15 } }}
+            transition={{ duration: reduce ? 0.12 : 0.28, ease: [0.25, 1, 0.5, 1] }}
           >
             <div className="plate-shadow">
               <div className="plate" style={{ ['--cut' as string]: '18px' }}>

@@ -67,7 +67,7 @@ export function GoalSting({ compact = false }: { compact?: boolean }) {
           className="pointer-events-none absolute inset-x-0 top-1/2 z-20 -translate-y-1/2"
           initial={reduce ? { opacity: 0 } : { clipPath: 'inset(0 100% 0 0)' }}
           animate={reduce ? { opacity: 1 } : { clipPath: 'inset(0 0% 0 0)' }}
-          exit={{ opacity: 0, transition: { duration: 0.25 } }}
+          exit={{ opacity: 0, transition: { duration: 0.15 } }}
           transition={{ duration: 0.26, ease: [0.25, 1, 0.5, 1] }}
         >
           <div className="flex items-stretch bg-ink/92 shadow-[0_10px_40px_rgb(0_0_0/0.6)]">
