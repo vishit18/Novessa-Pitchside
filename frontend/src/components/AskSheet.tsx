@@ -2,6 +2,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { CLUBS, PLAYERS } from '@/data/league'
 import { ApiError, askAnalyst, type AskAnswer } from '@/net/api'
+import { MicButton } from './MicButton'
 import { isRtl } from '@/state/profile'
 import { useSession, useSessionState, useT } from '@/state/useSession'
 
@@ -16,7 +17,8 @@ const MAX = 280
 /**
  * Ask the Analyst. The viewer types a question; the gateway's Scout picks lookups, code runs them
  * up to this viewer's clock, the Analyst answers and the Verifier checks every number. The panel
- * shows the answer, whether it was checked, and the numbers behind it.
+ * shows the answer, whether it was checked, and the numbers behind it. With Speech on, the viewer
+ * can hold the mic and say the question instead (MicButton).
  *
  * `placement` is "side" on the broadcast (a panel over the right of the pitch) and "bottom" on
  * the phone view (a sheet from the bottom edge).
@@ -181,13 +183,23 @@ export function AskSheet({
                       }}
                       className="w-full resize-none border border-white/30 bg-ink/80 px-3 py-2.5 text-[16px] text-text placeholder:text-muted focus-visible:border-amber focus-visible:outline-none"
                     />
-                    <button
-                      type="submit"
-                      disabled={!text.trim()}
-                      className="h-11 self-end bg-amber px-5 text-[15px] font-semibold text-ink transition-opacity disabled:opacity-40"
-                    >
-                      {t('askSend')}
-                    </button>
+                    <div className="flex items-center justify-between gap-3">
+                      <MicButton
+                        matchId={session.opts.matchId}
+                        lang={profile.lang}
+                        onText={(heard) => {
+                          setText(heard)
+                          void send(heard)
+                        }}
+                      />
+                      <button
+                        type="submit"
+                        disabled={!text.trim()}
+                        className="ms-auto h-11 shrink-0 bg-amber px-5 text-[15px] font-semibold text-ink transition-opacity disabled:opacity-40"
+                      >
+                        {t('askSend')}
+                      </button>
+                    </div>
                   </form>
                 </>
               )}

@@ -97,6 +97,7 @@ Think of it as a live TV gallery. The state engine is the data team. The agents 
 ### 9. Scout and Ask the Analyst (viewer questions)
 - **Role:** a viewer types a question mid-match ("why are Kestrel struggling?", "how fast has Wragg been?", in any language). The **Scout** (`chat-fast`) picks up to three lookups from a fixed list (match state, a player, a team's last N minutes, then versus now, leaders, key moments) or declines anything not about this match. Code runs the lookups on `MatchIntel`, **clipped to the viewer's own clock**, so an answer can never spoil what is still to come. The **Analyst** (`chat-strong`) answers from those rows only, in the viewer's persona; the **Verifier** checks every number in the answer against the rows (one retry, then a numbers-only answer); the **Localiser** puts it in the viewer's language; the safety gate checks both question and answer. Cached per (seed, question, 30 s of match time, persona, language).
 - **Failure paths:** Scout down → rules (the players named in the question, plus the match state). Analyst down → numbers-only answer. Off-topic or unsafe → declined, with no lookups.
+- **Voice questions:** hold the mic in the Ask panel and speak. The gateway sends the clip to Azure AI Speech fast transcription (keyless, Entra token, same resource as the voices) with the viewer's locale and a phrase list of the match's names, so "Wragg" comes back as Wragg. The words land in the question box and go through the same Scout, Analyst, Verifier, Localiser path. No model is asked to hear anything; the question text is what gets checked. Speech down or not configured → the mic is hidden and typing still works.
 - Code: `backend/agents/ask.py`, prompts `scout.md` and `ask.md`, endpoint `POST /matches/{id}/ask`, UI `frontend/src/components/AskSheet.tsx` (Ask button or `/` on the broadcast, Ask on the phone view).
 
 ### QA gate (not an agent, a step)
@@ -122,7 +123,7 @@ Agents don't pass huge prompts to each other; they pass IDs and read the shared 
 | Model 429 / quota | circuit breaker opens for that agent; Producer switches to deterministic mode; Control Room shows it |
 | Verifier rejects claim | Analyst retries once with reason; then numbers-only card |
 | Translator fails | fall back to LLM translation; then English with a "translation unavailable" flag |
-| Speech fails | text-only commentary, no audio |
+| Speech fails | text-only commentary, no audio; the Ask panel hides the mic |
 | Content Safety flags | drop text, log, show fallback card |
 | Agent process crash | workflow checkpointing (Agent Framework supports it) resumes from last checkpoint |
 

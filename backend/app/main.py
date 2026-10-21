@@ -7,6 +7,7 @@ import csv
 import io
 import json
 import os
+import re
 from bisect import bisect_left
 from collections.abc import AsyncIterator, Iterator
 from contextlib import asynccontextmanager, suppress
@@ -14,15 +15,23 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from fastapi import FastAPI, HTTPException, Query, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException, Query, Request, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import PlainTextResponse, Response
+from opentelemetry import trace
 from pydantic import BaseModel, Field, ValidationError
 
 from backend.a2a.server import mount_a2a
 from backend.agents.ask import ask as ask_analyst
 from backend.agents.localiser import localise, localise_lines
 from backend.agents.recap import make_recap
+from backend.agents.services import (
+    AUDIO_TYPES,
+    LANGUAGES,
+    ServiceUnavailable,
+    Transcriber,
+    default_transcriber,
+)
 from backend.app.agents_runtime import AgentRuntime
 from backend.app.catchup import build_catchup, build_key_moments
 from backend.app.live import LiveIngest
@@ -42,6 +51,8 @@ BAD_REQUEST = 4400
 NOT_FOUND = 4404
 PERSONAS = ("analyst", "casual", "kids", "accessibility")
 TEXT_WAIT_S = 90.0  # how long a socket waits for the agents before leaving the fallback card
+MAX_AUDIO_BYTES = 1_000_000  # about 30 seconds of Opus; a question is a few seconds
+tracer = trace.get_tracer("pitchside.gateway")
 
 
 def _store(app: FastAPI) -> MatchStore:
@@ -177,6 +188,42 @@ class Session:
             self.restart()
 
 
+def _phrases(store: MatchStore, meta: MatchMeta) -> list[str]:
+    """Club names and player names (full and surname) for the two teams in this match."""
+    codes = (meta.home.code, meta.away.code)
+    names = store.names
+    out = [names.clubs[c] for c in codes if c in names.clubs]
+    for pid, name in names.players.items():
+        if pid.split("-")[0] in codes:
+            out.append(name)
+            out.append(name.split()[-1])
+    return list(dict.fromkeys(out))
+
+
+def _sound_key(word: str) -> str:
+    """Rough spoken form: Wragg and Rag, Knott and Not, come out the same."""
+    w = "".join(ch for ch in word.lower() if ch.isalpha())
+    if len(w) > 2 and w[0] in "wk" and w[1] in "rn":
+        w = w[1:]
+    return "".join(ch for i, ch in enumerate(w) if i == 0 or ch != w[i - 1])
+
+
+def _respell(text: str, phrases: list[str]) -> str:
+    """Give a capitalised word that sounds like one of this match's surnames the league spelling.
+
+    A phrase list cannot help with homophones ("Wragg" is heard as "Rag"), so this runs on the
+    words Speech returns. Lower-case words are left alone: the recogniser only capitalises what
+    it took for a name.
+    """
+    surnames = {_sound_key(p): p for p in phrases if " " not in p and len(p) > 2}
+
+    def fix(m: re.Match[str]) -> str:
+        word = m.group(0)
+        return surnames.get(_sound_key(word), word) if word[0].isupper() else word
+
+    return re.sub(r"\b\w+\b", fix, text)
+
+
 def create_app(data_dir: Path | None = None) -> FastAPI:
     """Build the gateway. Pass `data_dir` in tests; otherwise DATA_DIR or ./data is used."""
 
@@ -198,6 +245,8 @@ def create_app(data_dir: Path | None = None) -> FastAPI:
             app.state.store.names,
             localise_overlay_lines if runtime.enabled else None,
         )
+        if not hasattr(app.state, "transcriber"):
+            app.state.transcriber = default_transcriber()
         app.state.bus = default_bus()
         app.state.live = LiveIngest(app.state.store, app.state.bus)
         if os.environ.get("PRELOAD") == "1":
@@ -374,6 +423,41 @@ def create_app(data_dir: Path | None = None) -> FastAPI:
         ctx = await runtime.context(match_id)
         out = await ask_analyst(ctx, body.question, body.t, body.persona, body.lang)
         return out.model_dump(mode="json")
+
+    @app.get("/speech/health")
+    async def speech_health() -> dict[str, bool]:
+        """Whether voice questions can be transcribed. The Ask panel hides its mic when not."""
+        return {"transcribe": app.state.transcriber is not None}
+
+    @app.post("/matches/{match_id}/ask/audio")
+    async def ask_audio(match_id: str, request: Request, lang: str = "en") -> dict[str, str]:
+        """A spoken question to text, in the viewer's language. The client then calls /ask."""
+        transcriber: Transcriber | None = app.state.transcriber
+        if transcriber is None:
+            raise HTTPException(503, "speech is not configured")
+        if lang not in LANGUAGES:
+            raise HTTPException(400, "unknown language")
+        kind = request.headers.get("content-type", "").split(";")[0].strip()
+        if kind not in AUDIO_TYPES:
+            raise HTTPException(415, "send audio/webm, audio/ogg, audio/mp4 or audio/wav")
+        audio = await request.body()
+        if not audio:
+            raise HTTPException(400, "no audio")
+        if len(audio) > MAX_AUDIO_BYTES:
+            raise HTTPException(413, "keep it under 30 seconds")
+        loaded = await load(match_id)
+        with tracer.start_as_current_span("speech.transcribe") as span:
+            span.set_attribute("speech.lang", lang)
+            span.set_attribute("speech.bytes", len(audio))
+            try:
+                phrases = _phrases(_store(app), loaded.meta)
+                text = _respell(await transcriber.transcribe(audio, kind, lang, phrases), phrases)
+            except ServiceUnavailable as exc:
+                span.set_attribute("speech.failed", str(exc))
+                raise HTTPException(503, "speech is not answering") from exc
+        if not text:
+            raise HTTPException(422, "nothing was heard")
+        return {"text": text[:280], "lang": lang}
 
     @app.get("/matches/{match_id}/moments")
     async def key_moments(match_id: str) -> dict[str, Any]:

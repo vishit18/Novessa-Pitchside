@@ -171,3 +171,25 @@ export async function askAnalyst(
   if (!res.ok) throw new ApiError(path, res.status)
   return (await res.json()) as AskAnswer
 }
+
+let speechCheck: Promise<boolean> | null = null
+
+/** Whether the gateway can turn a spoken question into text. Asked once per page load. */
+export function canTranscribe(): Promise<boolean> {
+  speechCheck ??= getJson<{ transcribe: boolean }>('/speech/health')
+    .then((r) => r.transcribe)
+    .catch(() => false)
+  return speechCheck
+}
+
+/** A recorded question to text, in the viewer's language. 422 means nothing was heard. */
+export async function transcribeQuestion(id: string, audio: Blob, lang: string): Promise<string> {
+  const path = `/matches/${encodeURIComponent(id)}/ask/audio?lang=${encodeURIComponent(lang)}`
+  const res = await fetch(`${GATEWAY_HTTP}${path}`, {
+    method: 'POST',
+    headers: { 'Content-Type': audio.type.split(';')[0] || 'audio/webm' },
+    body: audio,
+  })
+  if (!res.ok) throw new ApiError(path, res.status)
+  return ((await res.json()) as { text: string }).text
+}

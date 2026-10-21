@@ -1,11 +1,12 @@
 """Azure AI Translator and Azure AI Speech, called keyless on the Foundry resource.
 
-Both are plain REST calls with an Entra token. Each has a protocol so tests can swap in a fake.
+All are plain REST calls with an Entra token. Each has a protocol so tests can swap in a fake.
 """
 
 from __future__ import annotations
 
 import asyncio
+import json
 import os
 import re
 import time
@@ -29,6 +30,11 @@ VOICES = {
 }
 
 
+STT_API_VERSION = "2025-10-15"
+# What the browser records: Chrome and Firefox give WebM or Ogg (Opus), Safari gives MP4 (AAC).
+AUDIO_TYPES = {"audio/webm": "webm", "audio/ogg": "ogg", "audio/mp4": "mp4", "audio/wav": "wav"}
+
+
 class ServiceUnavailable(RuntimeError):
     """Translator or Speech could not answer. The caller falls back."""
 
@@ -39,6 +45,12 @@ class Translator(Protocol):
 
 class Speech(Protocol):
     async def synthesize(self, text: str, lang: str) -> bytes: ...
+
+
+class Transcriber(Protocol):
+    async def transcribe(
+        self, audio: bytes, content_type: str, lang: str, phrases: list[str]
+    ) -> str: ...
 
 
 class _Entra:
@@ -143,9 +155,50 @@ class AzureSpeech:
             raise ServiceUnavailable(f"speech: {type(exc).__name__}") from exc
 
 
+class AzureTranscriber:
+    """Fast transcription: one short clip in, the words out, synchronously.
+
+    `phrases` is a phrase list (club and player names) so invented names come back spelled
+    the way the league spells them.
+    """
+
+    def __init__(self, endpoint: str | None = None, timeout_s: float = 8.0) -> None:
+        self.endpoint = (endpoint or os.environ["TRANSLATOR_ENDPOINT"]).rstrip("/")
+        self.timeout_s = timeout_s
+        self._auth = _Entra()
+        self._client = httpx.AsyncClient()
+
+    async def transcribe(
+        self, audio: bytes, content_type: str, lang: str, phrases: list[str]
+    ) -> str:
+        locale, _ = VOICES.get(lang, VOICES["en"])
+        kind = content_type.split(";")[0].strip()
+        definition: dict[str, object] = {"locales": [locale], "profanityFilterMode": "Masked"}
+        if phrases:
+            definition["phraseList"] = {"phrases": phrases}
+        try:
+            resp = await self._client.post(
+                f"{self.endpoint}/speechtotext/transcriptions:transcribe",
+                params={"api-version": STT_API_VERSION},
+                headers={"Authorization": f"Bearer {await self._auth.bearer()}"},
+                files={"audio": (f"question.{AUDIO_TYPES.get(kind, 'webm')}", audio, kind)},
+                data={"definition": json.dumps(definition)},
+                timeout=self.timeout_s,
+            )
+            resp.raise_for_status()
+            combined = resp.json().get("combinedPhrases") or []
+            return " ".join(str(c.get("text", "")) for c in combined).strip()
+        except (httpx.HTTPError, ValueError, AttributeError) as exc:
+            raise ServiceUnavailable(f"transcribe: {type(exc).__name__}") from exc
+
+
 def default_translator() -> Translator | None:
     return AzureTranslator() if os.environ.get("TRANSLATOR_ENDPOINT") else None
 
 
 def default_speech() -> Speech | None:
     return AzureSpeech() if os.environ.get("TRANSLATOR_ENDPOINT") else None
+
+
+def default_transcriber() -> Transcriber | None:
+    return AzureTranscriber() if os.environ.get("TRANSLATOR_ENDPOINT") else None

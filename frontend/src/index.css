@@ -173,7 +173,21 @@ button:not(:disabled):active {
   scale: 0.97;
 }
 
+/* Voice question: a ring that grows with the input level while the mic is held. */
+.mic::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border: 2px solid var(--color-amber);
+  opacity: calc(var(--level, 0) * 0.9);
+  transform: scale(calc(1 + var(--level, 0) * 0.35));
+  pointer-events: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .mic::after {
+    transform: none;
+  }
   .feed-in {
     animation: tag-fade-in 0.15s linear both;
   }
