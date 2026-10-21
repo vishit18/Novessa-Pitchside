@@ -11,8 +11,8 @@ export class Heatmap {
   max = 0
 
   constructor(
-    readonly cols = 35,
-    readonly rows = 23,
+    readonly cols = 42,
+    readonly rows = 27,
     private readonly everyS = 0.5,
   ) {
     this.counts = new Float32Array(cols * rows)
@@ -37,15 +37,41 @@ export class Heatmap {
     return true
   }
 
-  /** Cells with any time in them, as pitch rectangles with 0..1 intensity. */
+  /**
+   * Cells with any time in them, as pitch rectangles with 0..1 intensity. Counts are smoothed
+   * over each cell's neighbours first, so one stray sample does not read as a hot spot and the
+   * banded drawing gets clean contours instead of a checkerboard.
+   */
   cells(): { x: number; y: number; w: number; h: number; v: number }[] {
+    const { cols, rows } = this
+    const smooth = new Float32Array(cols * rows)
+    let max = 0
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        let sum = 0
+        let wsum = 0
+        for (let dr = -1; dr <= 1; dr++) {
+          for (let dc = -1; dc <= 1; dc++) {
+            const rr = r + dr
+            const cc = c + dc
+            if (rr < 0 || rr >= rows || cc < 0 || cc >= cols) continue
+            const k = dr === 0 && dc === 0 ? 4 : dr === 0 || dc === 0 ? 2 : 1
+            sum += (this.counts[rr * cols + cc] ?? 0) * k
+            wsum += k
+          }
+        }
+        const v = sum / wsum
+        smooth[r * cols + c] = v
+        max = Math.max(max, v)
+      }
+    }
     const out = []
-    const w = PITCH_LENGTH / this.cols
-    const h = PITCH_WIDTH / this.rows
-    for (let r = 0; r < this.rows; r++) {
-      for (let c = 0; c < this.cols; c++) {
-        const n = this.counts[r * this.cols + c] ?? 0
-        if (n > 0) out.push({ x: c * w, y: r * h, w, h, v: n / this.max })
+    const w = PITCH_LENGTH / cols
+    const h = PITCH_WIDTH / rows
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const v = max > 0 ? (smooth[r * cols + c] ?? 0) / max : 0
+        if (v > 0.15) out.push({ x: c * w, y: r * h, w, h, v })
       }
     }
     return out

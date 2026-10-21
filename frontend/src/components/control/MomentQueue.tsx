@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { newestFirst, proofOf, type Proof } from '@/core/control'
 import type { Decision, Insight } from '@/net/control'
+import { CheckIcon, CrossIcon, DashIcon } from '@/components/icons'
 
 const DECISION: Record<Decision, string> = {
   air: 'Air',
@@ -9,11 +10,11 @@ const DECISION: Record<Decision, string> = {
   drop: 'Drop',
 }
 
-const PROOF: Record<Proof, { mark: string; text: string; tone: string }> = {
-  proven: { mark: '✓', text: 'Proven', tone: 'text-control' },
-  retried: { mark: '✓', text: 'Proven on retry', tone: 'text-amber' },
-  failed: { mark: '✕', text: 'Not proven', tone: 'text-chaos' },
-  skipped: { mark: '–', text: 'Not checked', tone: 'text-muted' },
+const PROOF: Record<Proof, { mark: ReactNode; text: string; tone: string }> = {
+  proven: { mark: <CheckIcon />, text: 'Proven', tone: 'text-control' },
+  retried: { mark: <CheckIcon />, text: 'Proven on retry', tone: 'text-amber' },
+  failed: { mark: <CrossIcon />, text: 'Not proven', tone: 'text-chaos' },
+  skipped: { mark: <DashIcon />, text: 'Not checked', tone: 'text-muted' },
 }
 
 const KIND = (kind: string) => kind.replace(/_/g, ' ')
@@ -79,8 +80,10 @@ function Row({
           Producer: <span className="text-text">{DECISION[i.item.decision]}</span>{' '}
           <span className="num">{i.item.priority}</span>
         </span>
-        <span className={`col-start-2 text-[13px] font-semibold sm:col-start-auto ${proof.tone}`}>
-          <span aria-hidden>{proof.mark} </span>
+        <span
+          className={`col-start-2 flex items-center gap-1.5 text-[13px] font-semibold sm:col-start-auto ${proof.tone}`}
+        >
+          {proof.mark}
           {i.status === 'fallback' ? 'Numbers only' : proof.text}
         </span>
       </button>

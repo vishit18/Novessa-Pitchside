@@ -25,6 +25,13 @@ const GRASS_B = 0x1e5237
 const LINE = 0xe9eef2
 const AMBER = 0xffb020
 const INK = 0x0d1014
+/** Heatmap ramp: cool to hot, each band a flat colour so the edges stay crisp. */
+const HEAT_BANDS = [
+  { upTo: 0.35, color: 0xb8650a, alpha: 0.32 },
+  { upTo: 0.6, color: 0xf09a12, alpha: 0.55 },
+  { upTo: 0.85, color: 0xff5f1f, alpha: 0.72 },
+  { upTo: 1, color: 0xfff0c8, alpha: 0.88 },
+]
 /** Pressing opponents on the analyst layer. Not used anywhere else on the pitch. */
 const PRESS = 0xe05cff
 
@@ -88,8 +95,8 @@ export class PitchRenderer {
     host.appendChild(this.app.canvas)
     this.app.canvas.style.display = 'block'
     this.app.canvas.setAttribute('aria-hidden', 'true')
-    // Blur turns the coarse grid into a smooth density field.
-    this.heat.filters = [new BlurFilter({ strength: 14, quality: 3 })]
+    // A light blur only softens the cell edges; the bands in drawHeat keep the contours.
+    this.heat.filters = [new BlurFilter({ strength: 5, quality: 3 })]
     this.app.stage.addChild(this.world)
     this.world.addChild(
       this.grass,
@@ -464,14 +471,18 @@ export class PitchRenderer {
     )
   }
 
-  /** Heatmap in amber, drawn in pitch metres under the players and blurred by its filter. */
+  /**
+   * Heatmap in four hard bands, from deep amber where the player passed through to near white
+   * where they lived. Banding reads as a map at a glance; a continuous wash read as smudges.
+   */
   private drawHeat(): void {
     this.heatDirty = false
     const g = this.heat
     g.clear()
     if (!this.focus) return
     for (const c of this.heatmap.cells()) {
-      g.rect(c.x, c.y, c.w, c.h).fill({ color: AMBER, alpha: 0.12 + c.v * 0.5 })
+      const band = HEAT_BANDS.find((b) => c.v <= b.upTo) ?? HEAT_BANDS[HEAT_BANDS.length - 1]!
+      g.rect(c.x, c.y, c.w, c.h).fill({ color: band.color, alpha: band.alpha })
     }
     g.setFromMatrix(this.pitchMatrix)
   }

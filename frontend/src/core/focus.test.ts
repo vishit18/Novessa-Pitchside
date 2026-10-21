@@ -38,15 +38,30 @@ describe('Heatmap', () => {
     expect(h.sample(10, 10, 0.2)).toBe(false)
     expect(h.sample(10, 10, 0.5)).toBe(true)
     expect(h.max).toBe(2)
-    expect(h.cells()).toHaveLength(1)
-    expect(h.cells()[0]!.v).toBe(1)
+  })
+
+  it('smooths into the neighbouring cells, hottest where the player was', () => {
+    const h = new Heatmap(21, 14, 0.5)
+    h.sample(52, 34, 0)
+    const cells = h.cells()
+    // The cell itself and its eight neighbours, nothing further out.
+    expect(cells).toHaveLength(9)
+    const hottest = cells.reduce((a, b) => (b.v > a.v ? b : a))
+    expect(hottest.v).toBe(1)
+    expect(hottest.x).toBeLessThanOrEqual(52)
+    expect(hottest.x + hottest.w).toBeGreaterThan(52)
+    expect(cells.filter((c) => c.v < 1).every((c) => c.v < 0.6)).toBe(true)
   })
 
   it('clamps positions on the touchline into the grid', () => {
     const h = new Heatmap()
     h.sample(105, 68, 0)
     h.sample(0, 0, 1)
-    expect(h.cells()).toHaveLength(2)
+    const cells = h.cells()
+    expect(cells.some((c) => c.x === 0 && c.y === 0)).toBe(true)
+    expect(
+      cells.some((c) => Math.abs(c.x + c.w - 105) < 1e-6 && Math.abs(c.y + c.h - 68) < 1e-6),
+    ).toBe(true)
   })
 
   it('starts over after a seek backwards', () => {

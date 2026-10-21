@@ -9,6 +9,7 @@ import { navigate, withParams } from '@/router'
 import { ViewerChooser } from '@/components/ViewerChooser'
 import { defaultProfile, loadProfile } from '@/state/profile'
 import { useRecap } from '@/state/useRecap'
+import { AlertIcon, CheckIcon } from '@/components/icons'
 
 /** Story column, then the numbers. Centred as a pair so wide screens have no empty middle. */
 const LAYOUT = 'lg:grid-cols-[minmax(0,68ch)_minmax(0,480px)] lg:justify-center'
@@ -345,8 +346,8 @@ function Provenance({ recap }: { recap: RecapData }) {
   return (
     // Small print is always English, so it sets its own direction inside a right-to-left page.
     <div className="flex flex-col gap-2 text-[14px]" dir="auto">
-      <p dir="auto" className={checked ? 'text-control' : 'text-amber'}>
-        <span aria-hidden>{checked ? '✓ ' : '! '}</span>
+      <p dir="auto" className={`flex gap-1.5 ${checked ? 'text-control' : 'text-amber'}`}>
+        {checked ? <CheckIcon className="mt-1 size-3" /> : <AlertIcon className="mt-1 size-3" />}
         {checked
           ? checkedText
           : 'The writer was unavailable, so this is a plain recap built from the numbers.'}

@@ -2,6 +2,7 @@ import { metricLabel, type FeedItem } from '@/core/feed'
 import { sentenceCase } from '@/core/headline'
 import { CLUBS } from '@/data/league'
 import { useSessionState, useT } from '@/state/useSession'
+import { CheckIcon } from '@/components/icons'
 
 const TONE_STRIP: Record<string, string> = {
   goal: 'var(--color-amber)',
@@ -77,8 +78,8 @@ export function FeedCard({ item, open, onToggle, onListen }: Props) {
 
           {open && (
             <div id={why} className="mb-1 border-t border-white/10 pt-3 text-[14px]">
-              <p className="text-text/85">
-                {item.verified ? '✓ ' : ''}
+              <p className="flex items-center gap-1.5 text-text/85">
+                {item.verified && <CheckIcon className="size-3 text-control" />}
                 {t(item.source.startsWith('agent:') ? 'verifiedBy' : 'fromNumbers')}
               </p>
               {item.evidence.length > 0 && (

@@ -1,6 +1,7 @@
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { useEffect, useId, useRef, useState } from 'react'
 import { LANGS, PERSONAS, type Lang, type Persona } from '@/state/profile'
+import { CheckIcon, ChevronDownIcon } from './icons'
 
 interface Props {
   persona: string
@@ -79,12 +80,9 @@ export function ViewerChooser({ persona, lang, onChange, align = 'start' }: Prop
         <span className="font-semibold text-text">
           {p?.label ?? persona}, {l?.label ?? lang}
         </span>
-        <span
-          aria-hidden
-          className={`text-muted transition-transform duration-150 ${open ? 'rotate-180' : ''}`}
-        >
-          ▾
-        </span>
+        <ChevronDownIcon
+          className={`size-3 text-muted transition-transform duration-150 ${open ? 'rotate-180' : ''}`}
+        />
       </button>
       <AnimatePresence>
         {open && (
@@ -122,7 +120,7 @@ export function ViewerChooser({ persona, lang, onChange, align = 'start' }: Prop
                   onClick={() => pick({ persona: x.id })}
                 >
                   {x.label}
-                  {x.id === persona && <span aria-hidden>✓</span>}
+                  {x.id === persona && <CheckIcon />}
                 </button>
               ))}
             </div>
@@ -137,7 +135,7 @@ export function ViewerChooser({ persona, lang, onChange, align = 'start' }: Prop
                   onClick={() => pick({ lang: x.id })}
                 >
                   {x.label}
-                  {x.id === lang && <span aria-hidden>✓</span>}
+                  {x.id === lang && <CheckIcon />}
                 </button>
               ))}
             </div>
