@@ -22,7 +22,7 @@ Priority: **P0** = we fail or score badly without it. **P1** = needed to win. **
 
 | ✓ | Requirement | P | How |
 |---|---|---|---|
-| [x] | Customised viewing modes | P0 | Analyst, Casual, plus Kids/First-match and Accessibility (audio-described) |
+| [x] | Customised viewing modes | P0 | Analyst, Casual, plus Kids/First-match and Accessibility (audio-described) | 21 Oct: the picture changes too, not just the words. Analyst: magenta halos on players pressing the ball, lines to the two nearest options, evidence chips under each lower third. First match: a big arrow in the carrier's kit showing the way they attack, no shirt numbers, a "{Club} have the ball" chip, a bigger headline and at most two lines. Audio-described: bigger ball, thicker carrier ring (`PitchRenderer.setLayers`, `core/possession.ts`, `Hud.tsx`). Visible side by side on `/split`. |
 | [x] | Favourite club(s) | P0 | Profile picks a club; tone and emphasis tilt toward it, notifications for its moments |
 | [x] | Favourite player(s) | P0 | Their moments get priority and a "your player" badge |
 | [x] | Player-focused mode, following one player throughout the match | P0 | Camera follow on the 2D pitch, live player card, every insight framed around them |
@@ -57,7 +57,7 @@ Priority: **P0** = we fail or score badly without it. **P1** = needed to win. **
 | [x] | Explain **tactical pressure changes** | P0 | Pressure index + shift detector, explained by Tactical Analyst |
 | [x] | Explain **game rhythm patterns** | P0 | Rhythm from event tempo and possession length, momentum swings |
 | [x] | **Data innovation**: create or extend a synthetic football-realistic dataset (passes, shots, tackles, possession changes, pressure events, metadata) | P0 | Our engine + published dataset of generated matches with a datasheet (`data/README.md`) `data/README.md` datasheet, `scripts/export_dataset.py`, `docs/CALIBRATION.md`. |
-| [x] | **Multi-language storytelling** for global studio/streaming | P0 | Localiser agent + Azure AI Translator + Azure AI Speech voices |
+| [x] | **Multi-language storytelling** for global studio/streaming | P0 | Localiser agent + Azure AI Translator + Azure AI Speech voices | 21 Oct: viewers can also ask out loud. Hold the mic in Ask the Analyst; Azure AI Speech fast transcription (keyless) turns it into words in the viewer's language, with the match's names as a phrase list (`POST /matches/{id}/ask/audio`, `MicButton.tsx`). Checked live in English and Spanish. |
 | [x] | Suitable for studio, broadcast **and** streaming | P0 | Broadcast view (studio), Companion view (streaming/second screen), Control Room (producer) | All three exist: `/watch`, `/companion`, `/control`.
 
 ## E. Submission requirements (rules §4.4) — all P0
@@ -100,7 +100,7 @@ Priority: **P0** = we fail or score badly without it. **P1** = needed to win. **
 ### F2. Agentic Design & Innovation (20%)
 - [x] Creative agentic patterns → Producer/orchestrator, verifier loop, debate between Analyst and Verifier
 - [x] Sophisticated orchestration / **MCP integration** / multi-agent collaboration → Agent Framework workflow + our MCP server + A2A endpoint
-- [ ] Novel, or meaningfully better than existing approaches → "every claim is proven before it airs". 21 Oct: Ask the Analyst (Scout picks tools, code runs them up to the viewer's clock, Verifier checks the answer: `backend/agents/ask.py`), and a story check for who and when (`backend/agents/story.py`). + persona-aware rendering + same agents on synthetic and real footage
+- [ ] Novel, or meaningfully better than existing approaches → "every claim is proven before it airs". 21 Oct: Ask the Analyst (Scout picks tools, code runs them up to the viewer's clock, Verifier checks the answer: `backend/agents/ask.py`), and a story check for who and when (`backend/agents/story.py`). + persona-aware rendering (built 21 Oct, see B) + voice questions + same agents on synthetic and real footage
 
 ### F3. Real-World Impact & Applicability (20%)
 - [ ] Significant problem → broadcasters make one feed for millions of different fans
@@ -108,7 +108,7 @@ Priority: **P0** = we fail or score badly without it. **P1** = needed to win. **
 - [ ] Impact on businesses / users → broadcaster, streaming platform and fan stories in README
 
 ### F4. User Experience & Presentation (20%)
-- [ ] Well-designed, intuitive UX → `docs/07`. 21 Oct walk-through fixes: home page that states the problem (`frontend/src/screens/Home.tsx`), one nav on every page (`frontend/src/components/AppNav.tsx`), scrub timeline, split view explains itself and shows each viewer's record, real footage full screen keeps its tracking.
+- [ ] Well-designed, intuitive UX → `docs/07`. 21 Oct walk-through fixes: home page that states the problem (`frontend/src/screens/Home.tsx`), one nav on every page (`frontend/src/components/AppNav.tsx`), scrub timeline, split view explains itself and shows each viewer's record, real footage full screen keeps its tracking. 21 Oct, later: one "Viewing as" chooser per pane on Split and Recap (was about 19 and 12 controls), one transport on Split, a banded player heatmap, /real on its own transport and the match clock, motion under 300 ms with faster exits. Critique re-run: 26/40 (method changed, see `docs/08`).
 - [ ] Demo video clearly communicates the value → `docs/09`
 - [ ] Balanced frontend and backend → both visible in the video (Control Room shows the backend working) (screen built: `frontend/src/screens/ControlRoom.tsx`; tick once recorded)
 
