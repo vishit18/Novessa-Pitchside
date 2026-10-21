@@ -16,6 +16,7 @@ from backend.agents.context import MatchContext
 from backend.agents.llm import AgentUnavailable
 from backend.agents.localiser import localise_lines
 from backend.agents.models import Recap, RecapOutput
+from backend.agents.story import goal_time_problems, when_said
 from backend.agents.verifier import close, numbers_in
 from backend.app.overlay import Persona
 from engine.schema import EventType
@@ -46,6 +47,7 @@ def recap_facts(ctx: MatchContext, kind: Kind) -> dict[str, Any]:
     goals = [
         {
             "clock": e.clock,
+            "when": when_said(e.clock, e.period),
             "scorer": ctx.names.player(e.player_id),
             "team": club.get(e.team or "", e.team),
         }
@@ -158,11 +160,20 @@ async def make_recap(ctx: MatchContext, kind: Kind, persona: Persona, lang: str 
             trail.append(f"recap unavailable: {exc}")
             break
         stray = _stray(out, facts)
-        if not stray:
+        timing = goal_time_problems(" ".join([*out.paragraphs, *out.highlights]), facts["goals"])
+        if not stray and not timing:
             output = out
-            trail.append(f"every number checked against the fact sheet (attempt {attempt})")
+            trail.append(
+                f"every number and goal time checked against the fact sheet (attempt {attempt})"
+            )
             break
-        feedback = "These numbers are not in the fact sheet: " + ", ".join(f"{n:g}" for n in stray)
+        parts = []
+        if stray:
+            parts.append(
+                "These numbers are not in the fact sheet: " + ", ".join(f"{n:g}" for n in stray)
+            )
+        parts.extend(timing)
+        feedback = ". ".join(parts)
         trail.append(f"rejected (attempt {attempt}): {feedback}")
     status: Literal["verified", "fallback"] = "verified"
     if output is None:

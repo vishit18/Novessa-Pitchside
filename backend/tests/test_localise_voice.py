@@ -182,3 +182,10 @@ def test_units_stay_with_their_numbers() -> None:
     assert line_faithful(en, right_ar, names, "ar")
     # Without a language the unit check is skipped, as before.
     assert line_faithful(en, swapped, names)
+
+
+def test_arabic_joined_conjunction_keeps_the_name() -> None:
+    en = "Lucho Orbaiz has 3 shots, and Tobias Wragg has 3 shots."
+    ar = "Lucho Orbaiz لديه 3 تسديدات، وTobias Wragg لديه 3 تسديدات."
+    assert line_faithful(en, ar, ["Lucho Orbaiz", "Tobias Wragg"], "ar")
+    assert not line_faithful(en, "Lucho Orbaiz لديه 3 تسديدات، و3 تسديدات.", ["Tobias Wragg"], "ar")

@@ -8,6 +8,7 @@ from pathlib import Path
 from backend.agents.context import MatchContext
 from backend.agents.llm import AgentUnavailable
 from backend.agents.models import AnalystOutput, NarratorOutput, ProducerItem, Variant
+from backend.agents.story import story_problems
 from backend.agents.verifier import allowed_numbers, close, numbers_in
 from backend.app.overlay import Persona
 from backend.state.models import Moment
@@ -63,6 +64,11 @@ async def narrate(
         {
             "personas": item.personas,
             "clock": moment.clock,
+            "what_happened": {
+                "kind": moment.kind.replace("_", " "),
+                "club": ctx.team_name(moment.team) if moment.team else None,
+                "fact": ctx.names.humanise(moment.summary),
+            },
             "storylines": ctx.storylines,
             "insight": {"headline": analysis.headline, "why": analysis.why},
             "claims": [c.text for c in analysis.claims],
@@ -82,8 +88,19 @@ async def narrate(
         return fallback_variants(ctx, moment, item, analysis), "narrator unavailable"
     stray = _stray(out, moment, analysis)
     missing = [p for p in item.personas if p not in out.variants]
-    if stray or missing:
+    story = [
+        problem
+        for v in out.variants.values()
+        for problem in story_problems(ctx.names, moment, ctx.intel.teams, v.headline, v.body)
+    ]
+    if stray or missing or story:
         ctx.llm.note_fallback("narrator")
-        why = f"unproven numbers {stray}" if stray else f"missing personas {missing}"
+        why = (
+            f"unproven numbers {stray}"
+            if stray
+            else f"missing personas {missing}"
+            if missing
+            else "; ".join(dict.fromkeys(story))
+        )
         return fallback_variants(ctx, moment, item, analysis), f"narrator text rejected: {why}"
     return {p: _trim(out.variants[p]) for p in item.personas}, None

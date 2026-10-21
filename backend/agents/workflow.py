@@ -105,7 +105,7 @@ class VerifierExecutor(Executor):
         if msg.analysis is None:
             await wf.send_message(_fallback_card(self.ctx, brief, "analyst unavailable"))
             return
-        verdict = verifier.verify(self.ctx.intel, brief.moment, msg.analysis)
+        verdict = verifier.verify(self.ctx.intel, brief.moment, msg.analysis, self.ctx.names)
         n = len(verdict.checks)
         if verdict.overall == "approved":
             trail = [*brief.trail, f"verifier: {n}/{n} claims proven (attempt {brief.attempt})"]

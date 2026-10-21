@@ -11,6 +11,8 @@ import re
 
 from backend.agents.intel import MatchIntel, UnknownMetricError
 from backend.agents.models import AnalystOutput, Claim, ClaimCheck, Verdict
+from backend.agents.story import story_problems
+from backend.app.timeline import NameBook
 from backend.state.models import Moment
 
 ID_PATTERN = re.compile(r"\b[A-Z]{3}-\d{2}\b")
@@ -73,18 +75,25 @@ def allowed_numbers(moment: Moment, analysis: AnalystOutput) -> list[float]:
     return allowed
 
 
-def verify(intel: MatchIntel, moment: Moment, analysis: AnalystOutput) -> Verdict:
-    """Check every claim, then check the prose for numbers nobody proved."""
+def verify(
+    intel: MatchIntel, moment: Moment, analysis: AnalystOutput, book: NameBook | None = None
+) -> Verdict:
+    """Check every claim, then the prose for numbers nobody proved, then (given the names) that
+    the headline credits the right club and its time phrases fit the clock."""
     checks = [_check_claim(intel, i, c) for i, c in enumerate(analysis.claims)]
     allowed = allowed_numbers(moment, analysis)
     text = f"{analysis.headline} {analysis.why} " + " ".join(c.text for c in analysis.claims)
     stray = [n for n in numbers_in(text) if not any(close(n, a) for a in allowed)]
     bad = [c for c in checks if c.status == "rejected"]
-    if bad or stray:
+    story = (
+        story_problems(book, moment, intel.teams, analysis.headline, analysis.why) if book else []
+    )
+    if bad or stray or story:
         parts = [c.reason for c in bad]
         if stray:
             shown = ", ".join(f"{n:g}" for n in stray)
             parts.append(f"numbers with no claim behind them: {shown}")
+        parts.extend(story)
         return Verdict(
             overall="rejected", checks=checks, stray_numbers=stray, reason="; ".join(parts)
         )

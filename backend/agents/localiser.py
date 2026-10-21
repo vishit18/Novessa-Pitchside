@@ -127,8 +127,14 @@ def _units_kept(source: str, target: str, lang: str) -> bool:
     return True
 
 
+# Arabic writes "and", "with", "for", "so" and "like" as one letter joined to the next word, so a
+# name can follow و ف ب ل ك with no space ("وTobias Wragg").
+ARABIC_PROCLITIC = "وفبلك"
+
+
 def _has_name(text: str, name: str) -> bool:
-    return re.search(rf"(?<!\w){re.escape(name)}(?!\w)", text) is not None
+    pattern = rf"(?:(?<!\w)|(?<=[{ARABIC_PROCLITIC}])){re.escape(name)}(?!\w)"
+    return re.search(pattern, text) is not None
 
 
 def _faithful(
