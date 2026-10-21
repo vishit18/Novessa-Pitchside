@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { CLUBS } from '@/data/league'
 import { getKeyMoments, type KeyMoment, type KeyMoments } from '@/net/api'
 import { useSession, useSessionState, useT } from '@/state/useSession'
@@ -72,7 +72,14 @@ export function Timeline({
   const clock = useSessionState((s) => s.snapshot?.clock ?? null)
   const [key, setKey] = useState<KeyMoments | null>(null)
   const [spoilers, setSpoilers] = useState(loadSpoilers)
-  const [drag, setDrag] = useState<number | null>(null)
+  const [drag, setDragState] = useState<number | null>(null)
+  // Mirrors `drag` for key-up and blur, which can fire before React has re-rendered with the
+  // value the key-down set. Reading the state there missed the seek on a busy page.
+  const dragRef = useRef<number | null>(null)
+  const setDrag = (v: number | null) => {
+    dragRef.current = v
+    setDragState(v)
+  }
 
   useEffect(() => {
     let live = true
@@ -179,9 +186,9 @@ export function Timeline({
           onChange={(e) => setDrag(Number(e.target.value))}
           onPointerUp={(e) => commit(Number((e.target as HTMLInputElement).value))}
           onKeyUp={(e) => {
-            if (drag !== null) commit(Number((e.target as HTMLInputElement).value))
+            if (dragRef.current !== null) commit(Number((e.target as HTMLInputElement).value))
           }}
-          onBlur={() => drag !== null && commit(drag)}
+          onBlur={() => dragRef.current !== null && commit(dragRef.current)}
         />
       </div>
 
