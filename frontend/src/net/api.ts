@@ -107,3 +107,38 @@ export const getRecap = (id: string, kind: RecapKind, persona: string, lang: str
   getJson<Recap>(
     `/matches/${encodeURIComponent(id)}/recap?kind=${kind}&persona=${persona}&lang=${lang}`,
   )
+
+/** One marker on the timeline: GET /matches/{id}/moments. */
+export interface KeyMoment {
+  moment_id: string
+  t_match: number
+  clock: string
+  kind: 'goal' | 'card' | 'penalty' | 'big_chance'
+  headline: string
+  team: string | null
+  card: 'yellow' | 'red' | null
+}
+
+/** The whole match's goals, cards and chances. Reveals the result: show only on request. */
+export interface KeyMoments {
+  match_id: string
+  duration: number
+  half_time: number | null
+  moments: KeyMoment[]
+}
+
+export const getKeyMoments = (id: string) =>
+  getJson<KeyMoments>(`/matches/${encodeURIComponent(id)}/moments`)
+
+/** GET /matches/{id}/moments/{moment}/text: one verified moment as every persona gets it. */
+export interface MomentText {
+  moment_id: string
+  lang: string
+  translation: string
+  variants: Record<string, { headline: string; body: string; commentary: string }>
+}
+
+export const getMomentText = (id: string, moment: string, lang: string) =>
+  getJson<MomentText>(
+    `/matches/${encodeURIComponent(id)}/moments/${encodeURIComponent(moment)}/text?lang=${lang}`,
+  )

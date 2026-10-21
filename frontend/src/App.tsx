@@ -16,6 +16,7 @@ const Recap = lazy(() => import('@/screens/Recap').then((m) => ({ default: m.Rec
 const RealFootage = lazy(() =>
   import('@/screens/RealFootage').then((m) => ({ default: m.RealFootage })),
 )
+const Home = lazy(() => import('@/screens/Home').then((m) => ({ default: m.Home })))
 const Split = lazy(() => import('@/screens/Split').then((m) => ({ default: m.Split })))
 
 const NAME = 'Novessa Pitchside'
@@ -29,6 +30,7 @@ export function titleFor(path: string): string {
     ['/control', 'Control room'],
     ['/split', 'Same match, your story'],
     ['/watch', 'Broadcast'],
+    ['/start', 'How do you watch?'],
   ].find(([prefix]) => path.startsWith(prefix as string))
   return screen ? `${screen[1]} · ${NAME}` : NAME
 }
@@ -45,7 +47,7 @@ function Loading() {
 }
 
 /**
- * Routes: / onboarding and match picker, /watch the broadcast view, /split two viewers side by
+ * Routes: / what this is and where to go, /start onboarding and match picker, /watch the broadcast view, /split two viewers side by
  * side, /companion the phone view, /recap half and full-time recaps, /control the producer's
  * view. A returning viewer with a saved profile and a match in the URL goes straight to /watch.
  */
@@ -62,9 +64,10 @@ export default function App() {
     if (path.startsWith('/control')) return <ControlRoom key={query.toString()} query={query} />
     if (path.startsWith('/split')) return <Split key={query.toString()} query={query} />
     if (path.startsWith('/watch')) return <Broadcast key={query.toString()} query={query} />
+    if (path.startsWith('/start')) return <Onboarding query={query} />
     if (path === '/' && query.get('match') && query.get('t') && loadProfile())
       return <Broadcast query={query} />
-    return <Onboarding query={query} />
+    return <Home />
   })()
   return <Suspense fallback={<Loading />}>{screen}</Suspense>
 }

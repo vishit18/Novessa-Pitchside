@@ -2,7 +2,7 @@
 
 /** Same values as backend/app/overlay.py Persona. */
 export type Persona = 'analyst' | 'casual' | 'kids' | 'accessibility'
-export type Lang = 'en' | 'es' | 'ar'
+export type Lang = 'en' | 'es' | 'fr' | 'ar' | 'hi' | 'pt'
 
 export interface ViewerProfile {
   viewerId: string
@@ -31,10 +31,14 @@ export const METRICS: { id: string; label: string; hint: string }[] = [
   { id: 'distance', label: 'Distance covered', hint: 'A marker each time a player runs further' },
 ]
 
+/** The six languages the Localiser and Speech cover, each in its own name. */
 export const LANGS: { id: Lang; label: string }[] = [
   { id: 'en', label: 'English' },
   { id: 'es', label: 'Español' },
+  { id: 'fr', label: 'Français' },
   { id: 'ar', label: 'العربية' },
+  { id: 'hi', label: 'हिन्दी' },
+  { id: 'pt', label: 'Português' },
 ]
 
 export const isRtl = (lang: Lang) => lang === 'ar'
@@ -64,7 +68,7 @@ export function loadProfile(): ViewerProfile | null {
     const raw = window.localStorage.getItem(KEY)
     if (!raw) return null
     const p = JSON.parse(raw) as Partial<ViewerProfile>
-    if (!p.persona || !p.lang) return null
+    if (!p.persona || !p.lang || !LANGS.some((l) => l.id === p.lang)) return null
     return defaultProfile(p)
   } catch {
     return null

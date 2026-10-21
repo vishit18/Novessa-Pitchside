@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { AgentGraph } from '@/components/control/AgentGraph'
 import { Gauges } from '@/components/control/Gauges'
 import { MomentQueue } from '@/components/control/MomentQueue'
-import { Wordmark } from '@/components/Hud'
+import { AppNav } from '@/components/AppNav'
 import { tally } from '@/core/control'
 import { GATEWAY_HTTP, listMatches, type MatchSummary } from '@/net/api'
 import { killAgent, startAgents } from '@/net/control'
@@ -35,10 +35,16 @@ export function ControlRoom({ query }: { query: URLSearchParams }) {
 
   return (
     <main className="stage-bg flex min-h-dvh w-full flex-col gap-6 px-4 py-5 sm:px-8">
-      <header className="flex flex-wrap items-center justify-between gap-x-8 gap-y-3">
-        <div className="flex flex-wrap items-baseline gap-x-5 gap-y-1">
-          <Wordmark />
-          <h1 className="font-display text-[26px] font-semibold leading-none">Control room</h1>
+      <AppNav match={matchId} />
+      <header className="flex flex-wrap items-end justify-between gap-x-8 gap-y-3">
+        <div>
+          <h1 className="font-display text-[40px] font-bold leading-none sm:text-[52px]">
+            Control room
+          </h1>
+          <p className="mt-2 max-w-[70ch] text-[15px] text-muted">
+            The agent team behind every broadcast, live. Switch any agent off to watch the others
+            recover.
+          </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <label className="flex items-center gap-2 text-[13px] text-muted">
@@ -62,13 +68,6 @@ export function ControlRoom({ query }: { query: URLSearchParams }) {
             className="bg-amber px-4 py-1.5 text-[14px] font-semibold text-ink transition-opacity disabled:cursor-not-allowed disabled:opacity-40"
           >
             {running ? 'Agents running' : progress ? 'Agents finished' : 'Start the agents'}
-          </button>
-          <button
-            type="button"
-            onClick={() => navigate(withParams('/watch', { match: matchId }))}
-            className="border border-white/35 px-3 py-1.5 text-[14px] text-text hover:border-amber"
-          >
-            Open the broadcast
           </button>
         </div>
       </header>

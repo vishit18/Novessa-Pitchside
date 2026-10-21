@@ -1,23 +1,13 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { MomentsTimeline } from '@/components/recap/MomentsTimeline'
 import { StatBars } from '@/components/recap/StatBars'
-import { Wordmark } from '@/components/Hud'
+import { AppNav } from '@/components/AppNav'
 import { KIND_LABEL, leaderLabel, leaderValue, shareText } from '@/core/recap'
 import { CLUBS } from '@/data/league'
 import { listMatches, type CatchUp, type Recap as RecapData, type RecapKind } from '@/net/api'
 import { navigate, withParams } from '@/router'
-import { defaultProfile, loadProfile, PERSONAS } from '@/state/profile'
+import { defaultProfile, LANGS, loadProfile, PERSONAS } from '@/state/profile'
 import { useRecap } from '@/state/useRecap'
-
-/** The six languages the Localiser covers, each in its own name. */
-const LANGUAGES = [
-  { id: 'en', label: 'English' },
-  { id: 'es', label: 'Español' },
-  { id: 'fr', label: 'Français' },
-  { id: 'ar', label: 'العربية' },
-  { id: 'hi', label: 'हिन्दी' },
-  { id: 'pt', label: 'Português' },
-]
 
 /** Story column, then the numbers. Centred as a pair so wide screens have no empty middle. */
 const LAYOUT = 'lg:grid-cols-[minmax(0,68ch)_minmax(0,480px)] lg:justify-center'
@@ -64,20 +54,10 @@ export function Recap({ query }: { query: URLSearchParams }) {
   return (
     <div className="stage-bg min-h-dvh">
       <main className="mx-auto flex min-h-dvh w-full max-w-[1280px] flex-col gap-8 px-4 py-5 sm:px-8">
-        <header className="flex flex-wrap items-center justify-between gap-x-8 gap-y-3">
-          <div className="flex flex-wrap items-baseline gap-x-5 gap-y-1">
-            <Wordmark />
-            <h1 className="font-display text-[26px] font-semibold leading-none">
-              {KIND_LABEL[kind]} recap
-            </h1>
-          </div>
-          <button
-            className="inline-flex min-h-11 items-center text-[14px] text-muted underline decoration-white/25 underline-offset-4 hover:text-text"
-            onClick={() => navigate(withParams('/watch', { match: matchId }))}
-          >
-            Back to the match
-          </button>
-        </header>
+        <AppNav match={matchId} />
+        <h1 className="font-display text-[40px] font-bold leading-none sm:text-[52px]">
+          {KIND_LABEL[kind]} recap
+        </h1>
 
         <Toolbar kind={kind} persona={persona} lang={lang} onChange={go} />
 
@@ -135,7 +115,7 @@ function Toolbar({
       <Chips
         label="Language"
         value={lang}
-        options={LANGUAGES}
+        options={LANGS}
         onPick={(id) => onChange({ lang: id })}
       />
     </div>

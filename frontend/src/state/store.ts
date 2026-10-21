@@ -26,6 +26,10 @@ export interface UIState {
   delayS: number
   speed: number
   paused: boolean
+  /** Render time in match seconds, a few times a second: for the timeline. */
+  t: number
+  /** Furthest match time this viewer has watched to. Markers past it would be spoilers. */
+  seenUpTo: number
   controls: PlaybackControls | null
   set: (patch: Partial<Omit<UIState, 'set'>>) => void
 }
@@ -44,6 +48,8 @@ export function createUIStore(profile: ViewerProfile): StoreApi<UIState> {
     delayS: 0,
     speed: 4,
     paused: false,
+    t: 0,
+    seenUpTo: 0,
     controls: null,
     set: (patch) => set(patch),
   }))

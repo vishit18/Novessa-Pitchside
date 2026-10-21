@@ -5,7 +5,7 @@ import { expect, test } from '@playwright/test'
  * number, always, instead of the full set of overlays.
  */
 test('one-number mode shows the running leader for the chosen measure', async ({ page }) => {
-  await page.goto('/?match=derby_01')
+  await page.goto('/start?match=derby_01')
   await page.getByRole('button', { name: /Just one number/ }).click()
   await page.getByRole('button', { name: /Sprint speed/ }).click()
   await page.getByRole('button', { name: /No side/ }).click()
@@ -20,7 +20,7 @@ test('one-number mode shows the running leader for the chosen measure', async ({
 })
 
 test('picking a normal persona clears one-number mode', async ({ page }) => {
-  await page.goto('/?match=derby_01')
+  await page.goto('/start?match=derby_01')
   await page.getByRole('button', { name: /Just one number/ }).click()
   await page.getByRole('button', { name: /Shot speed/ }).click()
   await page.getByRole('button', { name: 'Back' }).click()

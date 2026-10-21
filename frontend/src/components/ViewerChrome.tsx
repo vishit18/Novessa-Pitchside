@@ -1,4 +1,4 @@
-import { CHROME_BUTTON } from '@/components/chromeStyles'
+import { NavMenu } from '@/components/AppNav'
 import { CommentaryToggle } from '@/components/CommentaryToggle'
 import { CLUBS, PLAYERS } from '@/data/league'
 import { navigate, withParams } from '@/router'
@@ -7,8 +7,8 @@ import { useSession, useSessionState, useT } from '@/state/useSession'
 import { useWake } from '@/state/useWake'
 
 /**
- * Top-right of the broadcast. The chip says who is watching and how, always. Companion, recap
- * and commentary fade in when the pointer moves or focus lands, and out again after three seconds.
+ * Top-right of the broadcast. The chip says who is watching and how, always. Commentary and the
+ * menu (every other page) fade in when the pointer moves or focus lands, and out after three seconds.
  */
 export function ViewerChrome() {
   const session = useSession()
@@ -31,7 +31,7 @@ export function ViewerChrome() {
     <div className="flex flex-col items-end gap-2" onFocusCapture={wake}>
       <button
         className="plate-chip group flex items-center gap-3 bg-raised/90 py-2 pl-4 pr-3 text-start hover:bg-[#1d242d]"
-        onClick={() => navigate(withParams('/', { match: matchId }))}
+        onClick={() => navigate(withParams('/start', { match: matchId }))}
         aria-label={`${persona}, ${lang}${who ? `, ${who}` : ''}. ${t('changeHow')}`}
       >
         <span className="flex flex-col">
@@ -51,19 +51,8 @@ export function ViewerChrome() {
             : 'pointer-events-none opacity-0 focus-within:pointer-events-auto focus-within:opacity-100'
         }`}
       >
-        <button
-          className={CHROME_BUTTON}
-          onClick={() => navigate(withParams('/companion', { match: matchId }))}
-        >
-          {t('openCompanion')}
-        </button>
-        <button
-          className={CHROME_BUTTON}
-          onClick={() => navigate(withParams('/recap', { match: matchId }))}
-        >
-          {t('openRecap')}
-        </button>
         <CommentaryToggle />
+        <NavMenu match={matchId} lang={profile.lang} />
       </div>
     </div>
   )

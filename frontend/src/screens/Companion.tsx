@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { FeedCard } from '@/components/companion/FeedCard'
 import { CatchUpSheet } from '@/components/companion/CatchUpSheet'
 import { ScoreBug, StatusPill } from '@/components/Hud'
+import { Timeline } from '@/components/Timeline'
 import { GATEWAY_HTTP } from '@/net/api'
 import { navigate, withParams } from '@/router'
 import { defaultProfile, isRtl, loadProfile } from '@/state/profile'
@@ -64,17 +65,22 @@ function CompanionBody({ matchId }: { matchId: string }) {
       dir={isRtl(lang) ? 'rtl' : 'ltr'}
     >
       <h1 className="sr-only">Novessa Pitchside companion</h1>
-      <header className="sticky top-0 z-10 flex items-start justify-between gap-3 bg-ink/90 px-4 pb-3 pt-3 backdrop-blur-sm">
-        <ScoreBug showMatchLine={false} />
-        <div className="flex flex-col items-end gap-1">
-          <StatusPill />
-          <button
-            className="inline-flex min-h-11 items-center px-1 text-[14px] text-muted underline decoration-white/25 underline-offset-4 hover:text-text"
-            onClick={() => navigate(withParams('/', { match: matchId }))}
-          >
-            Change
-          </button>
+      <header className="sticky top-0 z-10 flex flex-col gap-2 bg-ink/90 px-4 pb-3 pt-3 backdrop-blur-sm">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <ScoreBug showMatchLine={false} />
+          </div>
+          <div className="flex shrink-0 flex-col items-end gap-1">
+            <StatusPill />
+            <button
+              className="inline-flex min-h-11 items-center px-1 text-[14px] text-muted underline decoration-white/25 underline-offset-4 hover:text-text"
+              onClick={() => navigate(withParams('/start', { match: matchId }))}
+            >
+              Change
+            </button>
+          </div>
         </div>
+        <Timeline narrow />
       </header>
 
       <section aria-labelledby="feed-h" className="flex-1 px-4 pb-32 pt-2">

@@ -34,6 +34,7 @@ export class Session {
   private feedLog: OverlayEnvelope[] = []
   private lastFeedMs = 0
   private lastFeedSig = ''
+  private lastTimeMs = 0
 
   constructor(readonly opts: SourceOptions) {
     this.store = createUIStore(opts.profile)
@@ -62,6 +63,8 @@ export class Session {
       feed: [],
       speed: this.opts.speed ?? 4,
       paused: false,
+      t: this.opts.startAt ?? 0,
+      seenUpTo: this.opts.startAt ?? 0,
     })
     source.connect({
       onMessage: (m) => this.onMessage(m),
@@ -89,6 +92,22 @@ export class Session {
   setPaused(paused: boolean): void {
     this.source?.controls?.setPaused(paused)
     this.store.getState().set({ paused })
+  }
+
+  /**
+   * Jump to a match time. The gateway restarts the stream there; local buffers start over so
+   * nothing from the old position is drawn. The feed log is kept: it only ever shows overlays
+   * whose time has come, so seeking back hides later cards and seeking forward shows them again.
+   */
+  seek(tMatch: number): void {
+    const t = Math.max(0, tMatch)
+    this.source?.controls?.seek(t)
+    this.buffers.clear()
+    this.clock.reset()
+    this.lastSnapshotT = -1
+    this.lastStatsT = -1
+    this.lastActiveSig = ''
+    this.store.getState().set({ t, active: [] })
   }
 
   private onMessage(msg: WireMessage): void {
@@ -130,6 +149,12 @@ export class Session {
     if (stats && stats.t_match !== this.lastStatsT) {
       this.lastStatsT = stats.t_match
       patch.playerStats = stats
+    }
+    if (nowMs - this.lastTimeMs > 250 && t > 0) {
+      this.lastTimeMs = nowMs
+      patch.t = t
+      const seen = this.store.getState().seenUpTo
+      if (t > seen) patch.seenUpTo = t
     }
     if (nowMs - this.lastFeedMs > 400) {
       this.lastFeedMs = nowMs

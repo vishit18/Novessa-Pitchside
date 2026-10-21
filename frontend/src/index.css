@@ -231,3 +231,54 @@ button:not(:disabled):active {
     0 calc(100% - 10px)
   );
 }
+
+/* Timeline scrubber: the native range input carries keyboard and screen-reader support; the
+   track is drawn underneath so markers can sit on it. Only the thumb is visible here. */
+.scrub {
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+  margin: 0;
+}
+.scrub::-webkit-slider-runnable-track {
+  background: transparent;
+  height: 100%;
+}
+.scrub::-moz-range-track {
+  background: transparent;
+}
+.scrub::-webkit-slider-thumb {
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  margin-top: calc((36px - 14px) / 2);
+  border-radius: 9999px;
+  background: var(--color-amber);
+  box-shadow: 0 0 0 3px rgb(13 16 20 / 0.9);
+}
+.scrub::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border: 0;
+  border-radius: 9999px;
+  background: var(--color-amber);
+  box-shadow: 0 0 0 3px rgb(13 16 20 / 0.9);
+}
+.scrub:focus-visible {
+  outline: none;
+}
+.scrub:focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 0 0 3px var(--color-amber);
+}
+
+/* Real footage in full screen: the frame fills the screen and the video keeps its shape, so the
+   tracking canvas drawn over it stays lined up. */
+.real-frame:fullscreen {
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  background: #000;
+}
+.real-frame:fullscreen .real-box {
+  width: min(100vw, calc(100vh * var(--ratio)));
+}

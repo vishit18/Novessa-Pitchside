@@ -36,6 +36,8 @@ export class WebSocketSource implements MatchSource {
   private lastT: number
   private speed: number
   private paused = false
+  /** Control messages sent before the socket opened, latest per op. Sent on open. */
+  private pending = new Map<string, Record<string, unknown>>()
 
   constructor(
     private readonly baseUrl: string,
@@ -105,6 +107,7 @@ export class WebSocketSource implements MatchSource {
 
   private send(msg: Record<string, unknown>): void {
     if (this.ws?.readyState === WebSocket.OPEN) this.ws.send(JSON.stringify(msg))
+    else this.pending.set(msg.op === 'play' ? 'pause' : String(msg.op), msg)
   }
 
   private open(): void {
@@ -115,6 +118,10 @@ export class WebSocketSource implements MatchSource {
     this.ws = ws
     ws.onopen = () => {
       this.attempt = 0
+      // The URL already carries speed and t; send what changed while the socket was opening.
+      const queued = [...this.pending.values()]
+      this.pending.clear()
+      for (const m of queued) this.send(m)
       if (this.paused) this.send({ op: 'pause' })
       h.onStatus('live')
     }

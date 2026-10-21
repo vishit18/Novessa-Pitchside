@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
-import { Wordmark } from '@/components/Hud'
+import { AppNav } from '@/components/AppNav'
 import { Stage } from '@/components/Stage'
 import { CLUBS, PLAYERS } from '@/data/league'
 import { getMatchMeta, listMatches, type MatchSummary } from '@/net/api'
@@ -83,10 +83,11 @@ export function Onboarding({ query }: { query: URLSearchParams }) {
   return (
     <main className="relative min-h-dvh w-full overflow-hidden bg-ink">
       <Backdrop matchId={matchId ?? matches?.[0]?.match_id ?? 'derby_01'} />
-      <div className="relative z-10 flex min-h-dvh max-w-[680px] flex-col px-5 py-8 sm:px-16 sm:py-14">
-        <Wordmark />
-
-        <div className="mt-14 sm:mt-24">
+      <div className="relative z-10 px-5 pt-4 sm:px-16">
+        <AppNav match={matchId} />
+      </div>
+      <div className="relative z-10 flex max-w-[680px] flex-col px-5 pb-8 sm:px-16 sm:pb-14">
+        <div className="mt-10 sm:mt-16">
           {step !== 'match' && (
             <div className="mb-5 flex items-center gap-4">
               <button

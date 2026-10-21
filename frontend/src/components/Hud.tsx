@@ -2,6 +2,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { useEffect, useRef, useState } from 'react'
 import { CLUBS, PLAYERS } from '@/data/league'
 import { lateness } from '@/core/overlays'
+import { Timeline } from '@/components/Timeline'
 import { outcomeLabel } from '@/i18n/strings'
 import { useSession, useSessionState, useT } from '@/state/useSession'
 import type { OverlayEnvelope } from '@/types/overlay'
@@ -228,26 +229,25 @@ export function Wordmark() {
   )
 }
 
-const SPEEDS = [1, 4, 10, 30]
 const DELAYS = [0, 20, 40]
 
 /**
- * Transport and viewer-delay controls. Hidden until the pointer moves or focus lands inside.
- * `transport` off hides play and speed, for views that share one transport across panes.
+ * The timeline (play, skip, drag, speed) and the viewer's stream delay. Hidden until the pointer
+ * moves or focus lands inside, and always shown while paused. `transport` off hides play, skip
+ * and speed, for views that share one transport across panes.
  */
 export function Controls({ transport = true }: { transport?: boolean }) {
   const session = useSession()
   const t = useT()
   const controls = useSessionState((s) => s.controls)
-  const speed = useSessionState((s) => s.speed)
   const paused = useSessionState((s) => s.paused)
   const delayS = useSessionState((s) => s.delayS)
-  const [shown, setShown] = useState(false)
+  const [awake, setAwake] = useState(false)
   const timer = useRef<number | undefined>(undefined)
   const wake = () => {
-    setShown(true)
+    setAwake(true)
     window.clearTimeout(timer.current)
-    timer.current = window.setTimeout(() => setShown(false), 3000)
+    timer.current = window.setTimeout(() => setAwake(false), 3000)
   }
   useEffect(() => {
     window.addEventListener('pointermove', wake)
@@ -260,62 +260,44 @@ export function Controls({ transport = true }: { transport?: boolean }) {
       window.clearTimeout(timer.current)
     }
   }, [])
+  const shown = awake || paused
   const btn =
-    'num h-8 min-w-9 border border-white/30 px-2.5 text-[16px] font-semibold text-muted transition-colors hover:text-text aria-pressed:border-amber aria-pressed:text-amber'
+    'num h-9 min-w-9 border border-white/25 px-2 text-[15px] font-semibold text-muted transition-colors hover:text-text aria-pressed:border-amber aria-pressed:text-amber'
   return (
     <div
       onFocusCapture={wake}
-      className={`plate-shadow transition-opacity duration-200 ${
+      onPointerMove={wake}
+      className={`plate-shadow w-full max-w-[1100px] transition-opacity duration-200 ${
         shown
           ? 'opacity-100'
           : 'pointer-events-none opacity-0 focus-within:pointer-events-auto focus-within:opacity-100'
       }`}
     >
       <div
-        className="plate flex flex-wrap items-center justify-center gap-x-5 gap-y-2 px-5 py-2.5"
+        className="plate flex flex-col gap-2 px-4 py-2.5"
         style={{ ['--cut' as string]: '10px' }}
         role="toolbar"
         aria-label="Playback"
       >
-        {controls && transport && (
-          <>
-            <button
-              className={btn}
-              aria-pressed={paused}
-              onClick={() => session.setPaused(!paused)}
-            >
-              {t(paused ? 'play' : 'pause')}
-            </button>
-            <div className="flex items-center gap-1" role="group" aria-label={t('replaySpeed')}>
-              {SPEEDS.map((s) => (
-                <button
-                  key={s}
-                  className={btn}
-                  aria-pressed={speed === s}
-                  onClick={() => session.setSpeed(s)}
-                >
-                  {s}x
-                </button>
-              ))}
-            </div>
-          </>
-        )}
-        <div className="flex items-center gap-1" role="group" aria-label={t('streamDelay')}>
-          <span className="mr-1.5 text-[13px] text-muted">{t('streamDelay')}</span>
-          {DELAYS.map((d) => (
-            <button
-              key={d}
-              className={btn}
-              aria-pressed={delayS === d}
-              onClick={() => session.setDelay(d)}
-            >
-              {d}s
-            </button>
-          ))}
+        {controls && <Timeline transport={transport} />}
+        <div className="flex flex-wrap items-center justify-end gap-x-4 gap-y-1">
+          <div className="flex items-center gap-1" role="group" aria-label={t('streamDelay')}>
+            <span className="mr-1.5 text-[13px] text-muted">{t('streamDelay')}</span>
+            {DELAYS.map((d) => (
+              <button
+                key={d}
+                className={btn}
+                aria-pressed={delayS === d}
+                onClick={() => session.setDelay(d)}
+              >
+                {d}s
+              </button>
+            ))}
+          </div>
+          <span className="num hidden text-[14px] text-muted sm:inline">
+            {t('behindLive', { s: session.clock.lead.toFixed(1) })}
+          </span>
         </div>
-        <span className="num hidden text-[14px] text-muted sm:inline">
-          {t('behindLive', { s: session.clock.lead.toFixed(1) })}
-        </span>
       </div>
     </div>
   )

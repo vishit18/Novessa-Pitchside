@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Wordmark } from '@/components/Hud'
+import { AppNav } from '@/components/AppNav'
 import {
   activeBursts,
   activePasses,
@@ -10,7 +10,6 @@ import {
   type Box,
   type RealOverlay,
 } from '@/core/real'
-import { navigate, withParams } from '@/router'
 import { getOverlay, listClips, videoUrl, type RealClip } from '@/net/real'
 
 const TEAM_COLOUR = { BLU: '#4d8dff', WHT: '#eef2f6' } as const
@@ -51,18 +50,10 @@ export function RealFootage() {
 
   return (
     <main className="stage-bg mx-auto flex min-h-dvh w-full max-w-[1500px] flex-col gap-6 px-4 py-5 sm:px-8">
-      <header className="flex flex-wrap items-center justify-between gap-x-8 gap-y-3">
-        <div className="flex flex-wrap items-baseline gap-x-5 gap-y-1">
-          <Wordmark />
-          <h1 className="font-display text-[26px] font-semibold leading-none">Real footage</h1>
-        </div>
-        <button
-          className="inline-flex min-h-11 items-center text-[14px] text-muted underline decoration-white/25 underline-offset-4 hover:text-text"
-          onClick={() => navigate(withParams('/'))}
-        >
-          Back to the match
-        </button>
-      </header>
+      <AppNav />
+      <h1 className="font-display text-[40px] font-bold leading-none sm:text-[52px]">
+        The same idea, on real video
+      </h1>
 
       {failed && (
         <p role="alert" className="max-w-[60ch] text-[15px]">
@@ -83,6 +74,8 @@ export function RealFootage() {
 function Player({ clip, overlay }: { clip: RealClip; overlay: RealOverlay }) {
   const video = useRef<HTMLVideoElement>(null)
   const canvas = useRef<HTMLCanvasElement>(null)
+  const frame = useRef<HTMLDivElement>(null)
+  const full = useFullscreen(frame)
   const [layers, setLayers] = useState<Layers>({ tags: true, passes: true, speeds: true })
   const layersRef = useRef(layers)
   useEffect(() => {
@@ -120,31 +113,66 @@ function Player({ clip, overlay }: { clip: RealClip; overlay: RealOverlay }) {
 
       <section aria-label="Match video" className="flex flex-col gap-3">
         <div className="overflow-x-auto">
-          <div className="relative min-w-[900px]">
-            {clip.video ? (
-              <video
-                ref={video}
-                src={videoUrl(clip.clip)}
-                controls
-                muted
-                playsInline
-                preload="auto"
-                className="block w-full bg-black"
-                style={{ aspectRatio: `${overlay.clip[0]} / ${overlay.clip[1]}` }}
+          {/* Full screen goes on this frame, not the video, so the tracking canvas comes too. */}
+          <div
+            ref={frame}
+            className="real-frame min-w-[900px]"
+            onDoubleClick={(e) => {
+              e.preventDefault()
+              full.toggle()
+            }}
+          >
+            <div
+              className="real-box relative w-full"
+              style={{
+                aspectRatio: `${overlay.clip[0]} / ${overlay.clip[1]}`,
+                ['--ratio' as string]: overlay.clip[0] / overlay.clip[1],
+              }}
+            >
+              {clip.video ? (
+                <video
+                  ref={video}
+                  src={videoUrl(clip.clip)}
+                  controls
+                  controlsList="nofullscreen"
+                  disablePictureInPicture
+                  muted
+                  playsInline
+                  preload="auto"
+                  className="block size-full bg-black"
+                />
+              ) : (
+                <div className="grid size-full place-items-center bg-black/60 p-6 text-center text-[15px]">
+                  The video is not on this server, so only the findings are shown below.
+                </div>
+              )}
+              <canvas
+                ref={canvas}
+                aria-hidden
+                className="pointer-events-none absolute inset-0 size-full"
               />
-            ) : (
-              <div
-                className="grid w-full place-items-center bg-black/60 p-6 text-center text-[15px]"
-                style={{ aspectRatio: `${overlay.clip[0]} / ${overlay.clip[1]}` }}
+              <button
+                className="absolute end-3 top-3 flex h-9 items-center gap-2 border border-white/40 bg-ink/75 px-3 text-[14px] font-medium text-text hover:border-white/80"
+                onClick={full.toggle}
+                aria-pressed={full.on}
               >
-                The video is not on this server, so only the findings are shown below.
-              </div>
-            )}
-            <canvas
-              ref={canvas}
-              aria-hidden
-              className="pointer-events-none absolute inset-0 size-full"
-            />
+                <svg
+                  viewBox="0 0 14 14"
+                  className="size-3.5"
+                  aria-hidden
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.6"
+                >
+                  {full.on ? (
+                    <path d="M5 1v4H1M9 1v4h4M5 13V9H1M9 13V9h4" />
+                  ) : (
+                    <path d="M1 5V1h4M13 5V1H9M1 9v4h4M13 9v4H9" />
+                  )}
+                </svg>
+                {full.on ? 'Exit full screen' : 'Full screen'}
+              </button>
+            </div>
           </div>
         </div>
         <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
@@ -205,6 +233,33 @@ function Player({ clip, overlay }: { clip: RealClip; overlay: RealOverlay }) {
       </div>
     </>
   )
+}
+
+/** Full screen for one element, tracking the browser's own state (Escape also leaves it). */
+function useFullscreen(ref: React.RefObject<HTMLElement | null>) {
+  const [on, setOn] = useState(false)
+  useEffect(() => {
+    const sync = () => {
+      const el = document.fullscreenElement
+      // A browser that ignores controlsList can still put the bare video in full screen, which
+      // would leave the tracking canvas behind. Hand full screen to the frame instead.
+      if (el instanceof HTMLVideoElement && ref.current?.contains(el)) {
+        void document
+          .exitFullscreen()
+          .then(() => ref.current?.requestFullscreen())
+          .catch(() => undefined)
+        return
+      }
+      setOn(el === ref.current && ref.current !== null)
+    }
+    document.addEventListener('fullscreenchange', sync)
+    return () => document.removeEventListener('fullscreenchange', sync)
+  }, [ref])
+  const toggle = () => {
+    if (document.fullscreenElement) void document.exitFullscreen().catch(() => undefined)
+    else void ref.current?.requestFullscreen().catch(() => undefined)
+  }
+  return { on, toggle }
 }
 
 function pct(v: number) {

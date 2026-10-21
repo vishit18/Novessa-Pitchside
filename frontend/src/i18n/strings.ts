@@ -1,4 +1,5 @@
 import type { Lang } from '@/state/profile'
+import { fr, hi, NAV, pt } from './strings.more'
 
 /**
  * Interface strings for the broadcast chrome. Match prose (insights, commentary) arrives from
@@ -71,9 +72,10 @@ const en = {
   noSpoilers: 'Covers the match up to {clock} and nothing after it.',
 }
 
-export type StringKey = keyof typeof en
+type BaseKey = keyof typeof en
+export type StringKey = BaseKey | keyof (typeof NAV)['en']
 
-const es: Record<StringKey, string> = {
+const es: Record<BaseKey, string> = {
   sentOff: 'Expulsado',
   subbedOff: 'Sustituido',
   following: 'Siguiendo a',
@@ -140,7 +142,7 @@ const es: Record<StringKey, string> = {
   noSpoilers: 'Cubre el partido hasta el {clock} y nada después.',
 }
 
-const ar: Record<StringKey, string> = {
+const ar: Record<BaseKey, string> = {
   sentOff: 'طُرد',
   subbedOff: 'تم استبداله',
   following: 'تتابع',
@@ -207,7 +209,13 @@ const ar: Record<StringKey, string> = {
   noSpoilers: 'يغطي المباراة حتى {clock} ولا شيء بعده.',
 }
 
-export const STRINGS: Record<Lang, Record<StringKey, string>> = { en, es, ar }
+// Typed per language, so a key missing from any table fails the build.
+const base: Record<Lang, Record<BaseKey, string>> = { en, es, fr, ar, hi, pt }
+const nav: Record<Lang, Record<keyof (typeof NAV)['en'], string>> = NAV
+
+export const STRINGS = Object.fromEntries(
+  (Object.keys(base) as Lang[]).map((l) => [l, { ...base[l], ...nav[l] }]),
+) as Record<Lang, Record<StringKey, string>>
 
 /** Look up a string and fill {placeholders}. Falls back to English, then to the key. */
 export function translate(

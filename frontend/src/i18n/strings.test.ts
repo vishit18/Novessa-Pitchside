@@ -14,6 +14,11 @@ describe('strings', () => {
     }
   })
 
+  it('covers all six languages the Localiser speaks', () => {
+    expect(Object.keys(STRINGS).sort()).toEqual(['ar', 'en', 'es', 'fr', 'hi', 'pt'])
+    expect(translate('hi', 'missed')).toBe('मुझसे क्या छूट गया?')
+  })
+
   it('fills placeholders', () => {
     expect(translate('en', 'passDone', { m: 32 })).toBe('32 m, completed')
     expect(translate('es', 'shotBy', { name: 'Ana' })).toBe('Disparo de Ana')
