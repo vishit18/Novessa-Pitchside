@@ -6,7 +6,8 @@ import { KIND_LABEL, leaderLabel, leaderValue, shareText } from '@/core/recap'
 import { CLUBS } from '@/data/league'
 import { listMatches, type CatchUp, type Recap as RecapData, type RecapKind } from '@/net/api'
 import { navigate, withParams } from '@/router'
-import { defaultProfile, LANGS, loadProfile, PERSONAS } from '@/state/profile'
+import { ViewerChooser } from '@/components/ViewerChooser'
+import { defaultProfile, loadProfile } from '@/state/profile'
 import { useRecap } from '@/state/useRecap'
 
 /** Story column, then the numbers. Centred as a pair so wide screens have no empty middle. */
@@ -106,17 +107,10 @@ function Toolbar({
         options={KINDS.map((k) => ({ id: k, label: KIND_LABEL[k] }))}
         onPick={(id) => onChange({ kind: id })}
       />
-      <Chips
-        label="Watching as"
-        value={persona}
-        options={PERSONAS.map((p) => ({ id: p.id, label: p.label }))}
-        onPick={(id) => onChange({ persona: id })}
-      />
-      <Chips
-        label="Language"
-        value={lang}
-        options={LANGS}
-        onPick={(id) => onChange({ lang: id })}
+      <ViewerChooser
+        persona={persona}
+        lang={lang}
+        onChange={(patch) => onChange({ ...patch } as Record<string, string>)}
       />
     </div>
   )

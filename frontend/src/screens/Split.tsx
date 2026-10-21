@@ -3,16 +3,8 @@ import { sentenceCase } from '@/core/headline'
 import { AppNav } from '@/components/AppNav'
 import { Timeline } from '@/components/Timeline'
 import { getKeyMoments } from '@/net/api'
-import {
-  defaultProfile,
-  isRtl,
-  LANGS,
-  loadProfile,
-  PERSONAS,
-  type Lang,
-  type Persona,
-  type ViewerProfile,
-} from '@/state/profile'
+import { ViewerChooser } from '@/components/ViewerChooser'
+import { defaultProfile, isRtl, loadProfile, PERSONAS, type ViewerProfile } from '@/state/profile'
 import type { Session } from '@/state/session'
 import { SessionContext, useLiveSession, useSessionState } from '@/state/useSession'
 import { BroadcastPane } from './BroadcastPane'
@@ -101,12 +93,6 @@ export function Split({ query }: { query: URLSearchParams }) {
   )
 }
 
-function chip(on: boolean): string {
-  return `h-9 min-w-9 border px-2.5 text-[15px] font-medium transition-colors ${
-    on ? 'border-amber text-amber' : 'border-white/30 text-muted hover:text-text'
-  }`
-}
-
 function Column({
   n,
   session,
@@ -119,46 +105,22 @@ function Column({
   onChange: (patch: Partial<ViewerProfile>) => void
 }) {
   const persona = PERSONAS.find((p) => p.id === profile.persona)
-  const lang = LANGS.find((l) => l.id === profile.lang)?.label ?? profile.lang
   return (
     <section className="flex min-w-0 flex-col gap-3" aria-label={`Viewer ${n}`}>
-      <div className="flex items-baseline justify-between gap-4">
-        <h2 className="font-display text-[28px] font-semibold leading-none">
-          Viewer {n}: {persona?.label ?? profile.persona}, {lang}
-        </h2>
-        <p className="text-[14px] text-muted max-sm:hidden">{persona?.hint}</p>
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+        <div className="flex items-baseline gap-3">
+          <h2 className="font-display text-[28px] font-semibold leading-none">Viewer {n}</h2>
+          <p className="text-[14px] text-muted max-sm:hidden">{persona?.hint}</p>
+        </div>
+        <ViewerChooser
+          persona={profile.persona}
+          lang={profile.lang}
+          onChange={onChange}
+          align={n === 2 ? 'end' : 'start'}
+        />
       </div>
       <div className="h-[44dvh] min-h-[280px] w-full overflow-hidden lg:h-[min(52dvh,560px)]">
         <BroadcastPane session={session} compact transport={false} />
-      </div>
-      <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2.5">
-        <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Watching as">
-          <span className="text-[13px] text-muted">Watching as</span>
-          {PERSONAS.map((p) => (
-            <button
-              key={p.id}
-              className={chip(p.id === profile.persona)}
-              aria-pressed={p.id === profile.persona}
-              onClick={() => onChange({ persona: p.id as Persona })}
-            >
-              {p.label}
-            </button>
-          ))}
-        </div>
-        <label className="flex items-center gap-2 text-[13px] text-muted">
-          Language
-          <select
-            className="h-9 border border-white/30 bg-ink px-2 text-[15px] font-medium text-text"
-            value={profile.lang}
-            onChange={(e) => onChange({ lang: e.target.value as Lang })}
-          >
-            {LANGS.map((l) => (
-              <option key={l.id} value={l.id}>
-                {l.label}
-              </option>
-            ))}
-          </select>
-        </label>
       </div>
       <SessionContext.Provider value={session}>
         <Told n={n} />

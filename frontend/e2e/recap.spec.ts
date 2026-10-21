@@ -13,6 +13,7 @@ test('recap page loads, shows key moments and switches language and half', async
   // The first goal falls inside the first half, so it is in the timeline.
   await expect(page.getByText('Tobias Wragg scored for Ashford Rovers').first()).toBeVisible()
 
+  await page.getByRole('button', { name: /Viewing as Casual, English/ }).click()
   await page.getByRole('button', { name: 'Español' }).click()
   await expect(page).toHaveURL(/lang=es/)
 

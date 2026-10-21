@@ -45,8 +45,10 @@ test('the timeline seeks the broadcast', async ({ page }) => {
 
 test('split view shows what each viewer has been told', async ({ page }) => {
   await page.goto('/split?match=derby_01&t=1590&speed=1')
-  await expect(page.getByRole('heading', { name: /Viewer 1: Analyst, English/ })).toBeVisible()
-  await expect(page.getByRole('heading', { name: /Viewer 2: First match, Español/ })).toBeVisible()
+  const v1 = page.getByRole('region', { name: 'Viewer 1' })
+  const v2 = page.getByRole('region', { name: 'Viewer 2' })
+  await expect(v1.getByRole('button', { name: /Viewing as Analyst, English/ })).toBeVisible()
+  await expect(v2.getByRole('button', { name: /Viewing as First match, Español/ })).toBeVisible()
   // The goal at 26:47 reaches both records. (In each viewer's language when Translator is
   // configured; CI runs without it, so check the clock rather than the words.)
   for (const n of [1, 2])
