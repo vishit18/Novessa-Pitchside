@@ -44,13 +44,14 @@ describe('Heatmap', () => {
     const h = new Heatmap(21, 14, 0.5)
     h.sample(52, 34, 0)
     const cells = h.cells()
-    // The cell itself and its eight neighbours, nothing further out.
-    expect(cells).toHaveLength(9)
+    // Spread over the neighbouring cells (5 m each here) and no further.
+    expect(
+      cells.every((c) => Math.abs(c.x + c.w / 2 - 52) < 10 && Math.abs(c.y + c.h / 2 - 34) < 10),
+    ).toBe(true)
     const hottest = cells.reduce((a, b) => (b.v > a.v ? b : a))
-    expect(hottest.v).toBe(1)
-    expect(hottest.x).toBeLessThanOrEqual(52)
-    expect(hottest.x + hottest.w).toBeGreaterThan(52)
-    expect(cells.filter((c) => c.v < 1).every((c) => c.v < 0.6)).toBe(true)
+    expect(Math.abs(hottest.x + hottest.w / 2 - 52)).toBeLessThan(3)
+    expect(Math.abs(hottest.y + hottest.h / 2 - 34)).toBeLessThan(3)
+    expect(cells.filter((c) => c.v < 0.3).length).toBeGreaterThan(0)
   })
 
   it('clamps positions on the touchline into the grid', () => {

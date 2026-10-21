@@ -104,6 +104,11 @@ function Player({ clip, overlay }: { clip: RealClip; overlay: RealOverlay }) {
       v.currentTime = Math.max(0, t - 1)
       void v.play().catch(() => undefined)
     }
+    // The list runs below the fold: bring the video back so the pass is actually seen.
+    frame.current?.scrollIntoView({
+      block: 'nearest',
+      behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+    })
   }
   const toggle = (k: keyof Layers) => setLayers((l) => ({ ...l, [k]: !l[k] }))
   const onScreen = new Set(activePasses(passes, now))
@@ -194,7 +199,7 @@ function Player({ clip, overlay }: { clip: RealClip; overlay: RealOverlay }) {
                 onClick={() => toggle(k)}
                 className={`h-9 border px-3 text-[14px] font-medium ${
                   layers[k]
-                    ? 'border-amber text-amber'
+                    ? 'border-amber bg-amber/15 text-amber'
                     : 'border-white/30 text-muted hover:text-text'
                 }`}
               >
@@ -256,12 +261,11 @@ function useVideoTime(ref: React.RefObject<HTMLVideoElement | null>): number {
     const v = ref.current
     if (!v) return
     const on = () => setT(v.currentTime)
-    v.addEventListener('timeupdate', on)
-    v.addEventListener('seeked', on)
-    return () => {
-      v.removeEventListener('timeupdate', on)
-      v.removeEventListener('seeked', on)
-    }
+    // `seeking` too: currentTime already holds the target, so the clock jumps before the
+    // frames for it have arrived.
+    const events = ['timeupdate', 'seeking', 'seeked'] as const
+    events.forEach((e) => v.addEventListener(e, on))
+    return () => events.forEach((e) => v.removeEventListener(e, on))
   }, [ref])
   return t
 }
@@ -283,21 +287,28 @@ function VideoBar({
   const t = useVideoTime(video)
   const [duration, setDuration] = useState(0)
   const [playing, setPlaying] = useState(false)
+  const [loading, setLoading] = useState(false)
   useEffect(() => {
     const v = video.current
     if (!v) return
     const meta = () => setDuration(Number.isFinite(v.duration) ? v.duration : 0)
     const sync = () => setPlaying(!v.paused)
+    const wait = () => setLoading(true)
+    const ready = () => setLoading(false)
     meta()
     sync()
-    v.addEventListener('loadedmetadata', meta)
-    v.addEventListener('play', sync)
-    v.addEventListener('pause', sync)
-    return () => {
-      v.removeEventListener('loadedmetadata', meta)
-      v.removeEventListener('play', sync)
-      v.removeEventListener('pause', sync)
-    }
+    const on: [string, () => void][] = [
+      ['loadedmetadata', meta],
+      ['play', sync],
+      ['pause', sync],
+      ['waiting', wait],
+      ['seeking', wait],
+      ['playing', ready],
+      ['seeked', ready],
+      ['canplay', ready],
+    ]
+    on.forEach(([e, f]) => v.addEventListener(e, f))
+    return () => on.forEach(([e, f]) => v.removeEventListener(e, f))
   }, [video])
   const seekTo = (s: number) => {
     const v = video.current
@@ -315,7 +326,11 @@ function VideoBar({
           {playing ? <path d="M2.5 1.5h2.5v9H2.5zM7 1.5h2.5v9H7z" /> : <path d="M3 1.5v9l7-4.5z" />}
         </svg>
       </button>
-      <span className="num w-[4.5rem] shrink-0 text-[22px] leading-none text-amber" dir="ltr">
+      <span
+        className={`num w-[4.5rem] shrink-0 text-[22px] leading-none text-amber ${loading ? 'pulse-soft' : ''}`}
+        dir="ltr"
+        aria-busy={loading}
+      >
         {matchClock(startS, t)}
       </span>
       <div className="relative h-9 min-w-0 flex-1">

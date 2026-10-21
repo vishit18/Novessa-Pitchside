@@ -27,10 +27,10 @@ const AMBER = 0xffb020
 const INK = 0x0d1014
 /** Heatmap ramp: cool to hot, each band a flat colour so the edges stay crisp. */
 const HEAT_BANDS = [
-  { upTo: 0.35, color: 0xb8650a, alpha: 0.32 },
-  { upTo: 0.6, color: 0xf09a12, alpha: 0.55 },
-  { upTo: 0.85, color: 0xff5f1f, alpha: 0.72 },
-  { upTo: 1, color: 0xfff0c8, alpha: 0.88 },
+  { upTo: 0.3, color: 0xf2a516, alpha: 0.3 },
+  { upTo: 0.55, color: 0xf58a14, alpha: 0.55 },
+  { upTo: 0.8, color: 0xff5a1f, alpha: 0.75 },
+  { upTo: 1, color: 0xfff0c8, alpha: 0.9 },
 ]
 /** Pressing opponents on the analyst layer. Not used anywhere else on the pitch. */
 const PRESS = 0xe05cff
@@ -132,6 +132,7 @@ export class PitchRenderer {
   setLayers(persona: Persona): void {
     if (persona === this.layers) return
     this.layers = persona
+    if (!this.ready) return
     for (const sp of this.sprites.values()) sp.label.visible = persona !== 'kids'
   }
 
@@ -146,7 +147,8 @@ export class PitchRenderer {
     if (id === this.focus) return
     this.focus = id
     this.heatmap.reset()
-    this.heat.clear()
+    // React can call this after the pane unmounted and the graphics were destroyed.
+    if (this.ready) this.heat.clear()
   }
 
   /** Metres to CSS pixels on screen, after the camera. Use this to place DOM tags. */

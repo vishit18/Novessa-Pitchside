@@ -65,12 +65,28 @@ export class Heatmap {
         max = Math.max(max, v)
       }
     }
+    // Sample the smoothed grid at twice the resolution, bilinearly, so the band edges follow
+    // the shape of the field instead of stepping along 2.5 m cells.
+    const at = (r: number, c: number) =>
+      smooth[Math.min(rows - 1, Math.max(0, r)) * cols + Math.min(cols - 1, Math.max(0, c))] ?? 0
     const out = []
-    const w = PITCH_LENGTH / cols
-    const h = PITCH_WIDTH / rows
-    for (let r = 0; r < rows; r++) {
-      for (let c = 0; c < cols; c++) {
-        const v = max > 0 ? (smooth[r * cols + c] ?? 0) / max : 0
+    const k = 2
+    const w = PITCH_LENGTH / (cols * k)
+    const h = PITCH_WIDTH / (rows * k)
+    for (let r = 0; r < rows * k; r++) {
+      for (let c = 0; c < cols * k; c++) {
+        const fr = (r + 0.5) / k - 0.5
+        const fc = (c + 0.5) / k - 0.5
+        const r0 = Math.floor(fr)
+        const c0 = Math.floor(fc)
+        const dr = fr - r0
+        const dc = fc - c0
+        const raw =
+          at(r0, c0) * (1 - dr) * (1 - dc) +
+          at(r0, c0 + 1) * (1 - dr) * dc +
+          at(r0 + 1, c0) * dr * (1 - dc) +
+          at(r0 + 1, c0 + 1) * dr * dc
+        const v = max > 0 ? raw / max : 0
         if (v > 0.15) out.push({ x: c * w, y: r * h, w, h, v })
       }
     }

@@ -180,7 +180,10 @@ function Headline({ o }: { o: OverlayEnvelope }) {
   const t = useT()
   const analyst = persona === 'analyst'
   const kids = persona === 'kids'
-  const evidence = analyst ? o.provenance.evidence.slice(0, 4) : []
+  // The score bug already shows the score, so score rows never take a chip.
+  const evidence = analyst
+    ? o.provenance.evidence.filter((e) => !e.metric.startsWith('score')).slice(0, 4)
+    : []
   const headSize = analyst
     ? 'text-[24px] sm:text-[34px]'
     : kids

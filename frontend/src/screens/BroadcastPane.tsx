@@ -20,7 +20,7 @@ interface Props {
   session: Session
   /** Smaller graphics, for panes that share the screen. */
   compact?: boolean
-  /** Show play and speed. Off when a parent view owns the transport. */
+  /** Show this pane's own controls. Off when a parent view owns one transport for all panes. */
   transport?: boolean
   /** Extra content for the top-right corner, under the live indicator. */
   corner?: ReactNode
@@ -88,9 +88,11 @@ function PaneBody({ compact, transport, corner, focus }: Omit<Props, 'session'>)
           )}
         </div>
         {/* On a phone the controls float above the lower third so they never reserve space. */}
-        <div className="flex justify-center max-sm:absolute max-sm:inset-x-4 max-sm:bottom-full max-sm:mb-2">
-          <Controls transport={transport} />
-        </div>
+        {transport && (
+          <div className="flex justify-center max-sm:absolute max-sm:inset-x-4 max-sm:bottom-full max-sm:mb-2">
+            <Controls />
+          </div>
+        )}
       </div>
 
       <GoalSting compact={compact} />

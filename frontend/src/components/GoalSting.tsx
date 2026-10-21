@@ -74,7 +74,6 @@ export function GoalSting({ compact = false }: { compact?: boolean }) {
             <span className="w-[18px] shrink-0" style={{ background: kit }} />
             <div
               className={`flex flex-1 flex-wrap items-end gap-x-8 gap-y-1 ${compact ? 'px-5 py-3' : 'px-10 py-5'}`}
-              dir="ltr"
             >
               <span
                 className={`font-display font-bold uppercase leading-[0.8] tracking-tight ${compact ? 'text-[64px]' : 'text-[120px]'}`}
@@ -91,7 +90,16 @@ export function GoalSting({ compact = false }: { compact?: boolean }) {
                 <span
                   className={`num mt-1.5 text-muted ${compact ? 'text-[16px]' : 'text-[22px]'}`}
                 >
-                  {[line, sting.scorer, sting.clock].filter(Boolean).join('   ')}
+                  {/* The scoreline reads home-left in every language, like the score bug. */}
+                  {line && <bdi dir="ltr">{line}</bdi>}
+                  {[sting.scorer, sting.clock].filter(Boolean).map((part) => (
+                    <span key={part}>
+                      <span className="mx-2 text-white/30" aria-hidden>
+                        ·
+                      </span>
+                      {part}
+                    </span>
+                  ))}
                 </span>
               </span>
             </div>
