@@ -438,6 +438,8 @@ class TimelineBuilder:
         if m.card:
             payload["card"] = m.card
             payload["staff"] = m.staff
+        if m.penalty:
+            payload["penalty"] = True
         return payload
 
     def _insight(self, m: Moment) -> Overlay:

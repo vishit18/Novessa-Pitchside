@@ -63,6 +63,7 @@ export class Session {
       playerStats: null,
       focusSpeed: null,
       carrierTeam: null,
+      goalBand: false,
       active: [],
       feed: [],
       speed: this.opts.speed ?? 4,

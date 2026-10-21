@@ -3,7 +3,9 @@ from __future__ import annotations
 from backend.state.config import load_thresholds
 from backend.state.models import Moment, Trigger
 from backend.tests.conftest import StateRun, run_state
+from engine.league import generate_league
 from engine.schema import EventType
+from engine.sim import simulate_match
 
 NO_COOLDOWN = {"goal", "card", "big_chance", "standout_action"}
 
@@ -122,3 +124,18 @@ def test_offsides_are_counted_per_team(state_run: StateRun) -> None:
     assert counted == len(flagged)
     for team, stats in state_run.engine.team_stats.items():
         assert stats.offsides == sum(1 for e in flagged if e.team == team)
+
+
+def test_a_goal_from_the_spot_says_penalty() -> None:
+    # derby_01's seed: Wragg scores a penalty at 26:47; every other goal is from open play.
+    match = simulate_match(generate_league(), "ASH", "KES", seed=43, match_id="derby_pen")
+    goals = [m for m in moments(run_state(match)) if m.kind == "goal"]
+    spot = {
+        e.player_id
+        for e in match.events
+        if e.type == EventType.SHOT and e.outcome == "goal" and "penalty" in e.tags
+    }
+    assert spot, "the seed should still produce a penalty goal"
+    assert [g.penalty for g in goals].count(True) == len(spot)
+    for g in goals:
+        assert ("scored a penalty" in g.summary) == g.penalty

@@ -32,6 +32,8 @@ export interface UIState {
   t: number
   /** Furthest match time this viewer has watched to. Markers past it would be spoilers. */
   seenUpTo: number
+  /** The goal band is on screen; the lower third waits for it. */
+  goalBand: boolean
   /** Ask the Analyst panel open on this viewer's screen. */
   askOpen: boolean
   /** Connected and playing, but no frames for a few seconds. */
@@ -57,6 +59,7 @@ export function createUIStore(profile: ViewerProfile): StoreApi<UIState> {
     paused: false,
     t: 0,
     seenUpTo: 0,
+    goalBand: false,
     askOpen: false,
     stalled: false,
     controls: null,

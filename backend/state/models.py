@@ -100,6 +100,7 @@ class Moment(BaseModel):
     evidence: list[Evidence] = Field(default_factory=list)
     card: Literal["yellow", "red"] | None = None
     staff: bool = False
+    penalty: bool = Field(default=False, description="A goal scored from the spot.")
     snapshot: StateSnapshot
 
 

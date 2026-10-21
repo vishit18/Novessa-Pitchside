@@ -11,7 +11,9 @@ test('recap page loads, shows key moments and switches language and half', async
   await expect(page.getByRole('heading', { name: 'Half-time recap', level: 1 })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Key moments' })).toBeVisible({ timeout: 60_000 })
   // The first goal falls inside the first half, so it is in the timeline.
-  await expect(page.getByText('Tobias Wragg scored for Ashford Rovers').first()).toBeVisible()
+  await expect(
+    page.getByText('Tobias Wragg scored a penalty for Ashford Rovers').first(),
+  ).toBeVisible()
 
   await page.getByRole('button', { name: /Viewing as Casual, English/ }).click()
   await page.getByRole('button', { name: 'Español' }).click()

@@ -54,6 +54,15 @@ def _clip(v: float, lo: float = 0.0, hi: float = 1.0) -> float:
     return max(lo, min(hi, v))
 
 
+def _swing_words(points: float) -> str:
+    """A momentum swing as a commentator says it. Viewers never see momentum as points."""
+    if points >= 90:
+        return "completely"
+    if points >= 70:
+        return "sharply"
+    return "clearly"
+
+
 class StateEngine:
     """Feed it events and frames in match-time order; read snapshots and moments out."""
 
@@ -105,6 +114,8 @@ class StateEngine:
         self._next_check = check_every_s
         self._last_extreme: str | None = None
         self._first_goal_done = False
+        # Who took the last shot from the spot, so the goal that follows can say penalty.
+        self._penalty_taker: str | None = None
 
     # ---- geometry ------------------------------------------------------------------------
 
@@ -220,6 +231,7 @@ class StateEngine:
         cooldown: bool = True,
         card: Literal["yellow", "red"] | None = None,
         staff: bool = False,
+        penalty: bool = False,
     ) -> Moment | None:
         key = (kind, team)
         last = self._last_moment.get(key)
@@ -239,6 +251,7 @@ class StateEngine:
             evidence=evidence or [],
             card=card,
             staff=staff,
+            penalty=penalty,
             snapshot=self.snapshot(),
         )
 
@@ -272,7 +285,7 @@ class StateEngine:
                 "momentum_swing",
                 50 + 40 * _clip((abs(delta) - m.momentum_swing) / (100 - m.momentum_swing)),
                 f"In about {self.cfg.moments.momentum_swing_window_s / 60:.0f} minutes, "
-                f"momentum swung {abs(delta):.0f} points toward {team}.",
+                f"the momentum swung {_swing_words(abs(delta))} toward {team}.",
                 team=team,
                 evidence=[
                     Evidence(metric="momentum", value=round(mom, 1)),
@@ -288,8 +301,7 @@ class StateEngine:
             mo = self._moment(
                 "pressure_shift",
                 45 + 40 * _clip((abs(d_press) - m.pressure_shift) / 50),
-                f"{team} are pressing noticeably harder than two minutes ago "
-                f"(pressure index {press[team]:.0f}).",
+                f"{team} are pressing noticeably harder than two minutes ago.",
                 team=team,
                 evidence=[
                     Evidence(metric="pressure_index", value=press[team], window="5min"),
@@ -602,6 +614,7 @@ class StateEngine:
         passer = self._pending_key.pop(ev.player_id, None)
         if passer:
             self.player(passer).xa += xg
+        self._penalty_taker = ev.player_id if "penalty" in (ev.tags or []) else None
         self._momentum[ev.team] += 2.0 + 12.0 * xg
         speed = ev.ball_speed_kmh or 0.0
         p.top_shot_kmh = max(p.top_shot_kmh, speed)
@@ -642,10 +655,13 @@ class StateEngine:
             out.append(self._milestone(ev, "first_goal", 1))
         if n >= 2:
             out.append(self._milestone(ev, "brace" if n == 2 else "hat_trick", n))
+        penalty = self._penalty_taker == ev.player_id
+        self._penalty_taker = None
+        how = "scored a penalty" if penalty else "scored"
         mo = self._moment(
             "goal",
             100,
-            f"{ev.player_id} scored for {ev.team}. It is {self.score[self.home]}-"
+            f"{ev.player_id} {how} for {ev.team}. It is {self.score[self.home]}-"
             f"{self.score[self.away]}.",
             team=ev.team,
             players=[ev.player_id],
@@ -654,6 +670,7 @@ class StateEngine:
                 Evidence(metric="score_away", value=self.score[self.away]),
             ],
             cooldown=False,
+            penalty=penalty,
         )
         if mo:
             out.append(mo)

@@ -133,7 +133,9 @@ function Digit({ value }: { value: number }) {
 
 export function LowerThird() {
   const active = useSessionState((s) => s.active)
-  const o = active.find((x) => x.slot === 'lower_third') ?? null
+  const goalBand = useSessionState((s) => s.goalBand)
+  // Held while the goal band plays: the goal gets the screen to itself, then the story.
+  const o = goalBand ? null : (active.find((x) => x.slot === 'lower_third') ?? null)
   const reduce = useReducedMotion()
   return (
     <div className="pointer-events-none w-[min(100%,640px)]" aria-live="polite">

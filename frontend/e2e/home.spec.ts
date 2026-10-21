@@ -80,4 +80,8 @@ test('a goal gets its own moment on screen', async ({ page }) => {
   const sting = page.locator('[aria-live="assertive"]')
   await expect(sting).toContainText('Ashford Rovers', { timeout: 30_000 })
   await expect(sting).toContainText('Tobias Wragg')
+  // It was a penalty, and the band says so. The lower third waits until the band has gone.
+  await expect(sting).toContainText('Penalty')
+  await expect(page.locator('[aria-live="polite"] .plate')).toHaveCount(0)
+  await expect(sting).toHaveCount(0, { timeout: 5_000 })
 })
