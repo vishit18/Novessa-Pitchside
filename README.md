@@ -31,15 +31,39 @@ npm run dev
 
 Open http://localhost:5173. The home page says what this is, shows one goal told three ways, and links to every screen. Every page has the same menu.
 
-`AGENTS=off` runs without any Azure account: you get the pitch, the instant overlays, the stats and the recap numbers. Leave it off the command to turn the agents on. For that, run `az login`, copy `.env.example` to `.env` and fill in the Foundry endpoint (see [`docs/02_AZURE_SETUP.md`](docs/02_AZURE_SETUP.md)). Everything signs in with Entra ID, so there are no keys to paste.
+`AGENTS=off` runs without any Azure account: you get the pitch, the instant overlays, the stats and the recap numbers.
+
+### With the agents on
+
+The agents, Translator, Speech and Content Safety all live on one Foundry resource and sign in with Entra ID, so there are no keys to paste. You need the Azure CLI, signed in as someone with the **Cognitive Services User** role on that resource (see [`docs/02_AZURE_SETUP.md`](docs/02_AZURE_SETUP.md)).
+
+1. Sign in: `az login`
+2. Copy `.env.example` to `.env` and set these five, all pointing at the same resource:
+   ```bash
+   FOUNDRY_OPENAI_ENDPOINT=https://<resource>.cognitiveservices.azure.com/
+   TRANSLATOR_ENDPOINT=https://<resource>.cognitiveservices.azure.com/
+   TRANSLATOR_REGION=<region, e.g. swedencentral>
+   SPEECH_REGION=<same region>
+   CONTENT_SAFETY_ENDPOINT=https://<resource>.cognitiveservices.azure.com/
+   ```
+3. Start the gateway with that file (`PRELOAD=1` builds the three demo matches at start-up, so the first page loads fast):
+   ```bash
+   PRELOAD=1 uv run --env-file .env uvicorn backend.app.main:app --port 8000
+   ```
+   In PowerShell: `$env:PRELOAD=1; uv run --env-file .env uvicorn backend.app.main:app --port 8000`
+4. Start the app as above (`cd frontend`, `npm run dev`) and open http://localhost:5173.
+
+Check it is on: http://localhost:8000/agents/health should say `"enabled": true`, and http://localhost:8000/speech/health `"transcribe": true` (that is what shows the mic in Ask the analyst).
+
+The demo matches ship with the agents' verified text already cached in `data/cache/agents/`, so a run-through of `derby_01` costs almost nothing and the "why" text arrives within a second. A new question to the analyst, a new language or a new match calls the models live, a few seconds each.
 
 Places worth a look:
 
 | Screen | Link | What to try |
 |---|---|---|
 | Broadcast | `/watch?match=derby_01&speed=4` | Overlays land instantly, the "why" text a moment later. Move the mouse for the timeline: drag to any minute, skip 30 s, change speed, or switch on "Key moments" to mark the goals and cards (it shows the result, so it is off by default). The menu in the corner reaches every other screen. |
-| Split | `/split?match=derby_01` | Two viewers on the same second of the same match: an analyst in English and a first-timer in Spanish. Starts just before the first goal. Under each pane is what that viewer has been told so far, so the difference stays on screen. One timeline drives both. |
-| Ask the analyst | press `/` on the broadcast, or Ask on the phone view | Ask anything about the match in any of the six languages. A Scout agent picks the lookups, code runs them up to your minute only (no spoilers), the Analyst answers, the Verifier checks every number. Open "How this was worked out" to see each number used. |
+| Split | `/split?match=derby_01` | Two viewers on the same second of the same match: an analyst in English and a first-timer in Spanish. Starts just before the first goal. The pitch itself differs: the analyst sees who is pressing the ball and the two simplest passes, the first-timer a big arrow showing which way the team on the ball is going and "Kestrel Bay FC tiene el balón". Change either viewer with "Viewing as". Under each pane is what that viewer has been told so far. One timeline drives both. |
+| Ask the analyst | press `/` on the broadcast, or Ask on the phone view | Ask anything about the match in any of the six languages, typed or out loud (hold the mic, speak, let go). A Scout agent picks the lookups, code runs them up to your minute only (no spoilers), the Analyst answers, the Verifier checks every number. Open "How this was worked out" to see each number used. |
 | Companion | `/companion?match=derby_01&speed=10` | The phone view, with its own timeline. Tap "What did I miss?" for a spoiler-safe catch-up. |
 | Control Room | `/control?match=derby_01` | The agents at work, the Verifier rejecting a claim, and the chaos switch that kills an agent mid-match. |
 | Recap | `/recap?match=derby_01&kind=full_time` | Half-time and full-time recaps in six languages. |
@@ -52,7 +76,7 @@ Places worth a look:
 - **Deterministic stats.** Possession, momentum, pressure, control and chaos, rhythm, an explainable pass difficulty score, sprint speeds and distances. All of it is computed in code. No language model ever computes a number.
 - **Instant overlays.** Name tags, speed bursts, pass difficulty, shot speed, cards, offsides and milestones come straight from the stats layer, with no model call.
 - **Agents.** Nine agents and a safety gate, described below. Every number is checked by the Verifier, and a story check makes sure the right club and the right minute are named. They add the explanation, the commentary, the translation, the voice and the recap.
-- **Personas.** Analyst, casual, first match and audio-described. Favourite club, favourite player (the camera follows them), or a single metric. Six languages everywhere: English, Spanish, French, Arabic (right to left), Hindi and Portuguese. Agent text, recaps, voice, the instant overlays and the interface itself.
+- **Personas.** Analyst, casual, first match and audio-described, and they change the picture as well as the words: pressing halos, passing options and evidence chips for the analyst; an arrow for the way play is going, no shirt numbers and short lines for a first-timer; a bigger ball for audio-described. Favourite club (a goal against your side is told more quietly), favourite player (the camera follows them, with a heatmap of where they have been), or a single metric. Six languages everywhere: English, Spanish, French, Arabic (right to left), Hindi and Portuguese. Agent text, recaps, voice, the instant overlays and the interface itself.
 - **Real footage.** A vision pipeline reads a real, openly licensed amateur match, tags players, follows the ball and measures speeds, then scores itself against the dataset's own labels.
 
 ## The agents
