@@ -30,6 +30,10 @@ export interface UIState {
   t: number
   /** Furthest match time this viewer has watched to. Markers past it would be spoilers. */
   seenUpTo: number
+  /** Ask the Analyst panel open on this viewer's screen. */
+  askOpen: boolean
+  /** Connected and playing, but no frames for a few seconds. */
+  stalled: boolean
   controls: PlaybackControls | null
   set: (patch: Partial<Omit<UIState, 'set'>>) => void
 }
@@ -50,6 +54,8 @@ export function createUIStore(profile: ViewerProfile): StoreApi<UIState> {
     paused: false,
     t: 0,
     seenUpTo: 0,
+    askOpen: false,
+    stalled: false,
     controls: null,
     set: (patch) => set(patch),
   }))

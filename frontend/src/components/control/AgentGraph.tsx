@@ -14,7 +14,7 @@ const KILL_SECONDS = 30
 
 const STATE_LABEL: Record<NodeState, string> = {
   idle: 'Waiting for work',
-  ok: 'Working',
+  ok: 'Healthy',
   degraded: 'Using fallbacks',
   breaker: 'Paused after repeated failures',
   killed: 'Switched off',
@@ -338,7 +338,13 @@ function NodeCard({ spec, health, lit, tally, onKill, step, compact }: CardProps
         <p
           className={`relative text-[13px] font-semibold ${down ? 'text-chaos' : state === 'degraded' ? 'text-amber' : 'text-text'}`}
         >
-          {down && left > 0 ? `${STATE_LABEL[state]}, ${left} s left` : STATE_LABEL[state]}
+          {down && left > 0
+            ? `${STATE_LABEL[state]}, ${left} s left`
+            : lit
+              ? 'Working now'
+              : state === 'idle' && tally.proven > 0
+                ? 'Answered from the cache'
+                : STATE_LABEL[state]}
         </p>
 
         <NodeStats spec={spec} health={health} tally={tally} compact={compact} />

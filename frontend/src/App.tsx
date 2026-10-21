@@ -1,4 +1,5 @@
 import { lazy, Suspense, useEffect } from 'react'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { useLocation } from '@/router'
 import { loadProfile } from '@/state/profile'
 
@@ -69,5 +70,9 @@ export default function App() {
       return <Broadcast query={query} />
     return <Home />
   })()
-  return <Suspense fallback={<Loading />}>{screen}</Suspense>
+  return (
+    <ErrorBoundary key={path}>
+      <Suspense fallback={<Loading />}>{screen}</Suspense>
+    </ErrorBoundary>
+  )
 }

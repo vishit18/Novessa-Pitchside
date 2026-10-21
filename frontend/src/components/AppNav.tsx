@@ -55,7 +55,10 @@ export function AppNav({ match = null, lang = 'en' }: { match?: string | null; l
       >
         <Wordmark />
       </button>
-      <nav aria-label="Pages" className="-mx-1 max-w-full overflow-x-auto">
+      <div className="sm:hidden">
+        <NavMenu match={match ?? 'derby_01'} lang={lang} />
+      </div>
+      <nav aria-label="Pages" className="-mx-1 max-w-full max-sm:hidden">
         <ul className="flex items-center gap-1 px-1">
           {NAV_ITEMS.filter((i) => i.path !== '/').map((i) => {
             const on = isCurrent(i.path, current)
@@ -115,7 +118,7 @@ export function NavMenu({ match, lang }: { match: string; lang: Lang }) {
         <svg viewBox="0 0 14 10" className="h-2.5 w-3.5" aria-hidden>
           <path d="M0 1h14M0 5h14M0 9h14" stroke="currentColor" strokeWidth="1.6" />
         </svg>
-        Menu
+        {translate(lang, 'menu')}
       </button>
       {open && (
         <div className="plate-shadow absolute end-0 top-full z-30 mt-2 w-[300px]">

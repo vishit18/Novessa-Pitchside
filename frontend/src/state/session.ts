@@ -11,6 +11,8 @@ import { createUIStore, type UIState } from './store'
 
 /** Jitter buffer on top of any deliberate delay, in match seconds. */
 const BASE_LEAD_S = 0.3
+/** No frame for this long while playing reads as a stalled feed. */
+const STALL_MS = 3000
 
 /** The one place that picks a transport. */
 export function createSource(opts: SourceOptions): MatchSource {
@@ -150,6 +152,9 @@ export class Session {
       this.lastStatsT = stats.t_match
       patch.playerStats = stats
     }
+    const ui = this.store.getState()
+    const stalled = ui.status === 'live' && !ui.paused && this.clock.quietFor(nowMs) > STALL_MS
+    if (stalled !== ui.stalled) patch.stalled = stalled
     if (nowMs - this.lastTimeMs > 250 && t > 0) {
       this.lastTimeMs = nowMs
       patch.t = t

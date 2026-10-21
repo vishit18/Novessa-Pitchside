@@ -37,7 +37,7 @@ export function Broadcast({ query }: { query: URLSearchParams }) {
     <main className="grid min-h-dvh w-full gap-4 bg-ink p-0 lg:h-dvh lg:grid-cols-[minmax(0,1fr)_400px] lg:p-4">
       <h1 className="sr-only">Novessa Pitchside player focus</h1>
       <div className="h-[62dvh] min-h-0 overflow-hidden lg:h-auto">
-        <BroadcastPane session={session} corner={corner} />
+        <BroadcastPane session={session} corner={corner} focus />
       </div>
       <aside className="min-h-0 px-4 pb-4 lg:p-0">
         <SessionContext.Provider value={session}>

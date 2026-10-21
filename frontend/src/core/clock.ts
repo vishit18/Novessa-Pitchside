@@ -12,6 +12,8 @@
 export class ClockSync {
   private latest = 0
   private lastObsMs = 0
+  /** Wall time of the last message of any kind, for spotting a stalled feed. */
+  private lastSeenMs = 0
   private rate = 1
   private t = 0
   private lastNowMs = 0
@@ -25,6 +27,7 @@ export class ClockSync {
 
   /** Call for every message that carries a match time. */
   observe(tMatch: number, nowMs: number): void {
+    this.lastSeenMs = nowMs
     if (!this.started) {
       this.started = true
       this.latest = tMatch
@@ -63,6 +66,11 @@ export class ClockSync {
       this.t += rate * dt + err * Math.min(1, 4 * dt)
     }
     return this.t
+  }
+
+  /** Milliseconds since the last message, or 0 before the first. */
+  quietFor(nowMs: number): number {
+    return this.started ? nowMs - this.lastSeenMs : 0
   }
 
   get liveEdge(): number {

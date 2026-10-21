@@ -1,4 +1,5 @@
 import { motion, useReducedMotion } from 'framer-motion'
+import { sentenceCase } from '@/core/headline'
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { AppNav } from '@/components/AppNav'
 import { Stage } from '@/components/Stage'
@@ -116,7 +117,7 @@ export function Home() {
           <AppNav match={MATCH} />
           <div className="mt-10 grid items-end gap-12 sm:mt-20 lg:grid-cols-[minmax(0,1fr)_minmax(0,560px)] lg:gap-16">
             <div className="max-w-[760px]">
-              <h1 className="font-display text-[52px] font-bold leading-[0.92] text-balance sm:text-[84px] xl:text-[104px]">
+              <h1 className="font-display text-[52px] font-bold leading-[0.92] text-balance sm:text-[76px] xl:text-[92px]">
                 Millions watch the same match. They all get the same broadcast.
               </h1>
               <p className="mt-6 max-w-[58ch] text-[18px] leading-relaxed text-text/85 sm:text-[20px]">
@@ -209,7 +210,7 @@ function OneMoment({ tellings }: { tellings: Telling[] }) {
                 dir={c.lang === 'ar' ? 'rtl' : 'ltr'}
               >
                 <p className="font-display text-[26px] font-bold leading-[0.95] sm:text-[30px]">
-                  {c.headline}
+                  {sentenceCase(c.headline, c.lang)}
                 </p>
                 <p className="mt-1.5 text-[15px] leading-snug text-text/80">{c.body}</p>
               </div>

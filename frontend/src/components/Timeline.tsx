@@ -109,7 +109,7 @@ export function Timeline({
       {transport && (
         <div className="flex items-center gap-1">
           <button
-            className={`${btn} w-16`}
+            className={`${btn} min-w-16 whitespace-nowrap`}
             aria-pressed={paused}
             onClick={() => all.forEach((s) => s.setPaused(!paused))}
           >
@@ -151,7 +151,7 @@ export function Timeline({
         {markers.map((m) => (
           <button
             key={m.moment_id}
-            className="group absolute top-1/2 z-10 grid size-5 -translate-x-1/2 -translate-y-1/2 place-items-center"
+            className="group absolute top-1/2 z-10 grid size-6 -translate-x-1/2 -translate-y-1/2 place-items-center"
             style={{ left: pct(m.t_match) }}
             onClick={() => commit(m.t_match - 8)}
             aria-label={`${t(markerLabel(m))} ${m.clock}`}

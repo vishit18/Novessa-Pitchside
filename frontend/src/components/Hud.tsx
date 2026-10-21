@@ -1,4 +1,5 @@
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
+import { sentenceCase } from '@/core/headline'
 import { useEffect, useRef, useState } from 'react'
 import { CLUBS, PLAYERS } from '@/data/league'
 import { lateness } from '@/core/overlays'
@@ -14,6 +15,7 @@ export function ScoreBug({ showMatchLine = true }: { showMatchLine?: boolean }) 
   const meta = useSessionState((s) => s.meta)
   const snap = useSessionState((s) => s.snapshot)
   const t = useT()
+  const flash = useScoreFlash(snap ? Object.values(snap.score).reduce((a, b) => a + b, 0) : 0)
   if (!meta) return null
   const home = meta.home.code
   const away = meta.away.code
@@ -22,7 +24,10 @@ export function ScoreBug({ showMatchLine = true }: { showMatchLine?: boolean }) 
   const half = t((snap?.period ?? 1) === 1 ? 'firstHalf' : 'secondHalf')
   return (
     <div className="w-[min(100%,380px)] select-none" role="group" aria-label="Score and momentum">
-      <div className="plate-shadow">
+      <div
+        className="plate-shadow transition-[filter] duration-300"
+        style={flash ? { filter: 'drop-shadow(0 0 18px rgb(255 176 32 / 0.85))' } : undefined}
+      >
         <div className="plate relative">
           {/* Home on the left in every language, as on a real score bug. */}
           <div className="flex items-stretch" dir="ltr">
@@ -64,6 +69,22 @@ export function ScoreBug({ showMatchLine = true }: { showMatchLine?: boolean }) 
       )}
     </div>
   )
+}
+
+/** True for a moment after the total score goes up, so the score bug can light up. */
+function useScoreFlash(total: number): boolean {
+  const [flash, setFlash] = useState(false)
+  const last = useRef(total)
+  useEffect(() => {
+    if (total > last.current) {
+      setFlash(true)
+      const id = window.setTimeout(() => setFlash(false), 1400)
+      last.current = total
+      return () => window.clearTimeout(id)
+    }
+    last.current = total
+  }, [total])
+  return flash
 }
 
 function Side({ code, score, align }: { code: string; score: number; align: 'left' | 'right' }) {
@@ -144,6 +165,7 @@ function toneColour(o: OverlayEnvelope): string {
 }
 
 function Headline({ o }: { o: OverlayEnvelope }) {
+  const lang = useSessionState((s) => s.profile.lang)
   const head = String(o.payload['headline'] ?? '')
   const body = String(o.payload['body'] ?? '')
   const late = lateness(o)
@@ -153,7 +175,7 @@ function Headline({ o }: { o: OverlayEnvelope }) {
       <span className="w-[7px] shrink-0" style={{ background: toneColour(o) }} />
       <div className="min-w-0 py-3 pr-8 pl-4">
         <div className="font-display text-[28px] sm:text-[42px] font-bold leading-[0.95]">
-          {head}
+          {sentenceCase(head, lang)}
         </div>
         <p className="mt-1.5 max-w-[56ch] text-[16px] leading-snug text-text/80 sm:text-[20px]">
           {body}
@@ -303,28 +325,39 @@ export function Controls({ transport = true }: { transport?: boolean }) {
   )
 }
 
+/**
+ * Connection and playback in one word. "Live" only when connected at normal speed and playing;
+ * a viewer at 4x or paused is watching a replay and is told so.
+ */
 export function StatusPill() {
   const status = useSessionState((s) => s.status)
   const detail = useSessionState((s) => s.statusDetail)
+  const speed = useSessionState((s) => s.speed)
+  const paused = useSessionState((s) => s.paused)
   const t = useT()
-  const live = status === 'live'
-  const label = t(
-    status === 'live'
-      ? 'live'
-      : status === 'connecting'
-        ? 'connecting'
-        : status === 'reconnecting'
-          ? 'reconnecting'
-          : 'offline',
-  )
+  const connected = status === 'live'
+  const live = connected && !paused && speed === 1
+  const label = connected
+    ? paused
+      ? t('pausedLabel')
+      : speed === 1
+        ? t('live')
+        : `${t('replay')} ${speed}x`
+    : t(
+        status === 'connecting'
+          ? 'connecting'
+          : status === 'reconnecting'
+            ? 'reconnecting'
+            : 'offline',
+      )
   return (
     <div className="flex items-center gap-2" role="status">
       <span
-        className={`size-2.5 rounded-full ${live ? 'bg-chaos shadow-[0_0_10px_var(--color-chaos)]' : 'bg-amber pulse-soft'}`}
+        className={`size-2.5 rounded-full ${live ? 'bg-chaos shadow-[0_0_10px_var(--color-chaos)]' : connected ? 'bg-white/60' : 'bg-amber pulse-soft'}`}
         aria-hidden="true"
       />
       <span className="font-display text-[18px] font-semibold leading-none">{label}</span>
-      {detail && !live && <span className="text-[13px] text-muted">{detail}</span>}
+      {detail && !connected && <span className="text-[13px] text-muted">{detail}</span>}
     </div>
   )
 }

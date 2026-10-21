@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { AskSheet } from '@/components/AskSheet'
 import { FeedCard } from '@/components/companion/FeedCard'
 import { CatchUpSheet } from '@/components/companion/CatchUpSheet'
 import { ScoreBug, StatusPill } from '@/components/Hud'
@@ -57,6 +58,8 @@ function CompanionBody({ matchId }: { matchId: string }) {
   const closeSheet = useCallback(() => setSheetOpen(false), [])
   const [open, setOpen] = useState<string | null>(null)
   const { on: commentary, toggle: toggleCommentary, player } = useCommentary()
+  const askOpen = useSessionState((s) => s.askOpen)
+  const closeAsk = useCallback(() => session.store.getState().set({ askOpen: false }), [session])
 
   return (
     <main
@@ -115,6 +118,12 @@ function CompanionBody({ matchId }: { matchId: string }) {
           {t('missed')}
         </button>
         <button
+          className="h-12 border border-amber px-4 text-[15px] font-semibold text-amber"
+          onClick={() => session.store.getState().set({ askOpen: true })}
+        >
+          {t('ask')}
+        </button>
+        <button
           className="h-12 border border-white/35 px-4 text-[15px] text-text aria-pressed:border-amber aria-pressed:text-amber"
           aria-pressed={commentary}
           onClick={toggleCommentary}
@@ -123,6 +132,7 @@ function CompanionBody({ matchId }: { matchId: string }) {
         </button>
       </div>
 
+      <AskSheet open={askOpen} onClose={closeAsk} placement="bottom" />
       <CatchUpSheet open={sheetOpen} matchId={matchId} session={session} onClose={closeSheet} />
     </main>
   )

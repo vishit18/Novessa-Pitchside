@@ -1,6 +1,7 @@
 import { metricLabel, type FeedItem } from '@/core/feed'
+import { sentenceCase } from '@/core/headline'
 import { CLUBS } from '@/data/league'
-import { useT } from '@/state/useSession'
+import { useSessionState, useT } from '@/state/useSession'
 
 const TONE_STRIP: Record<string, string> = {
   goal: 'var(--color-amber)',
@@ -26,6 +27,7 @@ interface Props {
 /** One moment the viewer has been shown. Tap to see why it was picked and what backs it. */
 export function FeedCard({ item, open, onToggle, onListen }: Props) {
   const t = useT()
+  const lang = useSessionState((s) => s.profile.lang)
   const why = `why-${item.id.replace(/\W+/g, '-')}`
   const club = item.team ? CLUBS[item.team] : undefined
   return (
@@ -46,7 +48,7 @@ export function FeedCard({ item, open, onToggle, onListen }: Props) {
             )}
           </div>
           <h3 dir="auto" className="mt-1.5 font-display text-[26px] font-bold leading-[1]">
-            {item.headline}
+            {sentenceCase(item.headline, lang)}
           </h3>
           {item.body && (
             <p dir="auto" className="mt-1.5 text-[15px] leading-snug text-text/85">

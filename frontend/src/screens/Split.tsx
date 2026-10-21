@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { sentenceCase } from '@/core/headline'
 import { AppNav } from '@/components/AppNav'
 import { Timeline } from '@/components/Timeline'
 import { getKeyMoments } from '@/net/api'
@@ -185,7 +186,7 @@ function Told({ n }: { n: number }) {
               </span>
               <span className="min-w-0">
                 <span className="block font-display text-[20px] font-semibold leading-tight">
-                  {it.headline}
+                  {sentenceCase(it.headline, lang)}
                 </span>
                 <span className="line-clamp-2 block text-[15px] leading-snug text-text/80">
                   {it.body}

@@ -61,14 +61,21 @@ export function ControlRoom({ query }: { query: URLSearchParams }) {
               ))}
             </select>
           </label>
-          <button
-            type="button"
-            onClick={start}
-            disabled={!health?.enabled || running}
-            className="bg-amber px-4 py-1.5 text-[14px] font-semibold text-ink transition-opacity disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            {running ? 'Agents running' : progress ? 'Agents finished' : 'Start the agents'}
-          </button>
+          {progress && !running ? (
+            <p role="status" className="flex items-center gap-2 text-[14px] text-text/85">
+              <span className="size-2 rounded-full bg-control" aria-hidden />
+              Agents finished
+            </p>
+          ) : (
+            <button
+              type="button"
+              onClick={start}
+              disabled={!health?.enabled || running}
+              className="bg-amber px-4 py-1.5 text-[14px] font-semibold text-ink transition-opacity disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              {running ? 'Agents running' : 'Start the agents'}
+            </button>
+          )}
         </div>
       </header>
 

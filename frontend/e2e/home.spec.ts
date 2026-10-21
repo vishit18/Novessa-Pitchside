@@ -55,3 +55,27 @@ test('split view shows what each viewer has been told', async ({ page }) => {
       { timeout: 45_000 },
     )
 })
+
+test('ask the analyst opens from the keyboard and answers or says why not', async ({ page }) => {
+  await page.goto('/watch?match=derby_01&t=2400&speed=1')
+  await expect(page.getByLabel('Match clock')).toHaveText(/^4\d:\d\d$/, { timeout: 20_000 })
+  await page.keyboard.press('/')
+  const panel = page.getByRole('dialog', { name: 'Ask the analyst' })
+  await expect(panel).toBeVisible()
+  await expect(panel).toContainText(/Uses the match up to \d\d:\d\d, nothing after/)
+  await panel.getByRole('button', { name: 'Who is on top right now, and why?' }).click()
+  // CI runs with the agents off: the panel must say so, not hang or break.
+  await expect(panel).toContainText(
+    /Checked against the match data|Straight from the numbers|The analyst is off right now/,
+    { timeout: 45_000 },
+  )
+  await page.keyboard.press('Escape')
+  await expect(panel).toHaveCount(0)
+})
+
+test('a goal gets its own moment on screen', async ({ page }) => {
+  await page.goto('/watch?match=derby_01&t=1600&speed=1')
+  const sting = page.locator('[aria-live="assertive"]')
+  await expect(sting).toContainText('Ashford Rovers', { timeout: 30_000 })
+  await expect(sting).toContainText('Tobias Wragg')
+})

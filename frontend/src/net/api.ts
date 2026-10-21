@@ -142,3 +142,32 @@ export const getMomentText = (id: string, moment: string, lang: string) =>
   getJson<MomentText>(
     `/matches/${encodeURIComponent(id)}/moments/${encodeURIComponent(moment)}/text?lang=${lang}`,
   )
+
+/** POST /matches/{id}/ask: Ask the Analyst. Mirrors backend/agents/models.py AskAnswer. */
+export interface AskAnswer {
+  question: string
+  answer: string
+  status: 'verified' | 'numbers_only' | 'declined' | 'unavailable'
+  lang: string
+  translation: string
+  t_match: number
+  clock: string
+  evidence: { key: string; label: string; value: number }[]
+  notes: string[]
+  tools: string[]
+  trail: string[]
+}
+
+export async function askAnalyst(
+  id: string,
+  body: { question: string; t: number; persona: string; lang: string },
+): Promise<AskAnswer> {
+  const path = `/matches/${encodeURIComponent(id)}/ask`
+  const res = await fetch(`${GATEWAY_HTTP}${path}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+  if (!res.ok) throw new ApiError(path, res.status)
+  return (await res.json()) as AskAnswer
+}
