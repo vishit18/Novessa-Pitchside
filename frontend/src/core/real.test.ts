@@ -4,6 +4,7 @@ import {
   activePasses,
   boxesAt,
   foot,
+  matchClock,
   passLine,
   rowAtOrBefore,
   trackOf,
@@ -92,5 +93,13 @@ describe('cards and callouts', () => {
     expect(trackOf('BLU-T014')).toBe(14)
     expect(trackOf(null)).toBeNull()
     expect(foot({ id: 1, x1: 10, y1: 0, x2: 30, y2: 50, kmh: 0 })).toEqual([20, 50])
+  })
+})
+
+describe('matchClock', () => {
+  it('adds the clip start so the transport matches the pass list', () => {
+    expect(matchClock(1890, 1.76)).toBe('31:31')
+    expect(matchClock(1890, 0)).toBe('31:30')
+    expect(matchClock(0, 5)).toBe('00:05')
   })
 })

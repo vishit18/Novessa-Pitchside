@@ -289,10 +289,14 @@ button:not(:disabled):active {
    tracking canvas drawn over it stays lined up. */
 .real-frame:fullscreen {
   display: grid;
+  grid-template-rows: 1fr auto;
   place-items: center;
   min-width: 0;
   background: #000;
 }
 .real-frame:fullscreen .real-box {
-  width: min(100vw, calc(100vh * var(--ratio)));
+  width: min(100vw, calc((100vh - 64px) * var(--ratio)));
+}
+.real-frame:fullscreen .real-bar {
+  width: 100%;
 }

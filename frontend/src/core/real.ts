@@ -132,3 +132,12 @@ export function passLine(e: RealEvent): string {
     .filter(Boolean)
     .join(', ')
 }
+
+/**
+ * The match clock at `t` seconds into the clip, as mm:ss. The clip starts `startS` seconds into
+ * the half, so the transport and the pass list read the same time the dataset's labels use.
+ */
+export function matchClock(startS: number, t: number): string {
+  const s = Math.max(0, Math.floor(startS + t))
+  return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`
+}

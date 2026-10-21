@@ -5,9 +5,11 @@ import {
   activePasses,
   boxesAt,
   foot,
+  matchClock,
   passLine,
   trackOf,
   type Box,
+  type RealEvent,
   type RealOverlay,
 } from '@/core/real'
 import { getOverlay, listClips, videoUrl, type RealClip } from '@/net/real'
@@ -76,6 +78,7 @@ function Player({ clip, overlay }: { clip: RealClip; overlay: RealOverlay }) {
   const canvas = useRef<HTMLCanvasElement>(null)
   const frame = useRef<HTMLDivElement>(null)
   const full = useFullscreen(frame)
+  const now = useVideoTime(video)
   const [layers, setLayers] = useState<Layers>({ tags: true, passes: true, speeds: true })
   const layersRef = useRef(layers)
   useEffect(() => {
@@ -103,6 +106,7 @@ function Player({ clip, overlay }: { clip: RealClip; overlay: RealOverlay }) {
     }
   }
   const toggle = (k: keyof Layers) => setLayers((l) => ({ ...l, [k]: !l[k] }))
+  const onScreen = new Set(activePasses(passes, now))
 
   return (
     <>
@@ -133,13 +137,12 @@ function Player({ clip, overlay }: { clip: RealClip; overlay: RealOverlay }) {
                 <video
                   ref={video}
                   src={videoUrl(clip.clip)}
-                  controls
-                  controlsList="nofullscreen"
                   disablePictureInPicture
                   muted
                   playsInline
                   preload="auto"
                   className="block size-full bg-black"
+                  onClick={() => togglePlay(video.current)}
                 />
               ) : (
                 <div className="grid size-full place-items-center bg-black/60 p-6 text-center text-[15px]">
@@ -173,6 +176,7 @@ function Player({ clip, overlay }: { clip: RealClip; overlay: RealOverlay }) {
                 {full.on ? 'Exit full screen' : 'Full screen'}
               </button>
             </div>
+            {clip.video && <VideoBar video={video} startS={overlay.start_s} passes={passes} />}
           </div>
         </div>
         <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
@@ -209,11 +213,15 @@ function Player({ clip, overlay }: { clip: RealClip; overlay: RealOverlay }) {
           <h2 id="found-h" className="font-display text-[26px] font-semibold leading-none">
             Passes it found
           </h2>
+          <p className="text-[13px] text-muted">
+            Times are the match clock, the same as under the video. Pick one to watch it.
+          </p>
           <ol className="flex flex-col divide-y divide-white/10 border-y border-white/10">
             {passes.map((e) => (
               <li key={e.t_match + (e.player_id ?? '')}>
                 <button
-                  className="grid w-full grid-cols-[4.5rem_1fr] gap-x-3 px-1 py-3 text-start hover:bg-white/[0.03]"
+                  aria-current={onScreen.has(e) ? 'true' : undefined}
+                  className="grid w-full grid-cols-[4.5rem_1fr] gap-x-3 px-1 py-3 text-start transition-colors hover:bg-white/[0.03] aria-[current]:bg-amber/10"
                   onClick={() => seek(e.t_match)}
                 >
                   <span className="num text-[22px] leading-none text-amber">{e.clock}</span>
@@ -232,6 +240,114 @@ function Player({ clip, overlay }: { clip: RealClip; overlay: RealOverlay }) {
         <Validation clip={clip} />
       </div>
     </>
+  )
+}
+
+function togglePlay(v: HTMLVideoElement | null) {
+  if (!v) return
+  if (v.paused) void v.play().catch(() => undefined)
+  else v.pause()
+}
+
+/** The video's current time, a few times a second (from the element's own timeupdate). */
+function useVideoTime(ref: React.RefObject<HTMLVideoElement | null>): number {
+  const [t, setT] = useState(0)
+  useEffect(() => {
+    const v = ref.current
+    if (!v) return
+    const on = () => setT(v.currentTime)
+    v.addEventListener('timeupdate', on)
+    v.addEventListener('seeked', on)
+    return () => {
+      v.removeEventListener('timeupdate', on)
+      v.removeEventListener('seeked', on)
+    }
+  }, [ref])
+  return t
+}
+
+/**
+ * Play, the match clock and a scrubber with a tick for every pass it found. Replaces the
+ * browser's own controls, which counted from 0:00 while the rest of the page uses the match
+ * clock.
+ */
+function VideoBar({
+  video,
+  startS,
+  passes,
+}: {
+  video: React.RefObject<HTMLVideoElement | null>
+  startS: number
+  passes: RealEvent[]
+}) {
+  const t = useVideoTime(video)
+  const [duration, setDuration] = useState(0)
+  const [playing, setPlaying] = useState(false)
+  useEffect(() => {
+    const v = video.current
+    if (!v) return
+    const meta = () => setDuration(Number.isFinite(v.duration) ? v.duration : 0)
+    const sync = () => setPlaying(!v.paused)
+    meta()
+    sync()
+    v.addEventListener('loadedmetadata', meta)
+    v.addEventListener('play', sync)
+    v.addEventListener('pause', sync)
+    return () => {
+      v.removeEventListener('loadedmetadata', meta)
+      v.removeEventListener('play', sync)
+      v.removeEventListener('pause', sync)
+    }
+  }, [video])
+  const seekTo = (s: number) => {
+    const v = video.current
+    if (v) v.currentTime = Math.min(Math.max(0, s), duration || s)
+  }
+  const at = (s: number) => `${duration ? (s / duration) * 100 : 0}%`
+  return (
+    <div className="real-bar flex h-16 items-center gap-4 bg-ink/90 px-3">
+      <button
+        className="grid size-10 shrink-0 place-items-center border border-white/30 text-text hover:border-amber"
+        onClick={() => togglePlay(video.current)}
+        aria-label={playing ? 'Pause' : 'Play'}
+      >
+        <svg viewBox="0 0 12 12" className="size-3.5" aria-hidden fill="currentColor">
+          {playing ? <path d="M2.5 1.5h2.5v9H2.5zM7 1.5h2.5v9H7z" /> : <path d="M3 1.5v9l7-4.5z" />}
+        </svg>
+      </button>
+      <span className="num w-[4.5rem] shrink-0 text-[22px] leading-none text-amber" dir="ltr">
+        {matchClock(startS, t)}
+      </span>
+      <div className="relative h-9 min-w-0 flex-1">
+        <div className="absolute inset-x-0 top-1/2 h-[3px] -translate-y-1/2 bg-white/15" />
+        <div
+          className="absolute start-0 top-1/2 h-[3px] -translate-y-1/2 bg-amber"
+          style={{ width: at(t) }}
+        />
+        {passes.map((e) => (
+          <span
+            key={e.t_match + (e.player_id ?? '')}
+            aria-hidden
+            className="absolute top-1/2 h-3 w-[2px] -translate-y-1/2 bg-white/50"
+            style={{ left: at(e.t_match) }}
+          />
+        ))}
+        <input
+          type="range"
+          className="scrub absolute inset-0 size-full"
+          min={0}
+          max={duration || 1}
+          step={0.04}
+          value={Math.min(t, duration || t)}
+          aria-label="Match time"
+          aria-valuetext={matchClock(startS, t)}
+          onChange={(e) => seekTo(Number(e.target.value))}
+        />
+      </div>
+      <span className="num hidden shrink-0 text-[14px] text-muted sm:inline" dir="ltr">
+        {matchClock(startS, 0)} to {matchClock(startS, duration)}
+      </span>
+    </div>
   )
 }
 
