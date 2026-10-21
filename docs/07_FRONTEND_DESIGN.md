@@ -26,8 +26,11 @@ The feeling is a night match under floodlights, seen from the gantry. Calm, dark
 
 ## Screens
 
-1. **Match picker / onboarding**: pick a match, then three quick taps: *How do you watch?* (Analyst, Casual, First match, Audio-described) → *Your club* → *Your player* (optional) → language. Under 15 seconds. Remember it.
-2. **Broadcast view** (the hero, 16:9): the 2D tactical feed (optional slight perspective tilt to feel like a camera), score bug top-left, momentum bar, lower thirds, player tags, pitch annotations (pass lines with difficulty, pressure halos). Controls hidden until hover.
+Every screen except the full-screen broadcast carries the same header: wordmark (home) and one link per screen, the current one underlined in amber. The broadcast has a single Menu button in its corner instead, so nothing sits on the football.
+
+0. **Home** (`/`): says the problem in one line ("Millions watch the same match. They all get the same broadcast."), shows the answer on one real goal told three ways (Analyst/English, Casual/Spanish, First match/Hindi, live agent text with a captured fallback), the six steps a moment goes through, and every way in labelled by who it is for. A newcomer should know what this is without clicking anything.
+1. **Match picker / onboarding** (`/start`): pick a match, then three quick taps: *How do you watch?* (Analyst, Casual, First match, Audio-described) → *Your club* → *Your player* (optional) → language. Under 15 seconds. Remember it.
+2. **Broadcast view** (the hero, 16:9): the 2D tactical feed (optional slight perspective tilt to feel like a camera), score bug top-left, momentum bar, lower thirds, player tags, pitch annotations (pass lines with difficulty, pressure halos). Controls hidden until hover, always shown while paused. The controls are a timeline: play, skip 30 s, drag to any minute (one seek on release), speed, and markers for goals and cards. Markers only cover what the viewer has already watched unless they switch on Key moments, because the full set gives away the result.
 3. **Split view: "Same match. Your story."** Two personas side by side on the same moment: e.g. Analyst/English vs Casual/Spanish. This is the money shot for the video; make it beautiful.
 4. **Player focus mode**: pitch follows one player, their live card (speed, distance, passes, difficulty, heatmap building over time), everything framed around them.
 5. **One-number mode**: viewer picks one metric; the UI reorganises around it with a big live number and its story.

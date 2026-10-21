@@ -137,6 +137,7 @@ make test         # all tests
 make lint
 make seed         # generate the league + 3 demo matches
 make replay MATCH=derby_01 SPEED=4
+uv run python -m scripts.warm_overlay_text   # instant-overlay translations for the demo matches
 azd up            # provision + deploy everything to Azure
 ```
 

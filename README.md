@@ -29,7 +29,7 @@ npm install
 npm run dev
 ```
 
-Open http://localhost:5173 and pick a match.
+Open http://localhost:5173. The home page says what this is, shows one goal told three ways, and links to every screen. Every page has the same menu.
 
 `AGENTS=off` runs without any Azure account: you get the pitch, the instant overlays, the stats and the recap numbers. Leave it off the command to turn the agents on. For that, run `az login`, copy `.env.example` to `.env` and fill in the Foundry endpoint (see [`docs/02_AZURE_SETUP.md`](docs/02_AZURE_SETUP.md)). Everything signs in with Entra ID, so there are no keys to paste.
 
@@ -37,13 +37,13 @@ Places worth a look:
 
 | Screen | Link | What to try |
 |---|---|---|
-| Broadcast | `/watch?match=derby_01&speed=4` | Overlays land instantly, the "why" text a moment later. Move the mouse to bring up Companion, Recap and Commentary. |
-| Split | `/split?match=derby_01&t=300&speed=4` | The same moment for an analyst in English and a casual fan in Spanish. |
-| Companion | `/companion?match=derby_01&speed=10` | The phone view. Tap "What did I miss?" for a spoiler-safe catch-up. |
+| Broadcast | `/watch?match=derby_01&speed=4` | Overlays land instantly, the "why" text a moment later. Move the mouse for the timeline: drag to any minute, skip 30 s, change speed, or switch on "Key moments" to mark the goals and cards (it shows the result, so it is off by default). The menu in the corner reaches every other screen. |
+| Split | `/split?match=derby_01` | Two viewers on the same second of the same match: an analyst in English and a first-timer in Spanish. Starts just before the first goal. Under each pane is what that viewer has been told so far, so the difference stays on screen. One timeline drives both. |
+| Companion | `/companion?match=derby_01&speed=10` | The phone view, with its own timeline. Tap "What did I miss?" for a spoiler-safe catch-up. |
 | Control Room | `/control?match=derby_01` | The agents at work, the Verifier rejecting a claim, and the chaos switch that kills an agent mid-match. |
 | Recap | `/recap?match=derby_01&kind=full_time` | Half-time and full-time recaps in six languages. |
 | One number | pick "Just one number" in onboarding | Choose sprint speed, shot speed, pass difficulty or distance. The broadcast keeps that number on screen and shows only that, plus goals. |
-| Real footage | `/real` | The same overlays on a real amateur match, measured from video. |
+| Real footage | `/real` | The same overlays on a real amateur match, measured from video. Full screen keeps the tracking on the picture. |
 
 ## What it does
 
@@ -51,7 +51,7 @@ Places worth a look:
 - **Deterministic stats.** Possession, momentum, pressure, control and chaos, rhythm, an explainable pass difficulty score, sprint speeds and distances. All of it is computed in code. No language model ever computes a number.
 - **Instant overlays.** Name tags, speed bursts, pass difficulty, shot speed, cards, offsides and milestones come straight from the stats layer, with no model call.
 - **Agents.** Eight agents and a safety gate, described below. They add the explanation, the commentary, the translation, the voice and the recap.
-- **Personas.** Analyst, casual, first match and audio-described. Favourite club, favourite player (the camera follows them), or a single metric. English, Spanish and Arabic in the broadcast, plus French, Hindi and Portuguese in recaps.
+- **Personas.** Analyst, casual, first match and audio-described. Favourite club, favourite player (the camera follows them), or a single metric. Six languages everywhere: English, Spanish, French, Arabic (right to left), Hindi and Portuguese. Agent text, recaps, voice, the instant overlays and the interface itself.
 - **Real footage.** A vision pipeline reads a real, openly licensed amateur match, tags players, follows the ball and measures speeds, then scores itself against the dataset's own labels.
 
 ## The agents

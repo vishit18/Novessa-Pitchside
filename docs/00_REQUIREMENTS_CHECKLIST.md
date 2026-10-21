@@ -26,9 +26,9 @@ Priority: **P0** = we fail or score badly without it. **P1** = needed to win. **
 | [x] | Favourite club(s) | P0 | Profile picks a club; tone and emphasis tilt toward it, notifications for its moments |
 | [x] | Favourite player(s) | P0 | Their moments get priority and a "your player" badge |
 | [x] | Player-focused mode, following one player throughout the match | P0 | Camera follow on the 2D pitch, live player card, every insight framed around them |
-| [x] | Language preference | P0 | Narrative and voice in at least 5 languages (EN, ES, FR, AR, HI; plus PT if cheap) |
+| [x] | Language preference | P0 | Narrative and voice in at least 5 languages (EN, ES, FR, AR, HI; plus PT if cheap) | 21 Oct: all six in every view (was EN/ES/AR live, six only in recaps). Interface strings `frontend/src/i18n/strings.more.ts`; instant overlays translated per match and language (`backend/app/overlay_text.py`, warmed by `scripts/warm_overlay_text.py`); Localiser now protects clocks, scores and short names and keeps units with their numbers (`backend/agents/localiser.py`). Fixed: Arabic recaps fell back to English, Hindi mangled clocks. |
 | [x] | Single performance metric a viewer cares about | P0 | "One-number mode": viewer picks e.g. pressing intensity or sprint speed, the whole overlay layer reorganises around it Built 20 Oct: onboarding step "Just one number", a persistent leader readout, and the gateway filter. `e2e/one-number.spec.ts`. |
-| [x] | "Welcome many more ideas" | P1 | Spoiler-safe catch-up ("I joined at 60', what did I miss?"), second-screen companion on mobile | Built: `/companion` (`frontend/src/screens/Companion.tsx`), catch-up from `GET /matches/{id}/catchup` (`backend/app/catchup.py`), spoiler test in `backend/tests/test_catchup.py`. Catch-up text is English only for now.
+| [x] | "Welcome many more ideas" | P1 | Spoiler-safe catch-up ("I joined at 60', what did I miss?"), second-screen companion on mobile | Built: `/companion` (`frontend/src/screens/Companion.tsx`), catch-up from `GET /matches/{id}/catchup` (`backend/app/catchup.py`), spoiler test in `backend/tests/test_catchup.py`. Catch-up text is English only for now. 21 Oct: a timeline on Broadcast, Companion and Split (drag, skip, speed, spoiler-safe goal/card markers, `frontend/src/components/Timeline.tsx`, `GET /matches/{id}/moments`).
 
 ## C. Real-time match intelligence (brief §(ii))
 
@@ -50,7 +50,7 @@ Priority: **P0** = we fail or score badly without it. **P1** = needed to win. **
 | ✓ | Requirement | P | How |
 |---|---|---|---|
 | [x] | Key narratives | P0 | Narrator agent keeps running storylines ("Ashford can't get out of their own half") |
-| [ ] | Player-performance context | P0 | Player cards with context vs their own baseline and the match |
+| [x] | Player-performance context | P0 | Player cards with context vs their own baseline and the match | 21 Oct: every number on the player-focus card says where the player ranks among the same position on the pitch ("#1 of 4 forwards"), computed in code (`frontend/src/core/context.ts`). Against the match, not a season baseline: the league has no history yet. |
 | [x] | Notable milestones | P0 | Milestone detector (first goal, 50th pass, fastest sprint of the match, etc.) |
 | [x] | Match recaps, automated | P0 | Half-time and full-time recaps per persona and language, plus a short "60-second highlights" script | Built: `/recap` (`frontend/src/screens/Recap.tsx`) over `GET /matches/{id}/recap`; six languages, four personas, highlights script, numbers panel, key moments, share. Falls back to computed numbers when the agents are off.
 | [x] | Explain **control vs chaos** | P0 | Control/Chaos index from possession stability, turnover rate, shape spread |
@@ -108,7 +108,7 @@ Priority: **P0** = we fail or score badly without it. **P1** = needed to win. **
 - [ ] Impact on businesses / users → broadcaster, streaming platform and fan stories in README
 
 ### F4. User Experience & Presentation (20%)
-- [ ] Well-designed, intuitive UX → `docs/07`
+- [ ] Well-designed, intuitive UX → `docs/07`. 21 Oct walk-through fixes: home page that states the problem (`frontend/src/screens/Home.tsx`), one nav on every page (`frontend/src/components/AppNav.tsx`), scrub timeline, split view explains itself and shows each viewer's record, real footage full screen keeps its tracking.
 - [ ] Demo video clearly communicates the value → `docs/09`
 - [ ] Balanced frontend and backend → both visible in the video (Control Room shows the backend working) (screen built: `frontend/src/screens/ControlRoom.tsx`; tick once recorded)
 
