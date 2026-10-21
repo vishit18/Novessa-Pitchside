@@ -18,6 +18,8 @@ export interface UIState {
   playerStats: PlayerStatsMessage | null
   /** Live speed of the followed player, straight from the latest frame. */
   focusSpeed: number | null
+  /** Club code of the team on the ball, or null when it is loose. For the First match chip. */
+  carrierTeam: string | null
   /** Overlays to draw right now, already resolved per slot. */
   active: OverlayEnvelope[]
   /** Story cards this viewer has already been shown, newest first. The Companion's feed. */
@@ -47,6 +49,7 @@ export function createUIStore(profile: ViewerProfile): StoreApi<UIState> {
     snapshot: null,
     playerStats: null,
     focusSpeed: null,
+    carrierTeam: null,
     active: [],
     feed: [],
     delayS: 0,

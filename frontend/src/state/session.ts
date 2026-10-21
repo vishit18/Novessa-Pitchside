@@ -32,6 +32,7 @@ export class Session {
   private lastSnapshotT = -1
   private lastStatsT = -1
   private lastSpeedMs = 0
+  private lastCarrierMs = 0
   /** Every story overlay received, never pruned, so the feed can be rebuilt at any time. */
   private feedLog: OverlayEnvelope[] = []
   private lastFeedMs = 0
@@ -61,6 +62,7 @@ export class Session {
       snapshot: null,
       playerStats: null,
       focusSpeed: null,
+      carrierTeam: null,
       active: [],
       feed: [],
       speed: this.opts.speed ?? 4,
@@ -179,5 +181,15 @@ export class Session {
     if (nowMs - this.lastSpeedMs < 250) return
     this.lastSpeedMs = nowMs
     this.store.getState().set({ focusSpeed: kmh })
+  }
+
+  /**
+   * Publish which team has the ball, at most a few times a second. A loose ball keeps the last
+   * team, so the chip does not flicker during every pass.
+   */
+  reportCarrierTeam(team: string | null, nowMs: number): void {
+    if (team === null || nowMs - this.lastCarrierMs < 300) return
+    this.lastCarrierMs = nowMs
+    if (team !== this.store.getState().carrierTeam) this.store.getState().set({ carrierTeam: team })
   }
 }

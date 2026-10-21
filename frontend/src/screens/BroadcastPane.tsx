@@ -2,6 +2,7 @@ import { useCallback, useEffect, type ReactNode } from 'react'
 import { AskSheet } from '@/components/AskSheet'
 import { GoalSting } from '@/components/GoalSting'
 import {
+  BallChip,
   Controls,
   KickOffCard,
   LowerThird,
@@ -67,6 +68,7 @@ function PaneBody({ compact, transport, corner, focus }: Omit<Props, 'session'>)
         <div className="flex w-[min(100%,380px)] flex-col gap-3">
           <ScoreBug showMatchLine={!compact && !focus} />
           <MetricReadout />
+          <BallChip />
         </div>
         <div className="flex flex-col items-end gap-2">
           <StatusPill />

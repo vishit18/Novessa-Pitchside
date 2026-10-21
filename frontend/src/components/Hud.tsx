@@ -5,6 +5,7 @@ import { CLUBS, PLAYERS } from '@/data/league'
 import { lateness } from '@/core/overlays'
 import { Timeline } from '@/components/Timeline'
 import { outcomeLabel } from '@/i18n/strings'
+import { metricName } from '@/i18n/strings.more'
 import { useSession, useSessionState, useT } from '@/state/useSession'
 import type { OverlayEnvelope } from '@/types/overlay'
 
@@ -164,24 +165,79 @@ function toneColour(o: OverlayEnvelope): string {
   return team ? colour(team) : 'var(--color-amber)'
 }
 
+/**
+ * A story beat. Analysts get tighter type and the numbers behind it as chips; a First match
+ * viewer gets a bigger headline and no more than two lines of body.
+ */
 function Headline({ o }: { o: OverlayEnvelope }) {
   const lang = useSessionState((s) => s.profile.lang)
+  const persona = useSessionState((s) => s.profile.persona)
   const head = String(o.payload['headline'] ?? '')
   const body = String(o.payload['body'] ?? '')
   const late = lateness(o)
   const t = useT()
+  const analyst = persona === 'analyst'
+  const kids = persona === 'kids'
+  const evidence = analyst ? o.provenance.evidence.slice(0, 4) : []
+  const headSize = analyst
+    ? 'text-[24px] sm:text-[34px]'
+    : kids
+      ? 'text-[34px] sm:text-[52px]'
+      : 'text-[28px] sm:text-[42px]'
+  const bodySize = analyst
+    ? 'max-w-[68ch] text-[15px] sm:text-[17px]'
+    : kids
+      ? 'line-clamp-2 max-w-[44ch] text-[18px] sm:text-[22px]'
+      : 'max-w-[56ch] text-[16px] sm:text-[20px]'
   return (
     <div className="flex">
       <span className="w-[7px] shrink-0" style={{ background: toneColour(o) }} />
       <div className="min-w-0 py-3 pr-8 pl-4">
-        <div className="font-display text-[28px] sm:text-[42px] font-bold leading-[0.95]">
+        <div className={`font-display font-bold leading-[0.95] ${headSize}`}>
           {sentenceCase(head, lang)}
         </div>
-        <p className="mt-1.5 max-w-[56ch] text-[16px] leading-snug text-text/80 sm:text-[20px]">
-          {body}
-        </p>
+        <p className={`mt-1.5 leading-snug text-text/80 ${bodySize}`}>{body}</p>
+        {evidence.length > 0 && (
+          <ul className="mt-2 flex flex-wrap gap-1.5" aria-label={t('askHow')}>
+            {evidence.map((e) => (
+              <li
+                key={e.metric}
+                className="flex items-baseline gap-1.5 border border-white/15 bg-black/30 px-2 py-0.5 text-[13px] text-muted"
+              >
+                {metricName(lang, e.metric)}
+                <span className="num text-[15px] font-semibold text-text" dir="ltr">
+                  {formatEvidence(e.metric, e.value)}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
         {late > 6 && <p className="mt-1 text-[12px] text-amber">{t('earlier')}</p>}
       </div>
+    </div>
+  )
+}
+
+function formatEvidence(metric: string, v: number): string {
+  if (metric.startsWith('xg')) return v.toFixed(2)
+  return Number.isInteger(v) ? String(v) : v.toFixed(1)
+}
+
+/** First match: which team has the ball, in words, so the arrow on the pitch has a caption. */
+export function BallChip() {
+  const persona = useSessionState((s) => s.profile.persona)
+  const team = useSessionState((s) => s.carrierTeam)
+  const t = useT()
+  if (persona !== 'kids' || !team) return null
+  return (
+    <div className="plate-shadow w-fit">
+      <p
+        className="plate flex items-center gap-2.5 py-2 pr-4 pl-2.5 text-[18px] font-semibold"
+        style={{ ['--cut' as string]: '8px' }}
+      >
+        <span className="h-6 w-[6px]" style={{ background: colour(team) }} aria-hidden />
+        {t('hasBall', { club: CLUBS[team]?.name ?? team })}
+      </p>
     </div>
   )
 }

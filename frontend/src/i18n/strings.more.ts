@@ -56,6 +56,7 @@ export const NAV = {
     grp_DEF: 'defenders',
     grp_MID: 'midfielders',
     grp_FWD: 'forwards',
+    hasBall: '{club} have the ball',
   },
   es: {
     navHome: 'Inicio',
@@ -108,6 +109,7 @@ export const NAV = {
     grp_DEF: 'defensas',
     grp_MID: 'centrocampistas',
     grp_FWD: 'delanteros',
+    hasBall: '{club} tiene el balón',
   },
   fr: {
     navHome: 'Accueil',
@@ -160,6 +162,7 @@ export const NAV = {
     grp_DEF: 'défenseurs',
     grp_MID: 'milieux',
     grp_FWD: 'attaquants',
+    hasBall: '{club} a le ballon',
   },
   ar: {
     navHome: 'الرئيسية',
@@ -212,6 +215,7 @@ export const NAV = {
     grp_DEF: 'مدافعين',
     grp_MID: 'لاعبي وسط',
     grp_FWD: 'مهاجمين',
+    hasBall: 'الكرة مع {club}',
   },
   hi: {
     navHome: 'होम',
@@ -264,6 +268,7 @@ export const NAV = {
     grp_DEF: 'डिफ़ेंडरों',
     grp_MID: 'मिडफ़ील्डरों',
     grp_FWD: 'फ़ॉरवर्ड्स',
+    hasBall: 'गेंद {club} के पास है',
   },
   pt: {
     navHome: 'Início',
@@ -316,6 +321,7 @@ export const NAV = {
     grp_DEF: 'zagueiros',
     grp_MID: 'meio-campistas',
     grp_FWD: 'atacantes',
+    hasBall: '{club} está com a bola',
   },
 } as const
 
@@ -518,4 +524,187 @@ export const pt = {
   verifiedBy: 'Conferido com os dados da partida',
   fromNumbers: 'Direto dos números da partida',
   noSpoilers: 'Cobre a partida até {clock} e nada depois.',
+}
+
+/** Evidence metrics as words, for the analyst's chips under a lower third. */
+type MetricKey =
+  | 'momentum'
+  | 'momentum_change'
+  | 'pressure_index'
+  | 'pressure_gap_change'
+  | 'control_chaos'
+  | 'events_per_min'
+  | 'pass_difficulty'
+  | 'penalties'
+  | 'men_on_pitch'
+  | 'xg'
+  | 'xg_total'
+  | 'score'
+  | 'score_home'
+  | 'score_away'
+  | 'top_speed_kmh'
+  | 'distance_km'
+  | 'pass_accuracy_pct'
+  | 'shots'
+  | 'passes'
+  | 'possession_5min'
+  | 'ball_wins'
+  | 'pressure_events'
+
+export const METRIC_LABELS: Record<
+  'en' | 'es' | 'fr' | 'ar' | 'hi' | 'pt',
+  Record<MetricKey, string>
+> = {
+  en: {
+    momentum: 'Momentum',
+    momentum_change: 'Momentum swing',
+    pressure_index: 'Pressure index',
+    pressure_gap_change: 'Pressure gap swing',
+    control_chaos: 'Control or chaos',
+    events_per_min: 'Events a minute',
+    pass_difficulty: 'Pass difficulty',
+    penalties: 'Penalties',
+    men_on_pitch: 'Players on the pitch',
+    xg: 'xG',
+    xg_total: 'xG total',
+    score: 'Goals',
+    score_home: 'Home goals',
+    score_away: 'Away goals',
+    top_speed_kmh: 'Top speed km/h',
+    distance_km: 'Distance km',
+    pass_accuracy_pct: 'Pass accuracy %',
+    shots: 'Shots',
+    passes: 'Passes',
+    possession_5min: 'Possession, 5 min %',
+    ball_wins: 'Ball wins',
+    pressure_events: 'Pressing actions',
+  },
+  es: {
+    momentum: 'Dominio',
+    momentum_change: 'Giro del dominio',
+    pressure_index: 'Índice de presión',
+    pressure_gap_change: 'Cambio en la presión',
+    control_chaos: 'Control o caos',
+    events_per_min: 'Acciones por minuto',
+    pass_difficulty: 'Dificultad del pase',
+    penalties: 'Penaltis',
+    men_on_pitch: 'Jugadores en el campo',
+    xg: 'xG',
+    xg_total: 'xG total',
+    score: 'Goles',
+    score_home: 'Goles locales',
+    score_away: 'Goles visitantes',
+    top_speed_kmh: 'Velocidad máxima km/h',
+    distance_km: 'Distancia km',
+    pass_accuracy_pct: 'Precisión de pase %',
+    shots: 'Tiros',
+    passes: 'Pases',
+    possession_5min: 'Posesión, 5 min %',
+    ball_wins: 'Recuperaciones',
+    pressure_events: 'Acciones de presión',
+  },
+  fr: {
+    momentum: 'Dynamique',
+    momentum_change: 'Bascule de la dynamique',
+    pressure_index: 'Indice de pression',
+    pressure_gap_change: 'Écart de pression',
+    control_chaos: 'Contrôle ou chaos',
+    events_per_min: 'Actions par minute',
+    pass_difficulty: 'Difficulté de la passe',
+    penalties: 'Penalties',
+    men_on_pitch: 'Joueurs sur le terrain',
+    xg: 'xG',
+    xg_total: 'xG total',
+    score: 'Buts',
+    score_home: 'Buts à domicile',
+    score_away: 'Buts à l’extérieur',
+    top_speed_kmh: 'Vitesse de pointe km/h',
+    distance_km: 'Distance km',
+    pass_accuracy_pct: 'Passes réussies %',
+    shots: 'Tirs',
+    passes: 'Passes',
+    possession_5min: 'Possession, 5 min %',
+    ball_wins: 'Récupérations',
+    pressure_events: 'Actions de pressing',
+  },
+  ar: {
+    momentum: 'الأفضلية',
+    momentum_change: 'تحوّل الأفضلية',
+    pressure_index: 'مؤشر الضغط',
+    pressure_gap_change: 'تغيّر فارق الضغط',
+    control_chaos: 'سيطرة أم فوضى',
+    events_per_min: 'أحداث في الدقيقة',
+    pass_difficulty: 'صعوبة التمريرة',
+    penalties: 'ركلات الجزاء',
+    men_on_pitch: 'اللاعبون في الملعب',
+    xg: 'xG',
+    xg_total: 'مجموع xG',
+    score: 'الأهداف',
+    score_home: 'أهداف صاحب الأرض',
+    score_away: 'أهداف الضيف',
+    top_speed_kmh: 'أقصى سرعة كم/س',
+    distance_km: 'المسافة كم',
+    pass_accuracy_pct: 'دقة التمرير %',
+    shots: 'التسديدات',
+    passes: 'التمريرات',
+    possession_5min: 'الاستحواذ، 5 دقائق %',
+    ball_wins: 'استعادة الكرة',
+    pressure_events: 'محاولات الضغط',
+  },
+  hi: {
+    momentum: 'दबदबा',
+    momentum_change: 'दबदबे में बदलाव',
+    pressure_index: 'दबाव सूचकांक',
+    pressure_gap_change: 'दबाव के अंतर में बदलाव',
+    control_chaos: 'नियंत्रण या अफरा-तफरी',
+    events_per_min: 'प्रति मिनट घटनाएँ',
+    pass_difficulty: 'पास की कठिनाई',
+    penalties: 'पेनल्टी',
+    men_on_pitch: 'मैदान पर खिलाड़ी',
+    xg: 'xG',
+    xg_total: 'कुल xG',
+    score: 'गोल',
+    score_home: 'घरेलू टीम के गोल',
+    score_away: 'मेहमान टीम के गोल',
+    top_speed_kmh: 'सबसे तेज़ रफ़्तार किमी/घं',
+    distance_km: 'दूरी किमी',
+    pass_accuracy_pct: 'पास सटीकता %',
+    shots: 'शॉट',
+    passes: 'पास',
+    possession_5min: 'कब्ज़ा, 5 मिनट %',
+    ball_wins: 'गेंद छीनी',
+    pressure_events: 'प्रेसिंग',
+  },
+  pt: {
+    momentum: 'Domínio',
+    momentum_change: 'Virada no domínio',
+    pressure_index: 'Índice de pressão',
+    pressure_gap_change: 'Mudança na pressão',
+    control_chaos: 'Controle ou caos',
+    events_per_min: 'Lances por minuto',
+    pass_difficulty: 'Dificuldade do passe',
+    penalties: 'Pênaltis',
+    men_on_pitch: 'Jogadores em campo',
+    xg: 'xG',
+    xg_total: 'xG total',
+    score: 'Gols',
+    score_home: 'Gols do mandante',
+    score_away: 'Gols do visitante',
+    top_speed_kmh: 'Velocidade máxima km/h',
+    distance_km: 'Distância km',
+    pass_accuracy_pct: 'Precisão de passe %',
+    shots: 'Finalizações',
+    passes: 'Passes',
+    possession_5min: 'Posse, 5 min %',
+    ball_wins: 'Desarmes',
+    pressure_events: 'Ações de pressão',
+  },
+}
+
+/** An evidence metric in the viewer's language. Unknown keys come out as plain words. */
+export function metricName(lang: keyof typeof METRIC_LABELS, metric: string): string {
+  const known = (METRIC_LABELS[lang] as Record<string, string>)[metric]
+  if (known) return known
+  const words = metric.replace(/_/g, ' ')
+  return words.charAt(0).toUpperCase() + words.slice(1)
 }

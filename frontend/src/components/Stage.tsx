@@ -3,6 +3,7 @@ import { CLUBS } from '@/data/league'
 import { makeTilt, type Tilt } from '@/core/tilt'
 import { isGoal } from '@/core/overlays'
 import { preKickFrame } from '@/core/formation'
+import { carrierOf } from '@/core/possession'
 import { frameAt } from '@/core/timeline'
 import type { TrackingFrame } from '@/types/schema'
 import { useSession, useSessionState } from '@/state/useSession'
@@ -31,6 +32,7 @@ export function Stage() {
   const meta = useSessionState((s) => s.meta)
   const goalOn = useSessionState((s) => s.active.some(isGoal))
   const focus = useSessionState((s) => s.profile.player)
+  const persona = useSessionState((s) => s.profile.persona)
 
   useEffect(() => {
     const host = hostRef.current
@@ -72,6 +74,8 @@ export function Stage() {
           }
           const followed = session.store.getState().profile.player
           if (followed) session.reportFocusSpeed(players.get(followed)?.v_kmh ?? null, now)
+          const carrier = carrierOf(frame)
+          session.reportCarrierTeam(carrier ? (carrier.id.split('-')[0] ?? null) : null, now)
           for (const entry of registry.current.values()) {
             const pt = resolveTagPoint(entry.overlay, players, project)
             if (!pt) continue
@@ -93,6 +97,10 @@ export function Stage() {
   useEffect(() => {
     renderer?.setFocus(focus)
   }, [renderer, focus])
+
+  useEffect(() => {
+    renderer?.setLayers(persona)
+  }, [renderer, persona])
 
   useEffect(() => {
     if (!renderer || !meta) return

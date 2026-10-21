@@ -3,6 +3,8 @@ import { PLAYERS } from '@/data/league'
 import { followCamera, type Camera } from '@/core/camera'
 import { Heatmap } from '@/core/heatmap'
 import { isGoal, lifeFraction } from '@/core/overlays'
+import { attackDirection, carrierOf, optionsFor, pressersOf } from '@/core/possession'
+import type { Persona } from '@/state/profile'
 import type { OverlayEnvelope } from '@/types/overlay'
 import { PITCH_LENGTH, PITCH_WIDTH } from '@/types/schema'
 import type { TrackingFrame } from '@/types/schema'
@@ -23,6 +25,8 @@ const GRASS_B = 0x1e5237
 const LINE = 0xe9eef2
 const AMBER = 0xffb020
 const INK = 0x0d1014
+/** Pressing opponents on the analyst layer. Not used anywhere else on the pitch. */
+const PRESS = 0xe05cff
 
 const hex = (c: string) => parseInt(c.replace('#', ''), 16)
 
@@ -62,6 +66,7 @@ export class PitchRenderer {
   private ball = new Graphics()
   private sprites = new Map<string, PlayerSprite>()
   private looks: Record<string, TeamLook> = {}
+  private layers: Persona = 'casual'
   private ready = false
   private w = 0
   private h = 0
@@ -110,6 +115,17 @@ export class PitchRenderer {
 
   setLooks(looks: Record<string, TeamLook>): void {
     this.looks = looks
+  }
+
+  /**
+   * What the pitch draws on top of the players, per persona. Analyst: who is pressing the ball
+   * and the two simplest passes. First match: a big arrow showing which way the team on the ball
+   * is going, and no shirt numbers. Audio-described: a bigger ball and a thicker carrier ring.
+   */
+  setLayers(persona: Persona): void {
+    if (persona === this.layers) return
+    this.layers = persona
+    for (const sp of this.sprites.values()) sp.label.visible = persona !== 'kids'
   }
 
   /** Metres to CSS pixels inside the host element. */
@@ -277,6 +293,7 @@ export class PitchRenderer {
     })
     label.anchor.set(0.5, 0.52)
     label.resolution = 3 // stays sharp when the camera zooms in
+    label.visible = this.layers !== 'kids'
     root.addChild(disc, label)
     this.playersLayer.addChild(root)
     sp = { root, disc, label, team: id.split('-')[0] ?? '' }
@@ -313,7 +330,8 @@ export class PitchRenderer {
       this.moveCamera(this.focus ? (at.get(this.focus) ?? null) : null, dt)
       if (this.heatDirty) this.drawHeat()
       const b = this.project(frame.ball.x, frame.ball.y)
-      const r = Math.max(3.5, this.scale * 0.42)
+      const big = this.layers === 'accessibility'
+      const r = Math.max(3.5, this.scale * 0.42) * (big ? 1.6 : 1)
       // Disc radius on screen after the camera, matching the sprite counter-scale.
       const pr = this.radius() / Math.sqrt(this.cam.zoom)
 
@@ -343,9 +361,12 @@ export class PitchRenderer {
         // Thin white ring for the ball carrier; amber is kept for the viewer's own player.
         const followed = this.focus !== null
         const color = followed ? LINE : AMBER
-        fx.circle(near.x, near.y, pr + 5).stroke({ width: followed ? 1.5 : 2, color, alpha: 0.85 })
+        const ring = (followed ? 1.5 : 2) * (big ? 2.2 : 1)
+        fx.circle(near.x, near.y, pr + 5).stroke({ width: ring, color, alpha: 0.85 })
         if (!followed) fx.circle(near.x, near.y, pr + 9).stroke({ width: 6, color, alpha: 0.12 })
       }
+
+      if (this.layers === 'analyst' || this.layers === 'kids') this.drawLayers(frame, at, pr)
 
       // The followed player: a steady ring with a soft halo.
       const me = this.focus ? at.get(this.focus) : undefined
@@ -380,6 +401,48 @@ export class PitchRenderer {
     }
     this.drawAnnotations(overlays, t)
     this.app.renderer.render(this.app.stage)
+  }
+
+  /** The persona's extra pitch layer, drawn on the effects graphics just under the players. */
+  private drawLayers(frame: TrackingFrame, at: Map<string, Point>, pr: number): void {
+    const c = carrierOf(frame)
+    const cp = c ? at.get(c.id) : undefined
+    if (!c || !cp) return
+    const fx = this.effects
+    if (this.layers === 'analyst') {
+      for (const o of optionsFor(frame, c)) {
+        const op = at.get(o.id)
+        if (!op) continue
+        fx.moveTo(cp.x, cp.y).lineTo(op.x, op.y).stroke({ width: 1.25, color: LINE, alpha: 0.7 })
+      }
+      for (const p of pressersOf(frame, c)) {
+        const pp = at.get(p.id)
+        if (!pp) continue
+        fx.circle(pp.x, pp.y, pr + 4).stroke({ width: 2, color: PRESS, alpha: 0.95 })
+        fx.circle(pp.x, pp.y, pr + 9).stroke({ width: 7, color: PRESS, alpha: 0.18 })
+      }
+      return
+    }
+    // First match: a chevron in the carrier's kit, out ahead of them, pointing the way they attack.
+    const team = c.id.split('-')[0] ?? ''
+    const dir = attackDirection(frame, team)
+    const ahead = this.project(c.x + dir, c.y)
+    const dx = ahead.x - cp.x
+    const dy = ahead.y - cp.y
+    const len = Math.hypot(dx, dy) || 1
+    const ux = dx / len
+    const uy = dy / len
+    const s = Math.max(14, pr * 2.6)
+    const tipD = pr * 1.8 + s * 1.4
+    const tip = { x: cp.x + ux * tipD, y: cp.y + uy * tipD }
+    const back = { x: tip.x - ux * s * 1.4, y: tip.y - uy * s * 1.4 }
+    const notch = { x: tip.x - ux * s * 0.8, y: tip.y - uy * s * 0.8 }
+    const left = { x: back.x - uy * s, y: back.y + ux * s }
+    const right = { x: back.x + uy * s, y: back.y - ux * s }
+    const look = this.looks[team]
+    fx.poly([tip.x, tip.y, left.x, left.y, notch.x, notch.y, right.x, right.y])
+      .fill({ color: hex(look?.primary ?? '#ffb020'), alpha: 0.95 })
+      .stroke({ width: 2, color: hex(look?.secondary ?? '#0d1014'), alpha: 0.9, join: 'round' })
   }
 
   private moveCamera(target: Point | null, dt: number): void {
