@@ -9,7 +9,13 @@ from typing import Any
 
 from backend.agents import storykeeper
 from backend.agents.cache import FileCache
-from backend.agents.recap import make_recap, recap_facts, recap_time, template_recap
+from backend.agents.recap import (
+    in_match_order,
+    make_recap,
+    recap_facts,
+    recap_time,
+    template_recap,
+)
 from backend.tests.test_agents import ScriptedTransport, make_ctx
 from backend.tests.test_agents import intel as intel
 from backend.tests.test_agents import names as names
@@ -98,3 +104,20 @@ def test_template_recap_works_without_goals() -> None:
         "teams": {"A": {"possession_pct": 50, "shots": 2}, "B": {"possession_pct": 50, "shots": 1}},
     }
     assert template_recap(facts).highlights
+
+
+def test_highlights_are_put_back_in_match_order() -> None:
+    lines = [
+        "Kick-off and Ashford settle first.",
+        "26:47: Wragg scores the penalty.",
+        "26:33: Ashford win a penalty.",
+        "45+2:10: Kestrel go close.",
+        "A tense end to the half.",
+    ]
+    assert in_match_order(lines) == [
+        "Kick-off and Ashford settle first.",
+        "26:33: Ashford win a penalty.",
+        "26:47: Wragg scores the penalty.",
+        "45+2:10: Kestrel go close.",
+        "A tense end to the half.",
+    ]

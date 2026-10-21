@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest'
 import type { RecapFacts, TeamFacts } from '@/net/api'
-import { fallbackTime, formatStat, leaderLabel, leaderValue, shareText, statRows } from './recap'
+import {
+  fallbackTime,
+  footballMinute,
+  formatStat,
+  leaderLabel,
+  leaderValue,
+  shareText,
+  statRows,
+} from './recap'
 
 const team = (over: Partial<TeamFacts> = {}): TeamFacts => ({
   goals: 1,
@@ -72,11 +80,20 @@ describe('formatting', () => {
     expect(leaderLabel('shot_speed')).toBe('Hardest shot')
     expect(leaderLabel('something_new')).toBe('something new')
     expect(leaderValue('sprint_speed', 33.4)).toBe('33.4 km/h')
-    expect(leaderValue('pass_difficulty', 91)).toBe('91')
+    expect(leaderValue('pass_difficulty', 91)).toBe('91 out of 100')
     expect(fallbackTime('half_time')).toBe(2700)
     expect(fallbackTime('full_time')).toBeGreaterThan(10_000)
     expect(shareText('Late winner', 'A 2, B 1', 'https://x/y')).toBe(
       'Late winner\nA 2, B 1\nhttps://x/y',
     )
+  })
+})
+
+describe('footballMinute', () => {
+  it('reads a clock the way a commentator says the minute', () => {
+    expect(footballMinute('60:38')).toBe("61'")
+    expect(footballMinute('00:12')).toBe("1'")
+    expect(footballMinute('45+3:07')).toBe("45+4'")
+    expect(footballMinute('HT')).toBe('HT')
   })
 })

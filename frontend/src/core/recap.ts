@@ -62,7 +62,7 @@ const LEADER_LABEL: Record<string, string> = {
 const LEADER_UNIT: Record<string, string> = {
   sprint_speed: 'km/h',
   shot_speed: 'km/h',
-  pass_difficulty: '',
+  pass_difficulty: 'out of 100',
   distance: 'km',
 }
 
@@ -79,4 +79,15 @@ export function leaderValue(metric: string, value: number): string {
 export function fallbackTime(kind: RecapKind): number {
   // Half-time is the first 45 minutes of play. Full time asks past the end; the gateway clamps.
   return kind === 'half_time' ? 2700 : 1_000_000
+}
+
+/**
+ * A score-bug clock as the minute a commentator would say: 60:38 is the 61st minute ("61'"),
+ * 45+3:07 is "45+4'". Anything it cannot read comes back unchanged.
+ */
+export function footballMinute(clock: string): string {
+  const m = /^(\d+)(?:\+(\d+))?:(\d{2})$/.exec(clock)
+  if (!m) return clock
+  const base = Number(m[1])
+  return m[2] !== undefined ? `${base}+${Number(m[2]) + 1}'` : `${base + 1}'`
 }

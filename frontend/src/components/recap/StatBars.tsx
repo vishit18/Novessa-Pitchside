@@ -27,15 +27,22 @@ export function StatBars({ facts, homeColour, awayColour }: Props) {
               <dt className="text-[13px] text-muted">{r.label}</dt>
               <dd className="num m-0 text-[22px] leading-none">{formatStat(r, 'away')}</dd>
             </div>
+            {/* Nothing either side (0 and 0) is a quiet track, not a half-and-half split. */}
             <div className="mt-1.5 flex h-[6px] gap-[3px]" aria-hidden>
-              <span
-                className="transition-[flex-grow] duration-300 ease-out"
-                style={{ flexGrow: r.homeShare * 100, background: homeColour }}
-              />
-              <span
-                className="transition-[flex-grow] duration-300 ease-out"
-                style={{ flexGrow: (1 - r.homeShare) * 100, background: awayColour }}
-              />
+              {r.home + r.away === 0 ? (
+                <span className="flex-1 bg-white/10" />
+              ) : (
+                <>
+                  <span
+                    className="transition-[flex-grow] duration-300 ease-out"
+                    style={{ flexGrow: r.homeShare * 100, background: homeColour }}
+                  />
+                  <span
+                    className="transition-[flex-grow] duration-300 ease-out"
+                    style={{ flexGrow: (1 - r.homeShare) * 100, background: awayColour }}
+                  />
+                </>
+              )}
             </div>
           </div>
         ))}

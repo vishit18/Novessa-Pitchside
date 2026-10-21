@@ -10,7 +10,7 @@ import { SessionContext, useLiveSession, useSessionState } from '@/state/useSess
 import { BroadcastPane } from './BroadcastPane'
 
 /** How much of each viewer's record to show under their pane. */
-const TOLD = 4
+const TOLD = 2
 /** Without a ?t=, start this long before the first goal so the difference shows straight away. */
 const LEAD_IN_S = 40
 

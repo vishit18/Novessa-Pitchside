@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { MomentsTimeline } from '@/components/recap/MomentsTimeline'
 import { StatBars } from '@/components/recap/StatBars'
 import { AppNav } from '@/components/AppNav'
-import { KIND_LABEL, leaderLabel, leaderValue, shareText } from '@/core/recap'
+import { footballMinute, KIND_LABEL, leaderLabel, leaderValue, shareText } from '@/core/recap'
 import { CLUBS } from '@/data/league'
 import { listMatches, type CatchUp, type Recap as RecapData, type RecapKind } from '@/net/api'
 import { navigate, withParams } from '@/router'
@@ -266,7 +266,7 @@ function Written({
       <Scoreline
         codes={codes}
         score={score}
-        clock={facts.minute_reached}
+        clock={footballMinute(facts.minute_reached)}
         action={
           <ShareButton
             title={output.headline}

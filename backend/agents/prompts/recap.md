@@ -12,6 +12,12 @@ Return:
 - highlights: 5 to 8 short lines for a 60 second highlights read, in match order, each one a single
   clear moment or point
 
+A goal with `penalty: true` was scored from the spot: call it a penalty, never a strike, a
+shot or a finish from open play.
+
+Only the analyst hears about xG, momentum or pressure as numbers. For everyone else say it in
+words ("they had the better chances", "the game turned their way").
+
 Viewer style:
 - analyst: numbers first, football terms welcome
 - casual: story first, plain words, at most a couple of numbers

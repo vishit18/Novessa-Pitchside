@@ -7,6 +7,7 @@ in the fact sheet or the recap is rejected, retried once, then replaced by a pla
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 from typing import Any, Literal
 
@@ -19,7 +20,7 @@ from backend.agents.models import Recap, RecapOutput
 from backend.agents.story import goal_time_problems, when_said
 from backend.agents.verifier import close, numbers_in
 from backend.app.overlay import Persona
-from engine.schema import EventType
+from engine.schema import EventType, MatchEvent
 
 PROMPT = (Path(__file__).parent / "prompts" / "recap.md").read_text("utf-8")
 Kind = Literal["half_time", "full_time"]
@@ -44,12 +45,18 @@ def recap_facts(ctx: MatchContext, kind: Kind) -> dict[str, Any]:
     state = intel.get_state(t)
     home, away = intel.teams
     club = {c: ctx.team_name(c) for c in intel.teams}
+    spot = {
+        (e.player_id, e.period)
+        for e in intel.events
+        if e.type == EventType.SHOT and e.outcome == "goal" and "penalty" in e.tags
+    }
     goals = [
         {
             "clock": e.clock,
             "when": when_said(e.clock, e.period),
             "scorer": ctx.names.player(e.player_id),
             "team": club.get(e.team or "", e.team),
+            "penalty": _from_the_spot(intel.events, e, spot),
         }
         for e in intel.events
         if e.type == EventType.GOAL and e.t_match <= t
@@ -100,6 +107,42 @@ def recap_facts(ctx: MatchContext, kind: Kind) -> dict[str, Any]:
         "storylines": ctx.storylines,
         "verified_insights": aired,
     }
+
+
+def _from_the_spot(events: list[MatchEvent], goal: MatchEvent, spot: set[Any]) -> bool:
+    """Whether the shot that led to this goal was a penalty."""
+    if (goal.player_id, goal.period) not in spot:
+        return False
+    shots = [
+        e
+        for e in events
+        if e.type == EventType.SHOT and e.player_id == goal.player_id and e.t_match <= goal.t_match
+    ]
+    return bool(shots) and "penalty" in shots[-1].tags
+
+
+CLOCK = re.compile(r"\b(\d{1,3})(?:\+(\d{1,2}))?:(\d{2})\b")
+
+
+def in_match_order(lines: list[str]) -> list[str]:
+    """Put the lines that carry a match clock back in time order, leaving the others in place.
+
+    The model is asked for match order and mostly obeys; a highlights read that jumps from 26:47
+    back to 26:33 sounds broken when spoken.
+    """
+
+    def when(line: str) -> float | None:
+        m = CLOCK.search(line)
+        if not m:
+            return None
+        return int(m[1]) * 60 + int(m[2] or 0) * 60 + int(m[3])
+
+    timed = [(i, w) for i, w in ((i, when(x)) for i, x in enumerate(lines)) if w is not None]
+    order = sorted(timed, key=lambda iw: iw[1])
+    out = list(lines)
+    for (slot, _), (src, _) in zip(timed, order, strict=True):
+        out[slot] = lines[src]
+    return out
 
 
 def _stray(out: RecapOutput, facts: dict[str, Any]) -> list[float]:
@@ -162,7 +205,7 @@ async def make_recap(ctx: MatchContext, kind: Kind, persona: Persona, lang: str 
         stray = _stray(out, facts)
         timing = goal_time_problems(" ".join([*out.paragraphs, *out.highlights]), facts["goals"])
         if not stray and not timing:
-            output = out
+            output = out.model_copy(update={"highlights": in_match_order(out.highlights)})
             trail.append(
                 f"every number and goal time checked against the fact sheet (attempt {attempt})"
             )
