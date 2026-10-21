@@ -188,6 +188,7 @@ async def make_recap(ctx: MatchContext, kind: Kind, persona: Persona, lang: str 
         facts=facts,
         trail=trail,
     )
-    if status == "verified":
+    # A recap that fell back to English is not cached, so the next request tries to translate again.
+    if status == "verified" and translation != "unavailable":
         ctx.cache.put(key, recap)
     return recap

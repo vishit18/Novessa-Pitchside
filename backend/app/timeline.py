@@ -31,6 +31,7 @@ INSTANT_DELAY_S = 0.2
 STATE_EVERY_S = 1.0
 ENGINE_FRAME_HZ = 5.0
 ID_PATTERN = re.compile(r"\b[A-Z]{3}-\d{2}\b")
+CLUB_PATTERN = re.compile(r"\b[A-Z]{3}\b(?!-)")
 
 HEADLINES = {
     "goal": ("Goal", "goal"),
@@ -155,8 +156,9 @@ class NameBook:
         self.managers = {c.code: c.manager for c in league.clubs}
 
     def humanise(self, text: str) -> str:
-        """Swap player ids in a fact sentence for names."""
-        return ID_PATTERN.sub(lambda m: self.players.get(m.group(0), m.group(0)), text)
+        """Swap player ids (ASH-08) and bare club codes (ASH) in a fact sentence for names."""
+        text = ID_PATTERN.sub(lambda m: self.players.get(m.group(0), m.group(0)), text)
+        return CLUB_PATTERN.sub(lambda m: self.clubs.get(m.group(0), m.group(0)), text)
 
     def player(self, pid: str | None) -> str:
         return self.players.get(pid or "", pid or "")

@@ -9,9 +9,9 @@ from typing import Any
 import pytest
 
 from backend.agents.cache import FileCache
-from backend.agents.localiser import localise, numbers_of
+from backend.agents.localiser import line_faithful, localise, numbers_of
 from backend.agents.models import Variant
-from backend.agents.services import ServiceUnavailable
+from backend.agents.services import ServiceUnavailable, _keep_markup
 from backend.agents.voice import speak
 from backend.tests.test_agents import ScriptedTransport, make_ctx
 from backend.tests.test_agents import intel as intel
@@ -101,7 +101,9 @@ async def test_translator_that_changes_numbers_is_not_used(intel, names) -> None
     ctx = make_ctx(intel, names, PolishTransport())
     ctx.translator = FakeTranslator("bad_numbers")
     out = await localise(ctx, "mom-s01-0001", VARIANTS, "es")  # type: ignore[arg-type]
-    assert out.status == "llm"
+    assert out.status == "polished"
+    assert "99.9" not in out.variants["analyst"].body
+    assert "83.3" in out.variants["analyst"].body
 
 
 async def test_translator_down_falls_back_to_llm_then_english(intel, names) -> None:  # type: ignore[no-untyped-def]
@@ -111,8 +113,36 @@ async def test_translator_down_falls_back_to_llm_then_english(intel, names) -> N
     ctx2 = make_ctx(intel, names, PolishTransport(faithful=False))
     ctx2.translator = FakeTranslator("down")
     out = await localise(ctx2, "mom-s01-0001", VARIANTS, "es")  # type: ignore[arg-type]
+    # Lines whose numbers the model changed stay in English; the rest are localised.
+    assert out.status == "llm"
+    assert out.variants["analyst"].body == VARIANTS["analyst"].body
+    assert out.variants["analyst"].headline == "(es) Pressing high"
+    assert "kept in English" in out.note
+
+
+async def test_nothing_faithful_means_english(intel, names) -> None:  # type: ignore[no-untyped-def]
+    ctx = make_ctx(intel, names, PolishTransport(faithful=False))
+    ctx.translator = FakeTranslator("down")
+    numbers_only = {"analyst": Variant(headline="83.3", body="83.3", commentary="83.3")}
+    out = await localise(ctx, "mom-s01-0001", numbers_only, "es")  # type: ignore[arg-type]
     assert out.status == "unavailable"
-    assert out.variants == VARIANTS
+    assert out.variants == numbers_only
+
+
+def test_line_check_allows_spelled_small_numbers_only() -> None:
+    assert line_faithful("1 shot, 0.03 xG", "تسديدة واحدة، 0.03 xG", [])
+    assert not line_faithful("10 shots", "dix tirs", [])
+    assert not line_faithful("1 shot", "2 tirs", [])
+    assert not line_faithful("Goal at 26:47", "Gol en 26-47", [])
+    assert not line_faithful("Wragg scores", "रैग scores", ["Wragg"])
+
+
+def test_translator_markup_protects_clocks_scores_and_nested_names() -> None:
+    out = _keep_markup("Tobias Wragg (Wragg) made it 1-0 at 45+3:07", ["Tobias Wragg", "Wragg"])
+    assert out.count("<mstrans:dictionary") == 4
+    assert 'translation="Tobias Wragg">Tobias Wragg<' in out
+    assert 'translation="1-0">1-0<' in out
+    assert 'translation="45+3:07">45+3:07<' in out
 
 
 async def test_localised_text_is_cached(intel, names, tmp_path: Path) -> None:  # type: ignore[no-untyped-def]
@@ -137,3 +167,18 @@ async def test_voice_makes_audio_once_and_degrades(  # type: ignore[no-untyped-d
     assert sp.calls == 1
     ctx.speech = FakeSpeech(fail=True)
     assert await speak(ctx, "mom-1", "casual", "es", "Vamos.") is None
+
+
+def test_units_stay_with_their_numbers() -> None:
+    en = "In about 2 minutes, momentum swung 100 points toward Ashford Rovers."
+    names = ["Ashford Rovers"]
+    swapped = "मोमेंटम लगभग 100 मिनट में Ashford Rovers की ओर 2 अंक आगे बढ़ गया।"
+    right_hi = "लगभग 2 मिनट में मोमेंटम 100 अंक Ashford Rovers की ओर गया।"
+    right_es = "En unos 2 minutos, el impulso giró 100 puntos hacia Ashford Rovers."
+    right_ar = "خلال دقيقتين تقريبًا، تحول الزخم 100 نقطة نحو Ashford Rovers."
+    assert not line_faithful(en, swapped, names, "hi")
+    assert line_faithful(en, right_hi, names, "hi")
+    assert line_faithful(en, right_es, names, "es")
+    assert line_faithful(en, right_ar, names, "ar")
+    # Without a language the unit check is skipped, as before.
+    assert line_faithful(en, swapped, names)

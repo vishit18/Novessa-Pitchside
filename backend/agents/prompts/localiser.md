@@ -8,5 +8,7 @@ same number of lines, in the target language, in the same order.
   terms local fans use (for example how "press", "possession", "momentum" or "clean sheet" are
   said there). Keep it short and natural.
 - Keep every number exactly as given (same value, same decimals). Do not add or drop numbers.
-- Keep club and player names exactly as in the English line. Do not translate names.
+- Keep clocks (26:47, 45+3:07) and scores (1-0) exactly as written, in the same format.
+- Keep club and player names exactly as in the English line, in Latin letters, including short
+  forms such as a surname alone. Do not translate or transliterate names.
 - Do not add facts. Do not explain. Return only the lines.

@@ -58,15 +58,28 @@ class _Entra:
         return tok.token
 
 
+# Match clocks ("26:47", "45+3:07") and scorelines ("1-0"). Translator likes to reformat them
+# ("26-47", "1:0"), which keeps the digits but changes the fact.
+FIXED_TOKEN = re.compile(r"(?<![\w.])\d+(?:\+\d+)?:\d{2}(?!\d)|(?<![\w.])\d+-\d+(?![\w.])")
+
+
 def _keep_markup(text: str, keep: list[str]) -> str:
-    """Wrap names so Translator leaves them as they are."""
-    for name in sorted(set(keep), key=len, reverse=True):
-        text = re.sub(
-            rf"(?<![\w>]){re.escape(name)}(?![\w<])",
-            f'<mstrans:dictionary translation="{name}">{name}</mstrans:dictionary>',
-            text,
-        )
-    return text
+    """Wrap names, clocks and scores so Translator leaves them exactly as they are.
+
+    One pass with the longest names first, so "Wragg" inside "Tobias Wragg" is not wrapped twice.
+    """
+    names = sorted({k for k in keep if k}, key=len, reverse=True)
+    parts = [re.escape(n) for n in names]
+    pattern = FIXED_TOKEN.pattern
+    if parts:
+        pattern += rf"|(?<![\w>])(?:{'|'.join(parts)})(?![\w<])"
+    return re.sub(
+        pattern,
+        lambda m: (
+            f'<mstrans:dictionary translation="{m.group(0)}">{m.group(0)}</mstrans:dictionary>'
+        ),
+        text,
+    )
 
 
 class AzureTranslator:

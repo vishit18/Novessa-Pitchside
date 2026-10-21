@@ -88,6 +88,12 @@ Agent text update: `op: "update"`, same `moment_id`, `msg_id` ending `-text-<lan
 
 Catch-up: `GET /matches/{id}/catchup?t=<match seconds>` returns the score, a two-sentence summary and up to six story moments, all computed from state at or before `t` and nothing after it (no model calls). Spoiler-safe by construction; the Companion view calls it for "What did I miss?".
 
+Key moments: `GET /matches/{id}/moments` returns `duration`, `half_time` (match seconds) and every goal, card, penalty and big chance as `{moment_id, t_match, clock, kind, headline, team, card}`. It reveals the result, so the timeline scrubber only draws these markers when the viewer switches spoilers on; otherwise it marks only moments the viewer has already been shown.
+
+Moment text: `GET /matches/{id}/moments/{moment_id}/text?lang=` returns the verified agent text for one moment as every persona gets it (`variants`), in one language, with the same `translation` status as an update overlay. 404 when the agents have not verified that moment.
+
+Instant overlay language: for a viewer whose `lang` is not English, the gateway swaps the `headline` and `body` of instant overlays for Translator output, built once per match and language in the background (names, clocks and scores protected; a line whose numbers or names change stays English) and cached with the agent cache. Until the table is ready those overlays go out in English. When a line is swapped, top-level `lang` is set to the viewer's language.
+
 Gateway extras: `GET /agents/health`, `POST /agents/{agent}/kill?seconds=30` (chaos switch), `GET /matches/{id}/insights` (outputs with verification trails).
 
 Until the agents are live, `insight` overlays carry a numbers-only fallback card written from the state engine (`provenance.source = "state_engine"`).

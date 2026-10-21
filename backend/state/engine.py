@@ -271,8 +271,8 @@ class StateEngine:
             mo = self._moment(
                 "momentum_swing",
                 50 + 40 * _clip((abs(delta) - m.momentum_swing) / (100 - m.momentum_swing)),
-                f"Momentum moved {abs(delta):.0f} points toward {team} in about "
-                f"{self.cfg.moments.momentum_swing_window_s / 60:.0f} minutes.",
+                f"In about {self.cfg.moments.momentum_swing_window_s / 60:.0f} minutes, "
+                f"momentum swung {abs(delta):.0f} points toward {team}.",
                 team=team,
                 evidence=[
                     Evidence(metric="momentum", value=round(mom, 1)),

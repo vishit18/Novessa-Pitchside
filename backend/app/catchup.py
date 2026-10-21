@@ -15,6 +15,7 @@ from pydantic import BaseModel
 from backend.app.store import LoadedMatch
 from backend.app.timeline import HEADLINES, NameBook
 from backend.state.models import Moment
+from engine.schema import EventType
 
 # Moments below this significance are not worth a viewer's catch-up time.
 MIN_SIGNIFICANCE = 65.0
@@ -117,4 +118,56 @@ def build_catchup(match_id: str, loaded: LoadedMatch, names: NameBook, t_match: 
         summary=_summary(state, home, away, names),
         moments=moments,
         note=f"This covers the match up to {state['clock']} and nothing after it.",
+    )
+
+
+# Kinds a viewer would want to jump to on the timeline.
+KEY_KINDS = {"goal", "card", "penalty", "big_chance"}
+
+
+class KeyMoment(BaseModel):
+    moment_id: str
+    t_match: float
+    clock: str
+    kind: str
+    headline: str
+    team: str | None = None
+    card: str | None = None
+
+
+class KeyMoments(BaseModel):
+    match_id: str
+    duration: float
+    half_time: float | None
+    moments: list[KeyMoment]
+
+
+def build_key_moments(match_id: str, loaded: LoadedMatch) -> KeyMoments:
+    """Goals, cards, penalties and big chances for the whole match, for the timeline markers.
+
+    This does reveal the result, so the viewer has to ask for it: the scrubber only shows these
+    markers once spoilers are switched on, and otherwise marks only what has already been seen.
+    """
+    moments = [
+        KeyMoment(
+            moment_id=m.moment_id,
+            t_match=m.t_match,
+            clock=m.clock,
+            kind=m.kind,
+            headline=_headline(m),
+            team=m.team,
+            card=m.card,
+        )
+        for m in loaded.timeline.moments
+        if m.kind in KEY_KINDS and (m.kind != "big_chance" or m.significance >= MIN_SIGNIFICANCE)
+    ]
+    half = next(
+        (e.t_match for e in loaded.events if e.type == EventType.PERIOD_END and e.period == 1),
+        None,
+    )
+    return KeyMoments(
+        match_id=match_id,
+        duration=loaded.tracking.duration,
+        half_time=half,
+        moments=moments,
     )

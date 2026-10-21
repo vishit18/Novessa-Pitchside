@@ -20,11 +20,13 @@ from fastapi.responses import PlainTextResponse, Response
 from pydantic import ValidationError
 
 from backend.a2a.server import mount_a2a
+from backend.agents.localiser import localise, localise_lines
 from backend.agents.recap import make_recap
 from backend.app.agents_runtime import AgentRuntime
-from backend.app.catchup import build_catchup
+from backend.app.catchup import build_catchup, build_key_moments
 from backend.app.live import LiveIngest
 from backend.app.overlay import Overlay, ViewerProfile
+from backend.app.overlay_text import OverlayText, apply
 from backend.app.personas import for_viewer
 from backend.app.real import mount_real
 from backend.app.store import LoadedMatch, MatchStore, StaleDataError, UnknownMatchError
@@ -72,9 +74,11 @@ class Session:
         speed: float,
         start: float,
         agents: AgentRuntime | None = None,
+        texts: OverlayText | None = None,
     ) -> None:
         self.ws = ws
         self.agents = agents
+        self.texts = texts
         self.match = match
         self.profile = profile
         self.clock = ReplayClock(speed=speed, start=start)
@@ -108,10 +112,17 @@ class Session:
 
     async def _run(self) -> None:
         start = self.clock.match_time()
+        lang = self.profile.lang
+        if self.texts:
+            self.texts.table(self.match, lang)  # start translating the instant overlays early
         for kind in ("state", "player_stats"):
             latest = self.match.timeline.latest(kind, start)
             if latest:
                 await self.send(kind, latest.json_data())
+        # One frame straight away, so a viewer who seeks while paused sees the new position.
+        first = next(iter(self.match.tracking.iter_frames(FRAME_HZ, start=start)), None)
+        if first is not None and self.clock.paused:
+            await self.send("frame", first.model_dump(mode="json"))
         async for item in stream(self._items(start), self.clock):
             data = item.json_data()
             if item.type == "overlay":
@@ -119,6 +130,8 @@ class Session:
                 if shown is None:
                     continue
                 data = shown
+                if self.texts:
+                    data = apply(data, self.texts.table(self.match, lang), lang)
                 data["t_wall_emit"] = datetime.now(UTC).isoformat(timespec="milliseconds")
             await self.send(item.type, data)
             if item.type == "overlay" and self.agents and data.get("moment_id"):
@@ -162,6 +175,19 @@ def create_app(data_dir: Path | None = None) -> FastAPI:
         setup_telemetry()
         app.state.store = MatchStore(data_dir)
         app.state.agents = AgentRuntime(app.state.store)
+        runtime: AgentRuntime = app.state.agents
+
+        async def localise_overlay_lines(
+            match_id: str, lines: list[str], lang: str
+        ) -> tuple[list[str], str, str]:
+            return await localise_lines(await runtime.context(match_id), lines, lang)
+
+        app.state.overlay_text = OverlayText(
+            runtime.translator,
+            runtime.cache,
+            app.state.store.names,
+            localise_overlay_lines if runtime.enabled else None,
+        )
         app.state.bus = default_bus()
         app.state.live = LiveIngest(app.state.store, app.state.bus)
         if os.environ.get("PRELOAD") == "1":
@@ -235,7 +261,7 @@ def create_app(data_dir: Path | None = None) -> FastAPI:
                 "clock": moment.clock,
                 "t_match": moment.t_match,
                 "team": moment.team,
-                "summary": moment.summary,
+                "summary": _store(app).names.humanise(moment.summary),
                 "significance": moment.significance,
             }
             out.append(row)
@@ -326,6 +352,36 @@ def create_app(data_dir: Path | None = None) -> FastAPI:
             raise HTTPException(404, "nothing has happened by then") from None
         return out.model_dump(mode="json")
 
+    @app.get("/matches/{match_id}/moments")
+    async def key_moments(match_id: str) -> dict[str, Any]:
+        """Goals, cards, penalties and big chances for the timeline. Reveals the result."""
+        loaded = await load(match_id)
+        return build_key_moments(match_id, loaded).model_dump(mode="json")
+
+    @app.get("/matches/{match_id}/moments/{moment_id}/text")
+    async def moment_text(match_id: str, moment_id: str, lang: str = "en") -> dict[str, Any]:
+        """The agents' words for one moment, for every persona, in one language.
+
+        The same verified insight as each kind of viewer gets it. Used by the home page to show
+        one moment told several ways. Waits briefly for the agents if they have not reached it.
+        """
+        await load(match_id)
+        runtime: AgentRuntime = app.state.agents
+        runtime.start(match_id)
+        aired = await runtime.wait_for(match_id, moment_id, 20.0)
+        if aired is None or aired.status != "verified":
+            raise HTTPException(404, "no verified text for that moment yet")
+        variants, translation = aired.variants, "english"
+        if lang != "en":
+            loc = await localise(await runtime.context(match_id), moment_id, variants, lang)
+            variants, translation = loc.variants, loc.status
+        return {
+            "moment_id": moment_id,
+            "lang": lang,
+            "translation": translation,
+            "variants": {p: v.model_dump(mode="json") for p, v in variants.items()},
+        }
+
     @app.get("/matches/{match_id}/overlays.jsonl")
     async def overlays_jsonl(match_id: str) -> PlainTextResponse:
         m = await load(match_id)
@@ -379,7 +435,7 @@ def create_app(data_dir: Path | None = None) -> FastAPI:
             return
         runtime: AgentRuntime = app.state.agents
         runtime.start(match_id)
-        session = Session(ws, match, profile, speed, max(t, 0.0), runtime)
+        session = Session(ws, match, profile, speed, max(t, 0.0), runtime, app.state.overlay_text)
         session.clock.play()
         session.restart()
         try:
