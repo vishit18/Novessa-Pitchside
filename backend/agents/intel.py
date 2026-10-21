@@ -86,6 +86,20 @@ class MatchIntel:
             raise ValueError(f"no stats for {player_id} at {t_match}")
         return rows[player_id]
 
+    def top_players(self, field: str, t_match: float, n: int = 3) -> list[tuple[str, float]]:
+        """The `n` players with the highest value of one player_stats field at `t_match`.
+
+        `pass_accuracy_pct` reads `pass_accuracy` and needs at least ten passes to count.
+        """
+        src = "pass_accuracy" if field == "pass_accuracy_pct" else field
+        rows = self._stats_rows(t_match).values()
+        scored = [
+            (r["player_id"], float(r[src]))
+            for r in rows
+            if r.get(src) is not None and (src != "pass_accuracy" or r.get("passes", 0) >= 10)
+        ]
+        return sorted(scored, key=lambda x: x[1], reverse=True)[:n]
+
     def _window(self, t_from: float, t_to: float) -> list[MatchEvent]:
         lo = bisect_left(self._times, t_from)
         hi = bisect_right(self._times, t_to)

@@ -17,15 +17,16 @@ from typing import Any
 from fastapi import FastAPI, HTTPException, Query, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import PlainTextResponse, Response
-from pydantic import ValidationError
+from pydantic import BaseModel, Field, ValidationError
 
 from backend.a2a.server import mount_a2a
+from backend.agents.ask import ask as ask_analyst
 from backend.agents.localiser import localise, localise_lines
 from backend.agents.recap import make_recap
 from backend.app.agents_runtime import AgentRuntime
 from backend.app.catchup import build_catchup, build_key_moments
 from backend.app.live import LiveIngest
-from backend.app.overlay import Overlay, ViewerProfile
+from backend.app.overlay import Overlay, Persona, ViewerProfile
 from backend.app.overlay_text import OverlayText, apply
 from backend.app.personas import for_viewer
 from backend.app.real import mount_real
@@ -61,6 +62,15 @@ def _cue_text(ov: Overlay) -> str:
     if ov.kind == "distance_milestone":
         return f"{p['player_id']} {p['km']} km"
     return ov.kind
+
+
+class AskRequest(BaseModel):
+    """POST /matches/{id}/ask body. `t` is the viewer's own match time, so nothing later leaks."""
+
+    question: str = Field(min_length=1, max_length=280)
+    t: float = Field(ge=0)
+    persona: Persona = "casual"
+    lang: str = "en"
 
 
 class Session:
@@ -350,6 +360,19 @@ def create_app(data_dir: Path | None = None) -> FastAPI:
             out = build_catchup(match_id, loaded, _store(app).names, t)
         except ValueError:
             raise HTTPException(404, "nothing has happened by then") from None
+        return out.model_dump(mode="json")
+
+    @app.post("/matches/{match_id}/ask")
+    async def ask(match_id: str, body: AskRequest) -> dict[str, Any]:
+        """Ask the Analyst: one viewer question, answered from the data up to `t` only."""
+        runtime: AgentRuntime = app.state.agents
+        if not runtime.enabled:
+            raise HTTPException(503, "agents are switched off")
+        if body.persona not in PERSONAS:
+            raise HTTPException(400, "bad persona")
+        await load(match_id)
+        ctx = await runtime.context(match_id)
+        out = await ask_analyst(ctx, body.question, body.t, body.persona, body.lang)
         return out.model_dump(mode="json")
 
     @app.get("/matches/{match_id}/moments")

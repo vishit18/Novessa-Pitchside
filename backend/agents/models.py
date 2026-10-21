@@ -151,3 +151,53 @@ class Aired(BaseModel):
     analysis: AnalystOutput | None = None
     variants: dict[Persona, Variant] = Field(default_factory=dict)
     trail: list[str] = Field(default_factory=list)
+
+
+ToolName = Literal["state_now", "player", "team_recent", "compare", "leaders", "moments"]
+
+
+class ToolCall(BaseModel):
+    """One lookup the Scout wants run. Code runs it; the model only sees what it asked for."""
+
+    tool: ToolName
+    team: str | None = Field(default=None, description="Club name or code, for team tools")
+    player: str | None = Field(default=None, description="Player name as the viewer wrote it")
+    metric: str | None = Field(default=None, description="For leaders and compare")
+    minutes: int | None = Field(default=None, ge=1, le=90, description="Window length")
+
+
+class AskPlan(BaseModel):
+    """What the Scout decided: the lookups that answer the question, or why not to answer."""
+
+    on_topic: bool = Field(description="False for anything that is not about this match")
+    calls: list[ToolCall] = Field(default_factory=list, max_length=3)
+    reason: str = ""
+
+
+class AskDraft(BaseModel):
+    """The Analyst's answer to a viewer question, written only from the evidence rows."""
+
+    answer: str = Field(max_length=480, description="Two or three sentences, numbers copied.")
+    used: list[str] = Field(default_factory=list, description="Keys of the evidence rows used")
+
+
+class Evidence(BaseModel):
+    key: str
+    label: str
+    value: float
+
+
+class AskAnswer(BaseModel):
+    """What the viewer gets back. Every number in `answer` is in `evidence`."""
+
+    question: str
+    answer: str
+    status: Literal["verified", "numbers_only", "declined", "unavailable"]
+    lang: str
+    translation: str = "english"
+    t_match: float
+    clock: str
+    evidence: list[Evidence] = Field(default_factory=list)
+    notes: list[str] = Field(default_factory=list, description="Text facts, like key moments")
+    tools: list[str] = Field(default_factory=list)
+    trail: list[str] = Field(default_factory=list)
