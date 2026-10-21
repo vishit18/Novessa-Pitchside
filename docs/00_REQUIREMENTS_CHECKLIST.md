@@ -100,7 +100,7 @@ Priority: **P0** = we fail or score badly without it. **P1** = needed to win. **
 ### F2. Agentic Design & Innovation (20%)
 - [x] Creative agentic patterns → Producer/orchestrator, verifier loop, debate between Analyst and Verifier
 - [x] Sophisticated orchestration / **MCP integration** / multi-agent collaboration → Agent Framework workflow + our MCP server + A2A endpoint
-- [ ] Novel, or meaningfully better than existing approaches → "every claim is proven before it airs" + persona-aware rendering + same agents on synthetic and real footage
+- [ ] Novel, or meaningfully better than existing approaches → "every claim is proven before it airs". 21 Oct: Ask the Analyst (Scout picks tools, code runs them up to the viewer's clock, Verifier checks the answer: `backend/agents/ask.py`), and a story check for who and when (`backend/agents/story.py`). + persona-aware rendering + same agents on synthetic and real footage
 
 ### F3. Real-World Impact & Applicability (20%)
 - [ ] Significant problem → broadcasters make one feed for millions of different fans

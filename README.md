@@ -39,6 +39,7 @@ Places worth a look:
 |---|---|---|
 | Broadcast | `/watch?match=derby_01&speed=4` | Overlays land instantly, the "why" text a moment later. Move the mouse for the timeline: drag to any minute, skip 30 s, change speed, or switch on "Key moments" to mark the goals and cards (it shows the result, so it is off by default). The menu in the corner reaches every other screen. |
 | Split | `/split?match=derby_01` | Two viewers on the same second of the same match: an analyst in English and a first-timer in Spanish. Starts just before the first goal. Under each pane is what that viewer has been told so far, so the difference stays on screen. One timeline drives both. |
+| Ask the analyst | press `/` on the broadcast, or Ask on the phone view | Ask anything about the match in any of the six languages. A Scout agent picks the lookups, code runs them up to your minute only (no spoilers), the Analyst answers, the Verifier checks every number. Open "How this was worked out" to see each number used. |
 | Companion | `/companion?match=derby_01&speed=10` | The phone view, with its own timeline. Tap "What did I miss?" for a spoiler-safe catch-up. |
 | Control Room | `/control?match=derby_01` | The agents at work, the Verifier rejecting a claim, and the chaos switch that kills an agent mid-match. |
 | Recap | `/recap?match=derby_01&kind=full_time` | Half-time and full-time recaps in six languages. |
@@ -50,7 +51,7 @@ Places worth a look:
 - **Synthetic league.** Eight invented clubs, 144 players, and a match engine with passes, carries, shots with xG, fouls, cards, penalties, corners, offsides, substitutions, fatigue and storylines that build over a match. Three demo matches ship in `data/matches/`, and `scripts/export_dataset.py` writes 200 matches as Parquet. See [`data/README.md`](data/README.md).
 - **Deterministic stats.** Possession, momentum, pressure, control and chaos, rhythm, an explainable pass difficulty score, sprint speeds and distances. All of it is computed in code. No language model ever computes a number.
 - **Instant overlays.** Name tags, speed bursts, pass difficulty, shot speed, cards, offsides and milestones come straight from the stats layer, with no model call.
-- **Agents.** Eight agents and a safety gate, described below. They add the explanation, the commentary, the translation, the voice and the recap.
+- **Agents.** Nine agents and a safety gate, described below. Every number is checked by the Verifier, and a story check makes sure the right club and the right minute are named. They add the explanation, the commentary, the translation, the voice and the recap.
 - **Personas.** Analyst, casual, first match and audio-described. Favourite club, favourite player (the camera follows them), or a single metric. Six languages everywhere: English, Spanish, French, Arabic (right to left), Hindi and Portuguese. Agent text, recaps, voice, the instant overlays and the interface itself.
 - **Real footage.** A vision pipeline reads a real, openly licensed amateur match, tags players, follows the ball and measures speeds, then scores itself against the dataset's own labels.
 

@@ -67,6 +67,7 @@ Think of it as a live TV gallery. The state engine is the data team. The agents 
 - **Role:** proves every claim before it airs. Re-queries the numbers through the MCP tools independently and checks each claim. Returns `approved | rejected(reason) | corrected(new_claim)`.
 - On rejection, the Analyst gets one retry with the reason. Second failure → the Producer airs the deterministic fallback card (numbers only, no prose) or drops it.
 - Logs the verification trail; the Control Room shows a green tick / red cross per claim. Judges love seeing this happen live.
+- **Story check** (`backend/agents/story.py`, 21 Oct): numbers can all be right while the sentence is wrong ("Kestrel Bay has a clear chance" on Ashford's penalty; a 27th-minute goal "just before half-time"). For goals, penalties, big chances and cards the headline may not credit only the other club, and time phrases ("before half-time", "stoppage time", "early", "late") must fit the clock. Runs in the Verifier (Analyst gets one retry with the reason), on every Narrator variant (falls back to the verified analysis text) and on recaps (one retry). `scripts/check_story.py` screens the warmed cache.
 - Note: about 30 other entries mention fact-checking, so this alone isn't our differentiator. It's the hygiene that makes the Producer, personas, voice and real footage trustworthy.
 
 ### 4. Narrator
@@ -92,6 +93,11 @@ Think of it as a live TV gallery. The state engine is the data team. The agents 
 - **Role:** half-time and full-time recaps per persona and language, plus a 60-second highlights script and "what did I miss?" catch-ups for viewers who join late.
 - **Exposed over A2A** so an external broadcaster agent could ask "give me the full-time recap for match m01 in Spanish, casual tone". Include a tiny demo client script that calls it. Only a handful of entries mention A2A/MCP in their pitch, so this is a real differentiator.
 - Model: `chat-strong`.
+
+### 9. Scout and Ask the Analyst (viewer questions)
+- **Role:** a viewer types a question mid-match ("why are Kestrel struggling?", "how fast has Wragg been?", in any language). The **Scout** (`chat-fast`) picks up to three lookups from a fixed list (match state, a player, a team's last N minutes, then versus now, leaders, key moments) or declines anything not about this match. Code runs the lookups on `MatchIntel`, **clipped to the viewer's own clock**, so an answer can never spoil what is still to come. The **Analyst** (`chat-strong`) answers from those rows only, in the viewer's persona; the **Verifier** checks every number in the answer against the rows (one retry, then a numbers-only answer); the **Localiser** puts it in the viewer's language; the safety gate checks both question and answer. Cached per (seed, question, 30 s of match time, persona, language).
+- **Failure paths:** Scout down → rules (the players named in the question, plus the match state). Analyst down → numbers-only answer. Off-topic or unsafe → declined, with no lookups.
+- Code: `backend/agents/ask.py`, prompts `scout.md` and `ask.md`, endpoint `POST /matches/{id}/ask`, UI `frontend/src/components/AskSheet.tsx` (Ask button or `/` on the broadcast, Ask on the phone view).
 
 ### QA gate (not an agent, a step)
 Every text output passes **Azure AI Content Safety** before it airs. Failures get logged and replaced with the fallback card.

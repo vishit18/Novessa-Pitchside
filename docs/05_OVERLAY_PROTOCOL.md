@@ -92,6 +92,8 @@ Key moments: `GET /matches/{id}/moments` returns `duration`, `half_time` (match 
 
 Moment text: `GET /matches/{id}/moments/{moment_id}/text?lang=` returns the verified agent text for one moment as every persona gets it (`variants`), in one language, with the same `translation` status as an update overlay. 404 when the agents have not verified that moment.
 
+Ask the Analyst: `POST /matches/{id}/ask` with `{question, t, persona, lang}` (`t` is the viewer's own match time) returns `{question, answer, status, lang, translation, t_match, clock, evidence: [{key, label, value}], notes, tools, trail}`. `status` is `verified` (every number in `answer` is in `evidence`), `numbers_only` (the Analyst was down or kept adding numbers, so the answer is built from the rows), `declined` (off-topic or unsafe) or `unavailable`. Nothing after `t` is looked up. 503 when the agents are off.
+
 Instant overlay language: for a viewer whose `lang` is not English, the gateway swaps the `headline` and `body` of instant overlays for Translator output, built once per match and language in the background (names, clocks and scores protected; a line whose numbers or names change stays English) and cached with the agent cache. Until the table is ready those overlays go out in English. When a line is swapped, top-level `lang` is set to the viewer's language.
 
 Gateway extras: `GET /agents/health`, `POST /agents/{agent}/kill?seconds=30` (chaos switch), `GET /matches/{id}/insights` (outputs with verification trails).
