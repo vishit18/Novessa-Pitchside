@@ -39,3 +39,9 @@ def test_denylist_matches_on_any_part_of_a_name(monkeypatch: pytest.MonkeyPatch)
 def test_save_and_load_roundtrip(league: League, tmp_path: Path) -> None:
     save_league(league, tmp_path)
     assert load_league(tmp_path) == league
+
+
+def test_no_two_team_mates_share_a_surname(league: League) -> None:
+    for club in league.clubs:
+        surnames = [p.name.split()[-1] for p in club.players]
+        assert len(surnames) == len(set(surnames)), club.code

@@ -25,7 +25,7 @@
     },
     {
       "id": "ASH-13",
-      "name": "Afonso Tavares",
+      "name": "Afonso Bettencourt",
       "shirt": 13,
       "position": "GK",
       "foot": "right",
@@ -48,7 +48,7 @@
     },
     {
       "id": "ASH-02",
-      "name": "Finley Garside",
+      "name": "Finley Dunstall",
       "shirt": 2,
       "position": "DEF",
       "foot": "right",
@@ -71,7 +71,7 @@
     },
     {
       "id": "ASH-03",
-      "name": "Elliot Wragg",
+      "name": "Elliot Bramwell",
       "shirt": 3,
       "position": "DEF",
       "foot": "right",
@@ -163,7 +163,7 @@
     },
     {
       "id": "ASH-15",
-      "name": "Jago Garside",
+      "name": "Jago Whitlock",
       "shirt": 15,
       "position": "DEF",
       "foot": "right",
@@ -464,7 +464,7 @@
     },
     {
       "id": "KES-02",
-      "name": "Kabir Sodhi",
+      "name": "Kabir Kamath",
       "shirt": 2,
       "position": "DEF",
       "foot": "right",
@@ -487,7 +487,7 @@
     },
     {
       "id": "KES-03",
-      "name": "Rhys Pennock",
+      "name": "Rhys Hensby",
       "shirt": 3,
       "position": "DEF",
       "foot": "right",
@@ -556,7 +556,7 @@
     },
     {
       "id": "KES-12",
-      "name": "Rohan Sodhi",
+      "name": "Rohan Joglekar",
       "shirt": 12,
       "position": "DEF",
       "foot": "right",
@@ -625,7 +625,7 @@
     },
     {
       "id": "KES-08",
-      "name": "Emil Sjoberg",
+      "name": "Emil Ljungdahl",
       "shirt": 8,
       "position": "MID",
       "foot": "left",
@@ -903,7 +903,7 @@
     },
     {
       "id": "MIL-03",
-      "name": "Kelechi Anyaoku",
+      "name": "Kelechi Olatunji",
       "shirt": 3,
       "position": "DEF",
       "foot": "right",
@@ -949,7 +949,7 @@
     },
     {
       "id": "MIL-05",
-      "name": "Ove Lindqvist",
+      "name": "Ove Dahlstrom",
       "shirt": 5,
       "position": "DEF",
       "foot": "right",
@@ -1250,7 +1250,7 @@
   "HAR": [
     {
       "id": "HAR-01",
-      "name": "Nuno Nogueira",
+      "name": "Nuno Loureiro",
       "shirt": 1,
       "position": "GK",
       "foot": "left",
@@ -1273,7 +1273,7 @@
     },
     {
       "id": "HAR-13",
-      "name": "Kelechi Ogunlade",
+      "name": "Kelechi Ajibola",
       "shirt": 13,
       "position": "GK",
       "foot": "right",
@@ -1319,7 +1319,7 @@
     },
     {
       "id": "HAR-03",
-      "name": "Ilyas Lahlou",
+      "name": "Ilyas Sqalli",
       "shirt": 3,
       "position": "DEF",
       "foot": "right",
@@ -1827,7 +1827,7 @@
     },
     {
       "id": "POR-15",
-      "name": "Yassine Tazi",
+      "name": "Yassine Lamrani",
       "shirt": 15,
       "position": "DEF",
       "foot": "left",
@@ -1988,7 +1988,7 @@
     },
     {
       "id": "POR-07",
-      "name": "Rhys Hartley",
+      "name": "Rhys Brackley",
       "shirt": 7,
       "position": "FWD",
       "foot": "left",
@@ -2105,7 +2105,7 @@
     },
     {
       "id": "RED-13",
-      "name": "Nacho Salcedo",
+      "name": "Nacho Irizar",
       "shirt": 13,
       "position": "GK",
       "foot": "right",
@@ -2498,7 +2498,7 @@
   "SAL": [
     {
       "id": "SAL-01",
-      "name": "Tiago Brandao",
+      "name": "Tiago Calheiros",
       "shirt": 1,
       "position": "GK",
       "foot": "right",
@@ -2567,7 +2567,7 @@
     },
     {
       "id": "SAL-03",
-      "name": "Emilio Ledesma",
+      "name": "Emilio Mendiburu",
       "shirt": 3,
       "position": "DEF",
       "foot": "left",
@@ -2613,7 +2613,7 @@
     },
     {
       "id": "SAL-05",
-      "name": "Jago Ashdown",
+      "name": "Jago Fairley",
       "shirt": 5,
       "position": "DEF",
       "foot": "right",
@@ -2636,7 +2636,7 @@
     },
     {
       "id": "SAL-12",
-      "name": "Dev Kulkarni",
+      "name": "Dev Iyengar",
       "shirt": 12,
       "position": "DEF",
       "foot": "left",
@@ -3213,7 +3213,7 @@
     },
     {
       "id": "THO-18",
-      "name": "Remi Lavigne",
+      "name": "Remi Pellerin",
       "shirt": 18,
       "position": "MID",
       "foot": "left",

@@ -206,6 +206,27 @@ LAST = {
     ],
 }
 
+# Spare surnames, used only to give team-mates who drew the same surname different ones. Kept
+# apart from LAST because the squads draw from LAST, and growing it would change every squad.
+LAST_EXTRA = {
+    "English": ["Thornbury", "Pellow", "Calloway", "Bramwell", "Whitlock", "Ashcombe", "Fairley",
+                "Hensby", "Dunstall", "Selwood", "Quarrie", "Brackley"],
+    "Spanish": ["Olabarri", "Villarroel", "Cardenal", "Baquedano", "Irizar", "Lacunza", "Echave",
+                "Mendiburu", "Ozores", "Galdeano", "Urquiza", "Basterra"],
+    "French": ["Delorme", "Fauvel", "Brissac", "Vauclair", "Tessier", "Lemarque", "Ferrand",
+               "Morvan", "Chalaux", "Duvernoy", "Garrigue", "Pellerin"],
+    "Portuguese": ["Valadares", "Bettencourt", "Loureiro", "Calheiros", "Mascarenhas", "Arruda",
+                   "Vilaca", "Gouveia", "Rebelo", "Sarmento", "Tavira", "Fontoura"],
+    "Nigerian": ["Adebanjo", "Olatunji", "Ezeogu", "Akinwale", "Obiefuna", "Oyelaran", "Nnadozie",
+                 "Anozie", "Odukoya", "Ajibola", "Okwuosa", "Adeyinka"],
+    "Indian": ["Bhandari", "Rathore", "Kamath", "Deshpande", "Iyengar", "Mahajan", "Thakkar",
+               "Venkatesh", "Saxena", "Joglekar", "Chaturvedi", "Raghavan"],
+    "Moroccan": ["Bennani", "Lamrani", "Chraibi", "Alaoui", "Benjelloun", "Fassi", "Sqalli",
+                 "Kettani", "Berrada", "Zniber", "Lahrichi", "Guessous"],
+    "Swedish": ["Hedqvist", "Aronsson", "Wallgren", "Kjellberg", "Dahlstrom", "Hagstrom", "Edfelt",
+                "Bergkvist", "Ljungdahl", "Tornqvist", "Bladh", "Sandahl"],
+}  # fmt: skip
+
 # SHA-256 of lowercased surnames of well-known real players, so none appear in source.
 # Generated names are checked against this in tests via `is_denied`.
 DENYLIST_SHA256 = frozenset(
@@ -357,6 +378,33 @@ def _manager_names(seed: int, taken: set[str]) -> list[str]:
     return names
 
 
+def _unique_surnames(clubs: list[Club], seed: int) -> None:
+    """No two team-mates share a surname: a squad with three Garsides reads as a bug.
+
+    The player drawn last keeps a shared surname; the others get a new one from their own
+    nationality's pool that no one in the league has. Runs on its own random stream after the
+    squads are drawn, so ratings, kits, managers and every match stay exactly as they were.
+    """
+    rng = random.Random(seed * 104729 + 7)
+    taken = {p.name.split()[-1] for c in clubs for p in c.players}
+    for club in clubs:
+        seen: set[str] = set()
+        for p in reversed(club.players):
+            first, last = p.name.rsplit(" ", 1)
+            if last in seen:
+                pool = sorted(
+                    s
+                    for s in LAST[p.nationality] + LAST_EXTRA[p.nationality]
+                    if s not in taken and not is_denied(f"{first} {s}")
+                )
+                if not pool:
+                    raise ValueError(f"no surname left for {p.id} ({p.nationality})")
+                last = rng.choice(pool)
+                taken.add(last)
+                p.name = f"{first} {last}"
+            seen.add(last)
+
+
 def generate_league(seed: int = DEFAULT_SEED) -> League:
     """Build the eight clubs and their squads from a fixed seed."""
     rng = random.Random(seed)
@@ -386,6 +434,7 @@ def generate_league(seed: int = DEFAULT_SEED) -> League:
                 players=players,
             )
         )
+    _unique_surnames(clubs, seed)
     for club, manager in zip(clubs, _manager_names(seed, used), strict=True):
         club.manager = manager
     return League(name=LEAGUE_NAME, seed=seed, clubs=clubs)
