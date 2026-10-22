@@ -10,19 +10,22 @@ UX and presentation is 20% of the score, and the video is judged almost entirely
 
 Stack: React 18 + Vite + TypeScript, Tailwind CSS, Framer Motion (overlay animation), **PixiJS** for the pitch (60 fps with 22 players + ball), Zustand for state, `react-i18next` (with RTL support), Recharts or visx for small charts. WebSocket client with reconnect and buffering.
 
-## Art direction: "floodlights"
+## Art direction: "Matchday broadcast"
 
-The feeling is a night match under floodlights, seen from the gantry. Calm, dark, precise; the data glows.
+A bright matchday afternoon with TV graphics on top. White page, black broadcast plates, a proper green pitch in a black frame like a monitor in the gallery. VJ picked every colour below (look 6 in `/design-lab`); use them exactly.
 
-- **Not** the Premier League look. Avoid their purple and their neon green/cyan combination. No lion, no crown motifs.
-- **Base:** graphite / near-black `#0D1014`, raised surfaces `#161B22`, hairlines `#2A313B`.
-- **Pitch:** muted deep green with subtle mowing stripes, white lines at ~70% opacity.
-- **Accent (the brand):** floodlight amber `#FFB020`.
-- **Semantic:** control = ice blue `#5CC8FF`, chaos = signal red `#FF4D4D`, pressure = magenta `#E05CFF`.
+- **Not** the Premier League look. No purple-and-neon, no lion, no crown, nothing that copies a real broadcaster's graphics package.
+- **Page:** white `#FFFFFF`, raised surfaces `#F3F5F2`, hairlines `#D3D9D4`, text `#101418`, muted text `#4F5A54`.
+- **Accent:** deep red `#C1121F` on the page (buttons, clocks, the current nav link). Signal yellow `#FFD100` only inside black plates and on the pitch, never on the white page.
+- **Plates** (score bug, lower thirds, tags, cards, timeline, menus): solid `#101418`, parallelogram clip `polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%)`, no inner highlight, shadow `drop-shadow(0 6px 12px rgb(16 20 24 / .35))`. Inside a plate the tokens flip to light ink: text `#FFFFFF`, muted `#B4BAC2`, hairline `#2C3037`, raised `#1A1D22`, accent `#FFD100`.
+- **Pitch:** grass `#2E8B48` / `#349650`, 14 mowing stripes, white lines at 95%, accent `#FFD100`, pressure `#8E24AA`, no light falloff. It sits on a `#101418` stage.
+- **Semantic:** control = navy `#1D4ED8`, chaos = amber `#C77700`, pressure = violet `#8E24AA`. On grass, marks in these colours get a thin white outline. Inside black plates they get a white outline or a label next to them. Chaos as text on the page is only for large or bold text (18px+, or 14px+ bold) or as a mark beside ink text.
+- **Buttons:** primary is `#C1121F` with white uppercase display text and the parallelogram clip, hover `#A10F1A`. Secondary is a `#101418` outline. Focus ring is 2px `#101418` with a 2px offset.
+- **Viewer labels:** first viewer is a yellow `#FFD100` tab with `#101418` text, second viewer a red `#C1121F` tab with white text, both sitting on top of the pane frame.
 - **Team colours** come from the fictional clubs' kits, always shown as small chips, never large floods of colour.
-- **Type** (Google Fonts, OFL licence): a condensed display face for numbers and broadcast graphics, e.g. **Barlow Condensed** or **Oswald**; a clean text face for prose, e.g. **Inter** or **IBM Plex Sans**; tabular numerals everywhere numbers change live so they don't jitter. Arabic: **IBM Plex Sans Arabic** or **Noto Sans Arabic**; Hindi: **Noto Sans Devanagari**.
-- **Motion:** overlays slide/wipe in like TV graphics (150–250 ms, ease-out), numbers count up, nothing bounces. Respect `prefers-reduced-motion`.
-- **Density:** broadcast graphics are sparse. Lower thirds with one headline and one line. The analyst view can be denser but still aligned to a strict grid.
+- **Type** (OFL licence): **Big Shoulders Display** 800 for numbers and broadcast graphics, uppercase for headlines; **Figtree** 400/600 for prose; tabular numerals everywhere numbers change live so they don't jitter. Arabic: **IBM Plex Sans Arabic**; Hindi: **Noto Sans Devanagari**. Uppercase does nothing in Arabic, so hierarchy never relies on caps alone.
+- **Motion:** plates and tags wipe in left to right in 180 ms, ease-out. Numbers count up, nothing bounces. `prefers-reduced-motion` turns every entrance into a plain fade.
+- **Density:** broadcast graphics are sparse. Lower thirds with one headline and one line. The analyst view can be denser but still aligned to a strict grid. Tight spacing, 2px radius.
 
 ## Screens
 
