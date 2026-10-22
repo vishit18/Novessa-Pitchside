@@ -33,7 +33,7 @@ function markerLabel(m: KeyMoment): StringKey {
 }
 
 function markerColour(m: KeyMoment): string {
-  if (m.kind === 'card') return m.card === 'red' ? 'var(--color-chaos)' : '#f5c542'
+  if (m.kind === 'card') return m.card === 'red' ? 'var(--color-red-card)' : '#f5c542'
   if (m.kind === 'goal') return CLUBS[m.team ?? '']?.primary_color ?? 'var(--color-amber)'
   return 'rgb(255 255 255 / 0.55)'
 }

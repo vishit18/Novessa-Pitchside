@@ -26,6 +26,8 @@
   --color-control: #1d4ed8;
   --color-chaos: #c77700;
   --color-pressure: #8e24aa;
+  /* Red cards stay red everywhere, plates included. Chaos is amber now and reads as a yellow. */
+  --color-red-card: #c1121f;
   --font-display: 'Big Shoulders Display', 'Arial Narrow', sans-serif;
   --font-sans: 'Figtree', system-ui, sans-serif;
   --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
@@ -259,6 +261,25 @@ button:not(:disabled):active {
 }
 .plate-shadow {
   filter: drop-shadow(0 6px 12px rgb(16 20 24 / 0.35));
+}
+
+/*
+ * The same plate, but the skewed shape is drawn behind the content instead of clipping it, so
+ * things that pop out of it (the timeline's marker tooltips) aren't cut off at its edge.
+ */
+.plate.plate-open {
+  position: relative;
+  isolation: isolate;
+  background: none;
+  clip-path: none;
+}
+.plate.plate-open::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: #101418;
+  clip-path: polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%);
 }
 
 /*

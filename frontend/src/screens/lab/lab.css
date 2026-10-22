@@ -52,6 +52,11 @@
   --color-amber: inherit;
   color: inherit;
 }
+/* Every look draws its own plate, so the app's open-plate backing layer stays out of the lab. */
+:is(.lab-matchday, .lab-magazine, .lab-broadcast, .lab-tactics, .lab-floodlights, .lab-blend)
+  .plate-open::before {
+  content: none;
+}
 :is(.lab-matchday, .lab-magazine, .lab-broadcast, .lab-tactics) :is(.num, .latin) {
   font-weight: inherit;
 }

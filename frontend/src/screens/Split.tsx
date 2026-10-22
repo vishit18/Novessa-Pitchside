@@ -83,7 +83,7 @@ export function Split({ query }: { query: URLSearchParams }) {
       </div>
 
       <div className="plate-shadow sticky bottom-3 z-20 mx-auto w-full max-w-[1100px]">
-        <div className="plate px-4 py-2.5" style={{ ['--cut' as string]: '10px' }}>
+        <div className="plate plate-open px-4 py-2.5" style={{ ['--cut' as string]: '10px' }}>
           <SessionContext.Provider value={a}>
             <Timeline linked={[b]} />
           </SessionContext.Provider>

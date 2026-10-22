@@ -14,7 +14,7 @@ const TONE_STRIP: Record<string, string> = {
 
 function strip(item: FeedItem): string {
   if (item.card === 'yellow') return '#f5c542'
-  if (item.card === 'red') return 'var(--color-chaos)'
+  if (item.card === 'red') return 'var(--color-red-card)'
   return TONE_STRIP[item.tone] ?? '#6b7683'
 }
 

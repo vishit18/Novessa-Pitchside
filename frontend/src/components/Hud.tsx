@@ -171,7 +171,7 @@ export function LowerThird() {
 function toneColour(o: OverlayEnvelope): string {
   const card = o.payload['card']
   if (card === 'yellow') return '#f5c542'
-  if (card === 'red') return 'var(--color-chaos)'
+  if (card === 'red') return 'var(--color-red-card)'
   const team = String(o.payload['team'] ?? '')
   return team ? colour(team) : 'var(--color-amber)'
 }
@@ -366,7 +366,7 @@ export function Controls({ transport = true }: { transport?: boolean }) {
       }`}
     >
       <div
-        className="plate flex flex-col gap-2 px-4 py-2.5"
+        className="plate plate-open flex flex-col gap-2 px-4 py-2.5"
         style={{ ['--cut' as string]: '10px' }}
         role="toolbar"
         aria-label="Playback"
