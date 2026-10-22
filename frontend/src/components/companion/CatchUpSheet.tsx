@@ -100,7 +100,7 @@ export function CatchUpSheet({ open, matchId, session, onClose }: Props) {
                 {load.data.summary}
               </p>
               {load.data.moments.length > 0 && (
-                <ol className="mt-4 flex flex-col divide-y divide-white/10 border-y border-white/10">
+                <ol className="mt-4 flex flex-col divide-y divide-text/10 border-y border-text/10">
                   {load.data.moments.map((m) => (
                     <li key={m.moment_id} className="grid grid-cols-[4.5rem_1fr] gap-x-3 py-3">
                       <span className="num text-[20px] leading-none text-amber" dir="ltr">
@@ -133,7 +133,7 @@ export function CatchUpSheet({ open, matchId, session, onClose }: Props) {
         <div className="px-5 pb-[max(1rem,env(safe-area-inset-bottom))] pt-1">
           <button
             ref={closeRef}
-            className="h-12 w-full bg-amber text-[16px] font-semibold text-ink"
+            className="btn-primary h-12 w-full bg-amber text-[16px] font-semibold text-ink"
             onClick={onClose}
           >
             {t('missedClose')}

@@ -31,7 +31,7 @@ export function ViewerChrome() {
   return (
     <div className="flex flex-col items-end gap-2" onFocusCapture={wake}>
       <button
-        className="plate-chip group flex items-center gap-3 bg-raised/90 py-2 pl-4 pr-3 text-start hover:bg-[#1d242d]"
+        className="plate-chip group flex items-center gap-3 bg-raised/90 py-2 pl-4 pr-3 text-start hover:bg-hairline"
         onClick={() => navigate(withParams('/start', { match: matchId }))}
         aria-label={`${persona}, ${lang}${who ? `, ${who}` : ''}. ${t('changeHow')}`}
       >

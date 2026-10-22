@@ -84,7 +84,7 @@ function PassTag({ o }: { o: OverlayEnvelope }) {
             </span>
           </div>
           {factors[0] && (
-            <div className="border-t border-white/10 px-3 py-1 text-[12px] text-muted">
+            <div className="border-t border-text/10 px-3 py-1 text-[12px] text-muted">
               {factors[0].name.replaceAll('_', ' ')} +{Math.round(factors[0].points)}
             </div>
           )}

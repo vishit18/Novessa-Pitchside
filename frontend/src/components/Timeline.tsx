@@ -109,7 +109,7 @@ export function Timeline({
   }
   const markers = visibleMoments(key?.moments ?? [], seenUpTo, spoilers)
   const btn =
-    'num grid h-9 min-w-9 place-items-center border border-white/25 px-2 text-[15px] font-semibold text-muted transition-colors hover:text-text aria-pressed:border-amber aria-pressed:text-amber'
+    'num grid h-9 min-w-9 place-items-center border border-text/25 px-2 text-[15px] font-semibold text-muted transition-colors hover:text-text aria-pressed:border-amber aria-pressed:text-amber'
 
   return (
     <div className="flex w-full flex-wrap items-center gap-x-3 gap-y-2" dir="ltr">
@@ -145,12 +145,12 @@ export function Timeline({
       <div
         className={`relative h-9 min-w-[180px] flex-1 ${narrow ? 'order-first basis-full' : ''}`}
       >
-        <div className="pointer-events-none absolute inset-x-0 top-1/2 h-[4px] -translate-y-1/2 bg-white/15">
-          <div className="absolute inset-y-0 left-0 bg-white/25" style={{ width: pct(seenUpTo) }} />
+        <div className="pointer-events-none absolute inset-x-0 top-1/2 h-[4px] -translate-y-1/2 bg-text/15">
+          <div className="absolute inset-y-0 left-0 bg-text/25" style={{ width: pct(seenUpTo) }} />
           <div className="absolute inset-y-0 left-0 bg-amber" style={{ width: pct(shown) }} />
           {key?.half_time && (
             <span
-              className="absolute top-1/2 h-3 w-px -translate-y-1/2 bg-white/50"
+              className="absolute top-1/2 h-3 w-px -translate-y-1/2 bg-text/50"
               style={{ left: pct(key.half_time) }}
             />
           )}

@@ -110,7 +110,7 @@ export function NavMenu({ match, lang }: { match: string; lang: Lang }) {
   return (
     <div className="relative" ref={root}>
       <button
-        className="flex h-9 items-center gap-2 border border-white/30 bg-ink/70 px-3 text-[14px] font-medium text-text hover:border-white/60"
+        className="flex h-9 items-center gap-2 border border-text bg-ink/70 px-3 text-[14px] font-medium text-text hover:bg-raised"
         aria-expanded={open}
         aria-haspopup="true"
         onClick={() => setOpen(!open)}
@@ -133,7 +133,7 @@ export function NavMenu({ match, lang }: { match: string; lang: Lang }) {
                     navigate(hrefFor(i.path, match))
                   }}
                   aria-current={isCurrent(i.path, window.location.pathname) ? 'page' : undefined}
-                  className="flex items-baseline justify-between gap-3 px-4 py-2 text-[15px] text-text hover:bg-white/[0.05] aria-[current=page]:text-amber"
+                  className="flex items-baseline justify-between gap-3 px-4 py-2 text-[15px] text-text hover:bg-text/[0.05] aria-[current=page]:text-amber"
                 >
                   {translate(lang, i.key)}
                   <span className="text-[12px] text-muted" lang="en">

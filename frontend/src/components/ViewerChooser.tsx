@@ -60,7 +60,7 @@ export function ViewerChooser({ persona, lang, onChange, align = 'start' }: Prop
 
   const option = (on: boolean) =>
     `flex h-10 w-full items-center justify-between gap-3 px-3 text-start text-[15px] transition-colors ${
-      on ? 'text-amber' : 'text-text/85 hover:bg-white/5 hover:text-text'
+      on ? 'text-amber' : 'text-text/85 hover:bg-text/5 hover:text-text'
     }`
 
   return (
@@ -74,7 +74,7 @@ export function ViewerChooser({ persona, lang, onChange, align = 'start' }: Prop
           setPhoneTop(r && window.innerWidth < 640 ? r.bottom + 6 : null)
           setOpen((v) => !v)
         }}
-        className="flex h-10 items-center gap-2 border border-white/30 px-3 text-[15px] transition-colors hover:border-amber aria-expanded:border-amber"
+        className="flex h-10 items-center gap-2 border border-text px-3 text-[15px] transition-colors hover:border-amber aria-expanded:border-amber"
       >
         <span className="text-muted">Viewing as</span>
         <span className="font-semibold text-text">
@@ -106,7 +106,7 @@ export function ViewerChooser({ persona, lang, onChange, align = 'start' }: Prop
                     transformOrigin: 'top center',
                   }
             }
-            className={`absolute top-full z-30 mt-1.5 grid w-[min(92vw,460px)] grid-cols-2 gap-3 border border-white/15 bg-ink p-2 shadow-2xl ${
+            className={`absolute top-full z-30 mt-1.5 grid w-[min(92vw,460px)] grid-cols-2 gap-3 border border-text/15 bg-ink p-2 shadow-2xl ${
               align === 'end' ? 'end-0' : 'start-0'
             }`}
           >

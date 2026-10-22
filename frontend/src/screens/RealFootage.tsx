@@ -15,7 +15,7 @@ import {
 import { getOverlay, listClips, videoUrl, type RealClip } from '@/net/real'
 
 const TEAM_COLOUR = { BLU: '#4d8dff', WHT: '#eef2f6' } as const
-const AMBER = '#ffb020'
+const AMBER = '#ffd100'
 
 interface Layers {
   tags: boolean
@@ -51,7 +51,7 @@ export function RealFootage() {
   }, [])
 
   return (
-    <main className="stage-bg mx-auto flex min-h-dvh w-full max-w-[1500px] flex-col gap-6 px-4 py-5 sm:px-8">
+    <main className="mx-auto flex min-h-dvh w-full max-w-[1500px] flex-col gap-6 px-4 py-5 sm:px-8">
       <AppNav />
       <h1 className="font-display text-[40px] font-bold leading-none sm:text-[52px]">
         The same idea, on real video
@@ -125,7 +125,7 @@ function Player({ clip, overlay }: { clip: RealClip; overlay: RealOverlay }) {
           {/* Full screen goes on this frame, not the video, so the tracking canvas comes too. */}
           <div
             ref={frame}
-            className="real-frame min-w-[900px]"
+            className="real-frame stage-bg min-w-[900px]"
             onDoubleClick={(e) => {
               e.preventDefault()
               full.toggle()
@@ -160,7 +160,7 @@ function Player({ clip, overlay }: { clip: RealClip; overlay: RealOverlay }) {
                 className="pointer-events-none absolute inset-0 size-full"
               />
               <button
-                className="absolute end-3 top-3 flex h-9 items-center gap-2 border border-white/40 bg-ink/75 px-3 text-[14px] font-medium text-text hover:border-white/80"
+                className="absolute end-3 top-3 flex h-9 items-center gap-2 border border-text/40 bg-ink/75 px-3 text-[14px] font-medium text-text hover:border-text/80"
                 onClick={full.toggle}
                 aria-pressed={full.on}
               >
@@ -200,7 +200,7 @@ function Player({ clip, overlay }: { clip: RealClip; overlay: RealOverlay }) {
                 className={`h-9 border px-3 text-[14px] font-medium ${
                   layers[k]
                     ? 'border-amber bg-amber/15 text-amber'
-                    : 'border-white/30 text-muted hover:text-text'
+                    : 'border-text/30 text-muted hover:text-text'
                 }`}
               >
                 {label}
@@ -221,12 +221,12 @@ function Player({ clip, overlay }: { clip: RealClip; overlay: RealOverlay }) {
           <p className="text-[13px] text-muted">
             Times are the match clock, the same as under the video. Pick one to watch it.
           </p>
-          <ol className="flex flex-col divide-y divide-white/10 border-y border-white/10">
+          <ol className="flex flex-col divide-y divide-text/10 border-y border-text/10">
             {passes.map((e) => (
               <li key={e.t_match + (e.player_id ?? '')}>
                 <button
                   aria-current={onScreen.has(e) ? 'true' : undefined}
-                  className="grid w-full grid-cols-[4.5rem_1fr] gap-x-3 px-1 py-3 text-start transition-colors hover:bg-white/[0.03] aria-[current]:bg-amber/10"
+                  className="grid w-full grid-cols-[4.5rem_1fr] gap-x-3 px-1 py-3 text-start transition-colors hover:bg-text/[0.03] aria-[current]:bg-amber/10"
                   onClick={() => seek(e.t_match)}
                 >
                   <span className="num text-[22px] leading-none text-amber">{e.clock}</span>
@@ -318,7 +318,7 @@ function VideoBar({
   return (
     <div className="real-bar flex h-16 items-center gap-4 bg-ink/90 px-3">
       <button
-        className="grid size-10 shrink-0 place-items-center border border-white/30 text-text hover:border-amber"
+        className="grid size-10 shrink-0 place-items-center border border-text/30 text-text hover:border-amber"
         onClick={() => togglePlay(video.current)}
         aria-label={playing ? 'Pause' : 'Play'}
       >
@@ -334,7 +334,7 @@ function VideoBar({
         {matchClock(startS, t)}
       </span>
       <div className="relative h-9 min-w-0 flex-1">
-        <div className="absolute inset-x-0 top-1/2 h-[3px] -translate-y-1/2 bg-white/15" />
+        <div className="absolute inset-x-0 top-1/2 h-[3px] -translate-y-1/2 bg-text/15" />
         <div
           className="absolute start-0 top-1/2 h-[3px] -translate-y-1/2 bg-amber"
           style={{ width: at(t) }}
@@ -343,7 +343,7 @@ function VideoBar({
           <span
             key={e.t_match + (e.player_id ?? '')}
             aria-hidden
-            className="absolute top-1/2 h-3 w-[2px] -translate-y-1/2 bg-white/50"
+            className="absolute top-1/2 h-3 w-[2px] -translate-y-1/2 bg-text/50"
             style={{ left: at(e.t_match) }}
           />
         ))}
@@ -536,7 +536,7 @@ function chip(
   const m = g.measureText(text)
   const hh = 14
   if (filled) {
-    g.fillStyle = 'rgba(13,16,20,0.85)'
+    g.fillStyle = 'rgba(16,20,24,0.85)'
     g.fillRect(x, y - hh, m.width + pad * 2, hh + 1)
   }
   g.fillStyle = col

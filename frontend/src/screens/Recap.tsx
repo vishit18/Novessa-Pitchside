@@ -54,7 +54,7 @@ export function Recap({ query }: { query: URLSearchParams }) {
   const catchUp = state.status === 'ready' || state.status === 'off' ? state.catchUp : null
 
   return (
-    <div className="stage-bg min-h-dvh">
+    <div className="min-h-dvh">
       <main className="mx-auto flex min-h-dvh w-full max-w-[1280px] flex-col gap-8 px-4 py-5 sm:px-8">
         <AppNav match={matchId} />
         <h1 className="font-display text-[40px] font-bold leading-none sm:text-[52px]">
@@ -138,9 +138,7 @@ function Chips({
             aria-pressed={o.id === value}
             onClick={() => o.id !== value && onPick(o.id)}
             className={`h-9 min-w-9 border px-3 text-[14px] font-medium ${
-              o.id === value
-                ? 'border-amber text-amber'
-                : 'border-white/30 text-muted hover:text-text'
+              o.id === value ? 'border-amber text-amber' : 'border-text text-muted hover:text-text'
             }`}
           >
             {o.label}
@@ -174,7 +172,7 @@ function ShareButton({ text, title }: { text: string; title: string }) {
   return (
     <div className="flex items-center gap-3">
       <button
-        className="h-9 border border-white/35 px-4 text-[14px] font-medium text-text hover:border-amber"
+        className="h-9 border border-text px-4 text-[14px] font-medium text-text hover:border-amber"
         onClick={share}
       >
         Share this recap
@@ -205,7 +203,7 @@ function Loading({
             {[92, 100, 84, 96, 60].map((w, i) => (
               <span
                 key={i}
-                className="pulse-soft block h-4 bg-white/[0.07]"
+                className="pulse-soft block h-4 bg-text/[0.07]"
                 style={{ width: `${w}%` }}
               />
             ))}
@@ -359,7 +357,7 @@ function Provenance({ recap }: { recap: RecapData }) {
       )}
       {recap.trail.length > 0 && (
         <details dir="auto" className="text-muted">
-          <summary className="min-h-8 cursor-pointer underline decoration-white/25 underline-offset-4">
+          <summary className="min-h-8 cursor-pointer underline decoration-text/25 underline-offset-4">
             How it was checked
           </summary>
           <ol className="mt-2 list-decimal ps-5">

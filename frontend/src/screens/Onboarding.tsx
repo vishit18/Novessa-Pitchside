@@ -374,7 +374,7 @@ function Choice({
       className="group plate-shadow block w-full text-start focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-amber"
     >
       <span
-        className={`plate flex items-stretch transition-colors group-hover:bg-[#222a34] ${dense ? '' : ''}`}
+        className={`plate flex items-stretch transition-colors group-hover:bg-raised ${dense ? '' : ''}`}
         style={{ ['--cut' as string]: dense ? '8px' : '12px' }}
       >
         <span
@@ -398,7 +398,7 @@ function Progress({ total, at }: { total: number; at: number }) {
       aria-valuenow={at + 1}
     >
       {Array.from({ length: total }, (_, i) => (
-        <span key={i} className={`h-[3px] w-8 ${i <= at ? 'bg-amber' : 'bg-white/15'}`} />
+        <span key={i} className={`h-[3px] w-8 ${i <= at ? 'bg-amber' : 'bg-text/15'}`} />
       ))}
     </div>
   )
@@ -415,7 +415,7 @@ function Backdrop({ matchId }: { matchId: string }) {
           <Stage />
         </SessionContext.Provider>
       </div>
-      <div className="absolute inset-0 bg-[linear-gradient(90deg,var(--color-ink)_30%,rgb(13_16_20/0.75)_55%,rgb(13_16_20/0.2))] max-sm:bg-ink/85" />
+      <div className="absolute inset-0 bg-[linear-gradient(90deg,var(--color-ink)_30%,color-mix(in_srgb,var(--color-ink)_75%,transparent)_55%,color-mix(in_srgb,var(--color-ink)_20%,transparent))] max-sm:bg-ink/85" />
     </div>
   )
 }

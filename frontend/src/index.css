@@ -249,6 +249,26 @@ button:not(:disabled):active {
   filter: drop-shadow(0 6px 12px rgb(16 20 24 / 0.35));
 }
 
+/*
+ * The primary action on the page: deep red, display caps, the plate's skew. The skew clips an
+ * outside focus ring, so clipped controls draw theirs inside, in their own text colour.
+ */
+.btn-primary {
+  font-family: var(--font-display);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  clip-path: polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%);
+}
+.btn-primary:not(:disabled):hover {
+  background: #a10f1a;
+}
+.btn-primary:focus-visible,
+.plate-chip:focus-visible {
+  outline-color: currentColor;
+  outline-offset: -5px;
+}
+
 /* A small chip in the plate shape, so it belongs with the score bug. */
 .plate-chip {
   clip-path: polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%);

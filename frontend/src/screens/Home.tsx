@@ -132,13 +132,13 @@ export function Home() {
               </p>
               <div className="mt-9 flex flex-wrap items-center gap-3">
                 <button
-                  className="h-12 bg-amber px-6 text-[17px] font-semibold text-ink transition-transform active:scale-[0.98]"
+                  className="btn-primary h-12 bg-amber px-6 text-[17px] font-semibold text-ink transition-transform active:scale-[0.98]"
                   onClick={watch}
                 >
                   Start watching
                 </button>
                 <button
-                  className="h-12 border border-white/40 px-6 text-[17px] font-medium text-text transition-colors hover:border-white/80 active:scale-[0.98]"
+                  className="h-12 border border-text px-6 text-[17px] font-medium text-text transition-colors hover:bg-raised active:scale-[0.98]"
                   onClick={split}
                 >
                   See two fans side by side
@@ -177,7 +177,7 @@ function HeroPitch() {
           <Stage />
         </SessionContext.Provider>
       </div>
-      <div className="absolute inset-0 bg-[linear-gradient(90deg,var(--color-ink)_28%,rgb(13_16_20/0.7)_60%,rgb(13_16_20/0.35))] max-lg:bg-ink/70" />
+      <div className="absolute inset-0 bg-[linear-gradient(90deg,var(--color-ink)_28%,color-mix(in_srgb,var(--color-ink)_70%,transparent)_60%,color-mix(in_srgb,var(--color-ink)_35%,transparent))] max-lg:bg-ink/70" />
       <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent to-ink" />
     </div>
   )
@@ -309,7 +309,7 @@ function Way({
   return (
     <button onClick={onClick} className="group plate-shadow block h-full text-start">
       <span
-        className="plate flex h-full flex-col px-6 py-5 transition-colors group-hover:bg-[#222a34]"
+        className="plate flex h-full flex-col px-6 py-5 transition-colors group-hover:bg-raised"
         style={{ ['--cut' as string]: '16px' }}
       >
         <span className="text-[14px] text-amber">{who}</span>
@@ -332,7 +332,7 @@ function SmallWay({
   return (
     <li>
       <button onClick={onClick} className="group block px-6 text-start">
-        <span className="font-display text-[24px] font-semibold leading-none underline decoration-white/25 underline-offset-4 group-hover:decoration-amber">
+        <span className="font-display text-[24px] font-semibold leading-none underline decoration-text/25 underline-offset-4 group-hover:decoration-amber">
           {title}
         </span>
         <span className="mt-1.5 block text-[15px] leading-relaxed text-muted">{children}</span>

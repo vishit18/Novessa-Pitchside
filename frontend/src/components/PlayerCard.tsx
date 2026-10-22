@@ -55,7 +55,7 @@ export function PlayerCard() {
         {stats && !stats.on_pitch && (
           <p
             className={`self-start px-2.5 py-1 font-display text-[22px] font-semibold leading-none ${
-              stats.reds > 0 ? 'bg-chaos text-white' : 'bg-white/10 text-text'
+              stats.reds > 0 ? 'bg-chaos text-white' : 'bg-text/10 text-text'
             }`}
             role="status"
           >
@@ -71,7 +71,7 @@ export function PlayerCard() {
           </p>
         </div>
 
-        <dl className="grid grid-cols-2 gap-x-6 gap-y-5 border-t border-white/10 pt-5 max-lg:grid-cols-3">
+        <dl className="grid grid-cols-2 gap-x-6 gap-y-5 border-t border-text/10 pt-5 max-lg:grid-cols-3">
           <Stat
             label={t('distance')}
             rank={rank((p) => p.distance_km)}

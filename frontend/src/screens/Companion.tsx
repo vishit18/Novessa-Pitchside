@@ -63,7 +63,7 @@ function CompanionBody({ matchId }: { matchId: string }) {
 
   return (
     <main
-      className="stage-bg mx-auto flex min-h-dvh w-full max-w-[560px] flex-col"
+      className="mx-auto flex min-h-dvh w-full max-w-[560px] flex-col"
       lang={lang}
       dir={isRtl(lang) ? 'rtl' : 'ltr'}
     >
@@ -76,7 +76,7 @@ function CompanionBody({ matchId }: { matchId: string }) {
           <div className="flex shrink-0 flex-col items-end gap-1">
             <StatusPill />
             <button
-              className="inline-flex min-h-11 items-center px-1 text-[14px] text-muted underline decoration-white/25 underline-offset-4 hover:text-text"
+              className="inline-flex min-h-11 items-center px-1 text-[14px] text-muted underline decoration-text/25 underline-offset-4 hover:text-text"
               onClick={() => navigate(withParams('/start', { match: matchId }))}
             >
               Change
@@ -112,7 +112,7 @@ function CompanionBody({ matchId }: { matchId: string }) {
 
       <div className="fixed inset-x-0 bottom-0 z-10 mx-auto flex w-full max-w-[560px] items-center gap-3 bg-ink/95 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur-sm">
         <button
-          className="h-12 flex-1 bg-amber px-4 text-[16px] font-semibold text-ink"
+          className="btn-primary h-12 flex-1 bg-amber px-4 text-[16px] font-semibold text-ink"
           onClick={() => setSheetOpen(true)}
         >
           {t('missed')}
@@ -124,7 +124,7 @@ function CompanionBody({ matchId }: { matchId: string }) {
           {t('ask')}
         </button>
         <button
-          className="h-12 border border-white/35 px-4 text-[15px] text-text aria-pressed:border-amber aria-pressed:text-amber"
+          className="h-12 border border-text px-4 text-[15px] text-text aria-pressed:border-amber aria-pressed:text-amber"
           aria-pressed={commentary}
           onClick={toggleCommentary}
         >

@@ -15,12 +15,12 @@ export function MomentsTimeline({ catchUp, wide = false }: Props) {
         Key moments
       </h2>
       <ol
-        className={`flex flex-col border-y border-white/10 ${wide ? 'lg:block lg:columns-2 lg:gap-x-14' : ''}`}
+        className={`flex flex-col border-y border-text/10 ${wide ? 'lg:block lg:columns-2 lg:gap-x-14' : ''}`}
       >
         {catchUp.moments.map((m) => (
           <li
             key={m.moment_id}
-            className="grid break-inside-avoid grid-cols-[4.5rem_1fr] gap-x-3 border-b border-white/10 py-3 last:border-b-0"
+            className="grid break-inside-avoid grid-cols-[4.5rem_1fr] gap-x-3 border-b border-text/10 py-3 last:border-b-0"
           >
             <span className="num text-[22px] leading-none text-amber" dir="ltr">
               {m.clock}

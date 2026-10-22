@@ -274,7 +274,7 @@ function KillButton({
       type="button"
       disabled={down}
       onClick={() => onKill(id)}
-      className="relative border border-white/35 px-3 py-1.5 text-[13px] text-text transition-colors hover:border-chaos hover:text-chaos disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-white/35 disabled:hover:text-text"
+      className="relative border border-text/35 px-3 py-1.5 text-[13px] text-text transition-colors hover:border-chaos hover:text-chaos disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-text/35 disabled:hover:text-text"
     >
       {down ? 'Recovering' : `Switch off for ${KILL_SECONDS} s`}
     </button>
@@ -315,7 +315,13 @@ function NodeCard({ spec, health, lit, tally, onKill, step, compact }: CardProps
           className={`absolute inset-x-0 top-0 h-[3px] transition-colors duration-200 ${
             lit ? 'bg-amber' : STATE_BAR[state]
           }`}
-          style={lit ? { boxShadow: '0 0 14px 2px rgb(255 176 32 / 0.55)' } : undefined}
+          style={
+            lit
+              ? {
+                  boxShadow: '0 0 14px 2px color-mix(in srgb, var(--color-amber) 55%, transparent)',
+                }
+              : undefined
+          }
         />
         <span
           aria-hidden

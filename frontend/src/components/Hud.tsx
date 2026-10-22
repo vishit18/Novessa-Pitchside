@@ -27,7 +27,14 @@ export function ScoreBug({ showMatchLine = true }: { showMatchLine?: boolean }) 
     <div className="w-[min(100%,380px)] select-none" role="group" aria-label="Score and momentum">
       <div
         className="plate-shadow transition-[filter] duration-300"
-        style={flash ? { filter: 'drop-shadow(0 0 18px rgb(255 176 32 / 0.85))' } : undefined}
+        style={
+          flash
+            ? {
+                filter:
+                  'drop-shadow(0 0 18px color-mix(in srgb, var(--color-amber) 85%, transparent))',
+              }
+            : undefined
+        }
       >
         <div className="plate relative">
           {/* Home on the left in every language, as on a real score bug. */}
@@ -50,7 +57,7 @@ export function ScoreBug({ showMatchLine = true }: { showMatchLine?: boolean }) 
             aria-label={t('momentum', { v: Math.abs(m), team: lead ?? '-' })}
             dir="ltr"
           >
-            <div className="absolute inset-y-0 left-1/2 w-px bg-white/30" />
+            <div className="absolute inset-y-0 left-1/2 w-px bg-text/30" />
             {/* Half the bar each way from the centre line, scaled rather than resized. */}
             <div
               className="absolute inset-y-0 w-1/2 transition-transform duration-300 ease-[var(--ease-out)]"
@@ -209,7 +216,7 @@ function Headline({ o }: { o: OverlayEnvelope }) {
             {evidence.map((e) => (
               <li
                 key={e.metric}
-                className="flex items-baseline gap-1.5 border border-white/15 bg-black/30 px-2 py-0.5 text-[13px] text-muted"
+                className="flex items-baseline gap-1.5 border border-text/15 bg-black/30 px-2 py-0.5 text-[13px] text-muted"
               >
                 {metricName(lang, e.metric)}
                 <span className="num text-[15px] font-semibold text-text" dir="ltr">
@@ -347,7 +354,7 @@ export function Controls({ transport = true }: { transport?: boolean }) {
   }, [])
   const shown = awake || paused
   const btn =
-    'num h-9 min-w-9 border border-white/25 px-2 text-[15px] font-semibold text-muted transition-colors hover:text-text aria-pressed:border-amber aria-pressed:text-amber'
+    'num h-9 min-w-9 border border-text/25 px-2 text-[15px] font-semibold text-muted transition-colors hover:text-text aria-pressed:border-amber aria-pressed:text-amber'
   return (
     <div
       onFocusCapture={wake}
@@ -416,7 +423,7 @@ export function StatusPill() {
   return (
     <div className="flex items-center gap-2" role="status">
       <span
-        className={`size-2.5 rounded-full ${live ? 'bg-chaos shadow-[0_0_10px_var(--color-chaos)]' : connected ? 'bg-white/60' : 'bg-amber pulse-soft'}`}
+        className={`size-2.5 rounded-full ${live ? 'bg-chaos shadow-[0_0_10px_var(--color-chaos)]' : connected ? 'bg-text/60' : 'bg-amber pulse-soft'}`}
         aria-hidden="true"
       />
       <span className="font-display text-[18px] font-semibold leading-none">{label}</span>

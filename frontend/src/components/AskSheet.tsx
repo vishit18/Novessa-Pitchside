@@ -122,7 +122,7 @@ export function AskSheet({
                   </p>
                 </div>
                 <button
-                  className="grid size-9 shrink-0 place-items-center border border-white/25 text-muted hover:text-text"
+                  className="grid size-9 shrink-0 place-items-center border border-text/25 text-muted hover:text-text"
                   onClick={onClose}
                   aria-label={t('askClose')}
                 >
@@ -154,7 +154,7 @@ export function AskSheet({
                       {suggestions.map((q) => (
                         <li key={q}>
                           <button
-                            className="w-full border border-white/15 px-3 py-2.5 text-start text-[15px] leading-snug text-text/90 transition-colors hover:border-amber/60 hover:text-text"
+                            className="w-full border border-text/15 px-3 py-2.5 text-start text-[15px] leading-snug text-text/90 transition-colors hover:border-amber/60 hover:text-text"
                             onClick={() => void send(q)}
                           >
                             {q}
@@ -181,7 +181,7 @@ export function AskSheet({
                           void send(text)
                         }
                       }}
-                      className="w-full resize-none border border-white/30 bg-ink/80 px-3 py-2.5 text-[16px] text-text placeholder:text-muted focus-visible:border-amber focus-visible:outline-none"
+                      className="w-full resize-none border border-text/30 bg-ink/80 px-3 py-2.5 text-[16px] text-text placeholder:text-muted focus-visible:border-amber focus-visible:outline-none"
                     />
                     <div className="flex items-center justify-between gap-3">
                       <MicButton
@@ -254,7 +254,7 @@ function Answer({ a }: { a: AskAnswer }) {
       ? { strip: 'bg-control', label: t('askChecked') }
       : a.status === 'numbers_only'
         ? { strip: 'bg-amber', label: t('askNumbersOnly') }
-        : { strip: 'bg-white/30', label: t('askDeclined') }
+        : { strip: 'bg-text/30', label: t('askDeclined') }
   return (
     <article className="flex flex-col gap-3" aria-live="polite">
       <p className="text-[15px] text-muted">“{a.question}”</p>
@@ -275,7 +275,7 @@ function Answer({ a }: { a: AskAnswer }) {
       {(a.evidence.length > 0 || a.notes.length > 0) && (
         <div>
           <button
-            className="text-[14px] text-muted underline decoration-white/25 underline-offset-4 hover:text-text"
+            className="text-[14px] text-muted underline decoration-text/25 underline-offset-4 hover:text-text"
             aria-expanded={how}
             onClick={() => setHow(!how)}
           >
@@ -291,7 +291,7 @@ function Answer({ a }: { a: AskAnswer }) {
                 {a.tools.map((tool, i) => (
                   <span
                     key={`${tool}-${i}`}
-                    className="bg-white/[0.06] px-2 py-0.5 text-[12px] text-text/80"
+                    className="bg-text/[0.06] px-2 py-0.5 text-[12px] text-text/80"
                   >
                     {TOOL_LABEL[tool] ?? tool}
                   </span>

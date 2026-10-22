@@ -34,7 +34,7 @@ export function ControlRoom({ query }: { query: URLSearchParams }) {
   const kill = (agent: string) => void killAgent(agent, KILL_SECONDS)
 
   return (
-    <main className="stage-bg flex min-h-dvh w-full flex-col gap-6 px-4 py-5 sm:px-8">
+    <main className="flex min-h-dvh w-full flex-col gap-6 px-4 py-5 sm:px-8">
       <AppNav match={matchId} />
       <header className="flex flex-wrap items-end justify-between gap-x-8 gap-y-3">
         <div>
@@ -52,7 +52,7 @@ export function ControlRoom({ query }: { query: URLSearchParams }) {
             <select
               value={matchId}
               onChange={(e) => navigate(withParams('/control', { match: e.target.value }))}
-              className="border border-white/35 bg-raised px-2 py-1.5 text-[14px] text-text"
+              className="border border-text bg-raised px-2 py-1.5 text-[14px] text-text"
             >
               {(matches.length ? matches.map((m) => m.match_id) : [matchId]).map((id) => (
                 <option key={id} value={id}>
@@ -71,7 +71,7 @@ export function ControlRoom({ query }: { query: URLSearchParams }) {
               type="button"
               onClick={start}
               disabled={!health?.enabled || running}
-              className="bg-amber px-4 py-1.5 text-[14px] font-semibold text-ink transition-opacity disabled:cursor-not-allowed disabled:opacity-40"
+              className="btn-primary bg-amber px-4 py-1.5 text-[14px] font-semibold text-ink transition-opacity disabled:cursor-not-allowed disabled:opacity-40"
             >
               {running ? 'Agents running' : 'Start the agents'}
             </button>

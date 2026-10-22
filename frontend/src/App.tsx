@@ -43,7 +43,7 @@ export function titleFor(path: string): string {
 /** What shows for the instant a screen's code is loading. */
 function Loading() {
   return (
-    <div className="stage-bg grid min-h-dvh place-items-center" role="status">
+    <div className="grid min-h-dvh place-items-center" role="status">
       <p className="pulse-soft font-display text-[28px] font-semibold">
         Novessa <span className="text-muted">Pitchside</span>
       </p>

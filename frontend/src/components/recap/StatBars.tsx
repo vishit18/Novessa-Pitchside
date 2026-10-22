@@ -30,7 +30,7 @@ export function StatBars({ facts, homeColour, awayColour }: Props) {
             {/* Nothing either side (0 and 0) is a quiet track, not a half-and-half split. */}
             <div className="mt-1.5 flex h-[6px] gap-[3px]" aria-hidden>
               {r.home + r.away === 0 ? (
-                <span className="flex-1 bg-white/10" />
+                <span className="flex-1 bg-text/10" />
               ) : (
                 <>
                   <span

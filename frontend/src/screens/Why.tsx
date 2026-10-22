@@ -250,7 +250,7 @@ export function Why() {
             Invented league, clubs and players. No real league data.
           </p>
           <button
-            className="h-11 bg-amber px-5 text-[16px] font-semibold text-ink"
+            className="btn-primary h-11 bg-amber px-5 text-[16px] font-semibold text-ink"
             onClick={() => navigate(withParams('/split', { match: MATCH, t: String(GOAL_T) }))}
           >
             See both fans live

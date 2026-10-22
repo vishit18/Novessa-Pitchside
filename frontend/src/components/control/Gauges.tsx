@@ -75,7 +75,7 @@ function Gauge({ id, h }: { id: string; h: AgentHealth }) {
     <li className="grid grid-cols-[5.5rem_1fr_auto] items-center gap-3">
       <span className="text-[14px]">{name}</span>
       <span
-        className="relative h-3 bg-white/[0.06]"
+        className="relative h-3 bg-text/[0.06]"
         role="img"
         aria-label={`${name}: typical ${seconds(h.p50_latency_ms)}, slowest 1 in 20 ${seconds(h.p95_latency_ms)}, budget ${LLM_BUDGET_MS / 1000} s`}
       >

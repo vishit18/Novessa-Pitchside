@@ -59,7 +59,7 @@ export function FeedCard({ item, open, onToggle, onListen }: Props) {
 
           <div className="mt-2 flex flex-wrap items-center gap-x-4">
             <button
-              className="inline-flex min-h-11 items-center text-[14px] text-muted underline decoration-white/25 underline-offset-4 hover:text-text"
+              className="inline-flex min-h-11 items-center text-[14px] text-muted underline decoration-text/25 underline-offset-4 hover:text-text"
               aria-expanded={open}
               aria-controls={why}
               onClick={onToggle}
@@ -77,7 +77,7 @@ export function FeedCard({ item, open, onToggle, onListen }: Props) {
           </div>
 
           {open && (
-            <div id={why} className="mb-1 border-t border-white/10 pt-3 text-[14px]">
+            <div id={why} className="mb-1 border-t border-text/10 pt-3 text-[14px]">
               <p className="flex items-center gap-1.5 text-text/85">
                 {item.verified && <CheckIcon className="size-3 text-control" />}
                 {t(item.source.startsWith('agent:') ? 'verifiedBy' : 'fromNumbers')}

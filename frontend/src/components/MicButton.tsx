@@ -187,7 +187,7 @@ export function MicButton({
         className={`mic relative grid size-11 shrink-0 touch-none select-none place-items-center border transition-colors duration-150 disabled:opacity-40 ${
           listening
             ? 'border-amber bg-amber text-ink'
-            : 'border-white/30 text-text hover:border-amber'
+            : 'border-text/30 text-text hover:border-amber'
         }`}
       >
         <svg viewBox="0 0 16 16" className="size-[18px]" aria-hidden>

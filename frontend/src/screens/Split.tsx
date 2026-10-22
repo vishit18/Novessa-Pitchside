@@ -109,7 +109,13 @@ function Column({
     <section className="flex min-w-0 flex-col gap-3" aria-label={`Viewer ${n}`}>
       <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
         <div className="flex items-baseline gap-3">
-          <h2 className="font-display text-[28px] font-semibold leading-none">Viewer {n}</h2>
+          <h2
+            className={`font-display text-[28px] font-extrabold uppercase leading-none px-3 pb-1 pt-1.5 ${
+              n === 1 ? 'bg-[#ffd100] text-[#101418]' : 'bg-amber text-white'
+            }`}
+          >
+            Viewer {n}
+          </h2>
           <p className="text-[14px] text-muted max-sm:hidden">{persona?.hint}</p>
         </div>
         <ViewerChooser

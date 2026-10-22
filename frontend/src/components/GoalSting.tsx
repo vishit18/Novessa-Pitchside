@@ -122,7 +122,7 @@ export function GoalSting({ compact = false }: { compact?: boolean }) {
                   {details.map((part, i) => (
                     <span key={part}>
                       {i > 0 && (
-                        <span className="mx-2 text-white/30" aria-hidden>
+                        <span className="mx-2 text-text/30" aria-hidden>
                           ·
                         </span>
                       )}
