@@ -21,6 +21,7 @@ from backend.app.overlay import (
     Persona,
     Provenance,
 )
+from backend.app.pulse import PulseWriter, RecentPlay
 from backend.state.engine import Output, StateEngine
 from backend.state.models import Moment, Trigger
 from engine.clock import display_clock, merge_by_time
@@ -30,6 +31,12 @@ from engine.tracking import TrackingData
 INSTANT_DELAY_S = 0.2
 STATE_EVERY_S = 1.0
 ENGINE_FRAME_HZ = 5.0
+# State of play (docs/05): how often, when the first one may go out, and how long it waits after
+# a story overlay or after the ball last moved before it speaks.
+PULSE_EVERY_S = 75.0
+PULSE_FIRST_S = 90.0
+PULSE_QUIET_S = 30.0
+PULSE_DEAD_BALL_S = 20.0
 ID_PATTERN = re.compile(r"\b[A-Z]{3}-\d{2}\b")
 CLUB_PATTERN = re.compile(r"\b[A-Z]{3}\b(?!-)")
 
@@ -57,13 +64,18 @@ MILESTONE_HEADLINES = {
 # about 5,700 ticks and 25 players, and dicts for all of that would cost hundreds of MB.
 STAT_COLUMNS = (
     "passes", "passes_complete", "difficulty_sum", "longest_pass_m", "hardest_pass", "shots",
-    "xg", "xa", "duels_won", "duels_lost", "fouls", "yellows", "reds", "distance_km",
-    "top_speed_kmh", "top_shot_kmh", "sprints",
+    "xg", "xa", "goals", "assists", "penalties_taken", "penalties_scored", "duels_won",
+    "duels_lost", "fouls", "yellows", "reds", "distance_km", "top_speed_kmh", "top_shot_kmh",
+    "sprints",
 )  # fmt: skip
 INT_COLUMNS = {
     "passes",
     "passes_complete",
     "shots",
+    "goals",
+    "assists",
+    "penalties_taken",
+    "penalties_scored",
     "duels_won",
     "duels_lost",
     "fouls",
@@ -176,6 +188,13 @@ class TimelineBuilder:
         # Match second where the first half ends; the clock shown to viewers depends on it.
         # Unknown until the half-time whistle when events arrive live, so first-half until then.
         self._period_break = float("inf")
+        self._recent = RecentPlay()
+        self._pulse = PulseWriter(
+            meta.home.code, meta.away.code, self.names.clubs, self.names.players
+        )
+        self._next_pulse = PULSE_FIRST_S
+        self._last_story_t = -1e9
+        self._last_event_t = -1e9
 
     def _overlay(self, **kw: Any) -> Overlay:
         self._n += 1
@@ -226,19 +245,74 @@ class TimelineBuilder:
         """
         if ev.type == EventType.PERIOD_END and ev.period == 1:
             self._period_break = ev.t_match
+        self._recent.add(ev)
+        self._last_event_t = ev.t_match
         return self._collect(self.engine.ingest_event(ev), ev)
 
     def feed_frame(self, frame: TrackingFrame) -> tuple[list[Moment], list[Overlay]]:
         """Same for one tracking frame."""
         self._on_pitch = {p.id for p in frame.players}
-        return self._collect(self.engine.ingest_frame(frame), None)
+        moments, overlays = self._collect(self.engine.ingest_frame(frame), None)
+        return moments, overlays + self._maybe_pulse(frame.t_match)
 
     def _collect(
         self, outs: list[Output], ev: MatchEvent | None
     ) -> tuple[list[Moment], list[Overlay]]:
         moments = [o for o in outs if isinstance(o, Moment)]
         overlays = [ov for o in outs for ov in self._to_overlays(o, ev)]
+        if any(ov.slot == "lower_third" for ov in overlays):
+            self._last_story_t = max(ov.t_match for ov in overlays)
         return moments, overlays
+
+    def _maybe_pulse(self, t: float) -> list[Overlay]:
+        """A state of play when one is due, the ball is in play and nothing just aired."""
+        if t < self._next_pulse:
+            return []
+        if t - self._last_event_t > PULSE_DEAD_BALL_S or t - self._last_story_t < PULSE_QUIET_S:
+            self._next_pulse = t + 15.0
+            return []
+        self._next_pulse = t + PULSE_EVERY_S
+        period, clock = display_clock(t, self._period_break)
+        minute = int(clock.split(":")[0].split("+")[0]) + (
+            int(clock.split("+")[1].split(":")[0]) if "+" in clock else 0
+        )
+        pulse = self._pulse.write(self.engine.snapshot(), self._recent, minute)
+        out = []
+        for variant, (headline, body), personas in (
+            ("analyst", pulse.analyst, ["analyst"]),
+            ("plain", pulse.plain, ["casual", "kids", "accessibility"]),
+        ):
+            out.append(
+                self._overlay(
+                    slot="lower_third",
+                    kind="state_of_play",
+                    priority=15,
+                    t_match=round(t, 2),
+                    duration_s=7.0,
+                    persona=personas,
+                    provenance=Provenance(
+                        source="state_engine",
+                        verified=True,
+                        evidence=[
+                            EvidenceRef(metric=f["metric"], value=float(f["value"]))
+                            for f in pulse.facts
+                            if f["team"] is None
+                        ],
+                    ),
+                    payload={
+                        "headline": headline,
+                        "body": body,
+                        "team": pulse.team,
+                        "tone": "pulse",
+                        "clock": clock,
+                        "period": period,
+                        "variant": variant,
+                        "angle": pulse.angle,
+                        "facts": pulse.facts,
+                    },
+                )
+            )
+        return out
 
     def _stats_item(self, t: float) -> StatsItem:
         """Snapshot every player's stats at tick `t`, plus the leader for each metric."""
@@ -457,7 +531,7 @@ class TimelineBuilder:
             kind="insight",
             priority=int(m.significance),
             t_match=m.t_match,
-            duration_s=9.0 if m.kind == "goal" else 7.0,
+            duration_s=12.0 if m.kind == "goal" else 7.0,
             anchor=anchor,
             moment_id=m.moment_id,
             provenance=Provenance(

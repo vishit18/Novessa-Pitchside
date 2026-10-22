@@ -30,6 +30,7 @@ Kind = Literal[
     "commentary_line",
     "recap",
     "stat_compare",
+    "state_of_play",
 ]
 
 Persona = Literal["analyst", "casual", "kids", "accessibility"]

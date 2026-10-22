@@ -55,10 +55,10 @@ class ScriptedTransport:
 
     async def chat(self, deployment: str, system: str, user: str, timeout_s: float) -> str:
         payload = json.loads(user.split(SPLIT)[0])
-        if "producer v1" in system:
+        if "<!-- producer v" in system:
             self.calls["producer"] = self.calls.get("producer", 0) + 1
             return self._producer(payload)
-        if "analyst v1" in system:
+        if "<!-- analyst v" in system:
             self.calls["analyst"] = self.calls.get("analyst", 0) + 1
             return self._analyst(payload)
         self.calls["narrator"] = self.calls.get("narrator", 0) + 1

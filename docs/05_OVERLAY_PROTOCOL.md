@@ -49,6 +49,7 @@ Publish this as a versioned spec: `docs/overlay-protocol-v1.md` + JSON Schema in
 | `commentary_line` | agent | text, audio_url (optional) |
 | `recap` | agent | sections[] |
 | `stat_compare` | state engine | two players / teams, metric, values |
+| `state_of_play` | state engine | headline, body, team on top, facts[] (see below) |
 
 ## Transport
 
@@ -62,11 +63,13 @@ The gateway sends JSON text frames over `WS /ws/matches/{id}?viewer=...&persona=
 | `player_stats` | `{t_match, players: [PlayerStats + on_pitch], leaders}` (see below) | 1 Hz |
 | `overlay` | the envelope above | as they happen |
 
+On connect and after every seek, before the stream resumes, the gateway sends the latest `state` and `player_stats`, then a **backfill**: the viewer's last 40 story overlays (`lower_third` insights, milestones and state of play) from before the start time, filtered and translated for that viewer, with `payload.backfill: true` and agent text attached as usual. Their show time has passed, so a renderer puts them in a story list and never on screen. A viewer who joins at 60 minutes gets the story so far.
+
 The client may send `{"op": "play"|"pause"}`, `{"op": "speed", "value": 4}` and `{"op": "seek", "t": 1200}`. Query parameters: `persona` (analyst, casual, kids, accessibility), `club`, `player`, `metric`, `lang`. `GET /matches/{id}` returns `MatchMeta`. `t_wall_emit` is set when the gateway sends the message and is null in exports.
 
 ## player_stats
 
-Sent to every viewer regardless of profile, once a second. `players` has one entry for every player who has been on the pitch (22 plus any substitutes who came on). Each entry: `player_id`, `team`, `on_pitch`, `passes`, `passes_complete`, `pass_accuracy` (0-1 or null), `avg_difficulty` (or null), `longest_pass_m`, `hardest_pass` (highest difficulty among completed passes), `shots`, `xg`, `xa`, `duels_won`, `duels_lost`, `fouls`, `yellows`, `reds`, `distance_km`, `top_speed_kmh`, `top_shot_kmh`, `sprints`. `leaders` maps each one-number metric to the current match leader, `{metric: {player_id, value}}`, for `sprint_speed` (top speed km/h), `shot_speed` (hardest shot km/h), `pass_difficulty` (`hardest_pass`) and `distance` (km). A metric with no leader yet is omitted. All numbers come from the state engine; the UI computes nothing.
+Sent to every viewer regardless of profile, once a second. `players` has one entry for every player who has been on the pitch (22 plus any substitutes who came on). Each entry: `player_id`, `team`, `on_pitch`, `passes`, `passes_complete`, `pass_accuracy` (0-1 or null), `avg_difficulty` (or null), `longest_pass_m`, `hardest_pass` (highest difficulty among completed passes), `shots`, `xg`, `xa`, `goals`, `assists`, `penalties_taken`, `penalties_scored`, `duels_won`, `duels_lost`, `fouls`, `yellows`, `reds`, `distance_km`, `top_speed_kmh`, `top_shot_kmh`, `sprints`. `leaders` maps each one-number metric to the current match leader, `{metric: {player_id, value}}`, for `sprint_speed` (top speed km/h), `shot_speed` (hardest shot km/h), `pass_difficulty` (`hardest_pass`) and `distance` (km). A metric with no leader yet is omitted. All numbers come from the state engine; the UI computes nothing.
 
 ## team_stats (inside `state`)
 
@@ -83,10 +86,13 @@ The `state` message carries `team_stats`: `{TEAM: {fouls, yellows, reds, corners
 - `milestone` and `insight`: slot `lower_third`. Payload: `headline`, `body`, `team`, `tone` (`goal`, `chance`, `swing`, `milestone`, `info`), optional `moment_kind`, and `clock` on both kinds (the match clock as shown on the score bug, e.g. `60:38`).
 - `op: "update"` with the same `moment_id` merges its payload into the earlier overlay. Agent text arrives this way after the instant overlay.
 - `momentum_bar` is not sent as an overlay in v1. The renderer reads `state.momentum`.
+- `state_of_play`: slot `lower_third`, priority 15 (anything else in the slot wins), every 75 match seconds while the ball is in play, skipped when a story overlay went out in the last 30 seconds. It is how a commentator fills the quiet: who is on top, who has the ball, how frantic it is, and who is running the game. Written by code from the state engine, never a model. Two variants by persona: `analyst` (numbers in the body) and `plain` (casual, kids, accessibility: words only). Payload: `headline`, `body`, `team` (the side on top, or null when even), `tone` `pulse`, `clock`, `variant` (`analyst` or `plain`), and `facts` `[{metric, team, value}]`: the numbers the sentence was built from, for a graphics engine that wants to draw its own. Player-focus viewers get it too, so the match around their player is never silent.
 
 Agent text update: `op: "update"`, same `moment_id`, `msg_id` ending `-text-<lang>`, payload `headline`, `body`, `commentary`, `agent_status` (`verified`), `translation` (`english`, `polished`, `translated`, `llm`, `unavailable`) and `audio_url` when Speech is configured; top-level `lang` is the language the text is really in. `provenance.source` is `agent:analyst`. Only verified text is sent; a moment that fell back keeps its numbers-only card. The viewer's persona picks the variant (kids and accessibility fall back to casual, then analyst).
 
 Catch-up: `GET /matches/{id}/catchup?t=<match seconds>` returns the score, a two-sentence summary and up to six story moments, all computed from state at or before `t` and nothing after it (no model calls). Spoiler-safe by construction; the Companion view calls it for "What did I miss?".
+
+Match pulse: `GET /matches/{id}/pulse?t=<match seconds>` returns the shape of the match so far, one sample every 30 match seconds up to `t` and nothing after: `{t_match, clock, period, momentum, control, tempo, possession_home_5min, pressure_home, pressure_away}` (`control` is the control/chaos value, 0 chaos to 100 control; `tempo` is events per minute). Spoiler-safe by construction. The watch view draws momentum, control and tempo over time from it, then keeps the lines going from the 1 Hz `state` messages.
 
 Key moments: `GET /matches/{id}/moments` returns `duration`, `half_time` (match seconds) and every goal, card, penalty and big chance as `{moment_id, t_match, clock, kind, headline, team, card}`. It reveals the result, so the timeline scrubber only draws these markers when the viewer switches spoilers on; otherwise it marks only moments the viewer has already been shown.
 
@@ -114,10 +120,11 @@ Until the agents are live, `insight` overlays carry a numbers-only fallback card
 The gateway sends each viewer only the variants matching their profile. Rules live in `backend/app/personas.py`, not in the frontend:
 - Analyst: all numeric kinds, insights with numbers, pass difficulty factors shown
 - Casual: momentum bar, player tags for favourites, insights (casual variant), milestones, goals; no factors
-- Player-focus: everything anchored to the chosen player, plus their live card; other players' tags hidden
+- Player-focus: everything anchored to the chosen player, plus their live card; other players' tags hidden. The match story still gets through: goals, cards, penalties, big chances and `state_of_play`
+- Favourite club: overlays about that club get `payload.favourite_club: true` and a priority boost; goals for and against get `payload.for_you` (`scored` or `conceded`) so the renderer can celebrate or commiserate
 - One-number mode: only overlays touching the chosen metric, plus goals
 - Kids, Accessibility: their own variants; accessibility also emits `commentary_line` with audio
 
 ## Export
 
-`GET /matches/{id}/overlays.jsonl` returns the whole overlay timeline. A broadcaster could feed this into their graphics system. Also export in a simple **CSV cue sheet** format (time, slot, text) that a human graphics operator could read.
+`GET /matches/{id}/overlays.jsonl` returns the whole overlay timeline; `?upto=<match seconds>` stops it at that time (the Control Room shows the feed only as far as the viewer has watched). A broadcaster could feed this into their graphics system. Also export in a simple **CSV cue sheet** format (time, slot, text) that a human graphics operator could read.

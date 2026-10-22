@@ -56,3 +56,47 @@ def test_story_combines_both(intel: MatchIntel, names: NameBook) -> None:
     other = names.clubs[next(t for t in intel.teams if t != m.team)]
     problems = story_problems(names, m, intel.teams, f"{other} hit back", "a late winner")
     assert any("credits" in p for p in problems)
+
+
+def test_a_running_total_is_not_one_shots_number() -> None:
+    from backend.agents.models import AnalystOutput, Claim
+    from backend.agents.verifier import scope_problems
+
+    total = Claim(text="his xG so far", metric="xg", value=0.002, player_id="ASH-17", t_to=1593)
+    bad = AnalystOutput(headline="Penalty", why="Wragg's penalty xG is 0.002.", claims=[total])
+    assert scope_problems(bad)
+    fine = AnalystOutput(
+        headline="Penalty won",
+        why="Ashford won a penalty, and Wragg has 0.002 xG so far.",
+        claims=[total],
+    )
+    assert not scope_problems(fine)
+    one = Claim(text="this penalty", metric="shot_xg", value=0.76, player_id="ASH-17", t_to=1607)
+    said = "His penalty was worth 0.76 xG."
+    shot = AnalystOutput(headline="Wragg scores", why=said, claims=[one])
+    assert not scope_problems(shot)
+
+
+def test_a_booking_does_not_change_a_teams_tactics(intel: MatchIntel, names: NameBook) -> None:
+    card = next(m for m in intel.loaded.timeline.moments if m.kind == "card" and not m.staff)
+    said = "The yellow card triggers a shift to defensive containment"
+    assert story_problems(names, card, intel.teams, "Yellow card", said)
+    assert not story_problems(names, card, intel.teams, "Yellow card", "He must be careful now")
+
+
+def test_shot_xg_is_the_latest_shot(intel: MatchIntel) -> None:
+    from engine.schema import EventType
+
+    shot = next(e for e in intel.events if e.type == EventType.SHOT and e.player_id and e.xg)
+    assert shot.player_id is not None
+    got = intel.measure("shot_xg", player_id=shot.player_id, t_to=shot.t_match)
+    assert got == round(shot.xg or 0.0, 3)
+
+
+def test_a_two_goal_scorer_can_be_early_and_late() -> None:
+    goals = [
+        {"scorer": "Hugo Brocard", "clock": "32:52"},
+        {"scorer": "Hugo Brocard", "clock": "89:26"},
+    ]
+    assert not goal_time_problems("Brocard scored in the first half and again late on.", goals)
+    assert goal_time_problems("Brocard scored in stoppage time.", goals)

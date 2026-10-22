@@ -52,6 +52,9 @@ NOT_FOUND = 4404
 PERSONAS = ("analyst", "casual", "kids", "accessibility")
 TEXT_WAIT_S = 90.0  # how long a socket waits for the agents before leaving the fallback card
 MAX_AUDIO_BYTES = 1_000_000  # about 30 seconds of Opus; a question is a few seconds
+PULSE_SAMPLE_S = 30  # match pulse resolution (docs/05)
+BACKFILL_N = 40  # story overlays sent on connect, so a late joiner gets the story so far
+STORY_KINDS = {"insight", "milestone", "state_of_play"}
 tracer = trace.get_tracer("pitchside.gateway")
 
 
@@ -128,6 +131,36 @@ class Session:
         )
         return merge_by_time(rest, frames)
 
+    def _for_me(self, data: dict[str, Any]) -> dict[str, Any] | None:
+        """An overlay as this viewer gets it: filtered, translated and stamped, or None."""
+        shown = for_viewer(data, self.profile)
+        if shown is None:
+            return None
+        lang = self.profile.lang
+        if self.texts:
+            shown = apply(shown, self.texts.table(self.match, lang), lang)
+        shown["t_wall_emit"] = datetime.now(UTC).isoformat(timespec="milliseconds")
+        return shown
+
+    def _with_text(self, data: dict[str, Any]) -> None:
+        if self.agents and data.get("moment_id"):
+            task = asyncio.create_task(self._attach_text(data))
+            self._text_tasks.add(task)
+            task.add_done_callback(self._text_tasks.discard)
+
+    async def _backfill(self, start: float) -> None:
+        """The viewer's story so far: their last story overlays from before `start` (docs/05)."""
+        past = [
+            ov
+            for ov in self.match.timeline.overlays
+            if ov.show_at < start and ov.slot == "lower_third" and ov.kind in STORY_KINDS
+        ]
+        mine = [d for ov in past if (d := self._for_me(ov.model_dump(mode="json"))) is not None]
+        for data in mine[-BACKFILL_N:]:
+            data["payload"]["backfill"] = True
+            await self.send("overlay", data)
+            self._with_text(data)
+
     async def send(self, kind: str, data: dict[str, Any]) -> None:
         await self.ws.send_text(json.dumps({"type": kind, "data": data}))
 
@@ -140,6 +173,7 @@ class Session:
             latest = self.match.timeline.latest(kind, start)
             if latest:
                 await self.send(kind, latest.json_data())
+        await self._backfill(start)
         # One frame straight away, so a viewer who seeks while paused sees the new position.
         first = next(iter(self.match.tracking.iter_frames(FRAME_HZ, start=start)), None)
         if first is not None and self.clock.paused:
@@ -147,18 +181,13 @@ class Session:
         async for item in stream(self._items(start), self.clock):
             data = item.json_data()
             if item.type == "overlay":
-                shown = for_viewer(data, self.profile)
+                shown = self._for_me(data)
                 if shown is None:
                     continue
                 data = shown
-                if self.texts:
-                    data = apply(data, self.texts.table(self.match, lang), lang)
-                data["t_wall_emit"] = datetime.now(UTC).isoformat(timespec="milliseconds")
             await self.send(item.type, data)
-            if item.type == "overlay" and self.agents and data.get("moment_id"):
-                task = asyncio.create_task(self._attach_text(data))
-                self._text_tasks.add(task)
-                task.add_done_callback(self._text_tasks.discard)
+            if item.type == "overlay":
+                self._with_text(data)
         await self.send("end", {"t_match": self.match.tracking.duration})
 
     def restart(self) -> None:
@@ -401,6 +430,33 @@ def create_app(data_dir: Path | None = None) -> FastAPI:
             raise HTTPException(404, "no state at that time")
         return state
 
+    @app.get("/matches/{match_id}/pulse")
+    async def pulse(match_id: str, t: float = Query(..., ge=0)) -> list[dict[str, Any]]:
+        """The shape of the match up to `t`, one sample every 30 s. Nothing after `t`."""
+        loaded = await load(match_id)
+        home, away = loaded.meta.home.code, loaded.meta.away.code
+        out = []
+        for it in loaded.timeline.items:
+            if it.t_match > t:
+                break
+            if it.type != "state" or it.t_match % PULSE_SAMPLE_S:
+                continue
+            s = it.data
+            out.append(
+                {
+                    "t_match": s["t_match"],
+                    "clock": s["clock"],
+                    "period": s["period"],
+                    "momentum": s["momentum"],
+                    "control": s["control_chaos"]["value"],
+                    "tempo": s["rhythm"]["events_per_min"],
+                    "possession_home_5min": s["possession_5min"][home],
+                    "pressure_home": s["pressure"][home],
+                    "pressure_away": s["pressure"][away],
+                }
+            )
+        return out
+
     @app.get("/matches/{match_id}/catchup")
     async def catchup(match_id: str, t: float = Query(..., ge=0)) -> dict[str, Any]:
         """Spoiler-safe summary of the match up to `t` match seconds. No model calls."""
@@ -490,9 +546,13 @@ def create_app(data_dir: Path | None = None) -> FastAPI:
         }
 
     @app.get("/matches/{match_id}/overlays.jsonl")
-    async def overlays_jsonl(match_id: str) -> PlainTextResponse:
+    async def overlays_jsonl(
+        match_id: str, upto: float | None = Query(None, ge=0)
+    ) -> PlainTextResponse:
+        """The overlay timeline as a graphics engine would take it, optionally up to `upto`."""
         m = await load(match_id)
-        body = "".join(o.model_dump_json() + "\n" for o in m.timeline.overlays)
+        rows = [o for o in m.timeline.overlays if upto is None or o.show_at <= upto]
+        body = "".join(o.model_dump_json() + "\n" for o in rows)
         return PlainTextResponse(body, media_type="application/x-ndjson")
 
     @app.get("/matches/{match_id}/cues.csv")

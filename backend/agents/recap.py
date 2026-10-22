@@ -61,6 +61,29 @@ def recap_facts(ctx: MatchContext, kind: Kind) -> dict[str, Any]:
         for e in intel.events
         if e.type == EventType.GOAL and e.t_match <= t
     ]
+    # Penalties that did not go in, and red cards: part of the story, so the recap must tell them.
+    missed = [
+        {
+            "clock": e.clock,
+            "taker": ctx.names.player(e.player_id),
+            "team": club.get(e.team or "", e.team),
+            "outcome": (e.outcome or "missed").replace("_", " "),
+        }
+        for e in intel.events
+        if e.type == EventType.SHOT
+        and "penalty" in e.tags
+        and e.outcome != "goal"
+        and e.t_match <= t
+    ]
+    reds = [
+        {"clock": e.clock, "player": ctx.names.player(e.player_id), "team": club.get(e.team or "")}
+        for e in intel.events
+        if e.type == EventType.CARD
+        and e.outcome == "red"
+        and e.player_id
+        and "manager" not in e.tags
+        and e.t_match <= t
+    ]
     teams: dict[str, Any] = {}
     for c in intel.teams:
         stats = state["team_stats"][c]
@@ -101,12 +124,50 @@ def recap_facts(ctx: MatchContext, kind: Kind) -> dict[str, Any]:
         "home": club[home],
         "away": club[away],
         "score": f"{club[home]} {state['score'][home]}, {club[away]} {state['score'][away]}",
+        "result": _result(kind, club[home], club[away], state["score"][home], state["score"][away]),
         "goals": goals,
+        "penalties_not_scored": missed,
+        "red_cards": reds,
         "teams": teams,
         "leaders": leaders,
         "storylines": ctx.storylines,
         "verified_insights": aired,
     }
+
+
+def _result(kind: Kind, home: str, away: str, h: int, a: int) -> str:
+    """Who is winning or won, in words, so the prose cannot get the outcome backwards."""
+    lead = "lead" if kind == "half_time" else "beat"
+    if h == a:
+        return f"{home} and {away} {'are level' if kind == 'half_time' else 'drew'} {h}-{a}"
+    win, lose = (home, away) if h > a else (away, home)
+    hi, lo = max(h, a), min(h, a)
+    if kind == "half_time":
+        return f"{win} {lead} {lose} {hi}-{lo}; {lose} are chasing an equaliser"
+    return f"{win} {lead} {lose} {hi}-{lo}"
+
+
+def must_mention(out: RecapOutput, facts: dict[str, Any]) -> list[str]:
+    """Every penalty that was not scored and every red card is in the recap; nobody who lost is
+    said to have been looking for a winner."""
+    text = " ".join([out.headline, *out.paragraphs, *out.highlights])
+    problems = []
+    for p in facts.get("penalties_not_scored", []):
+        if p["taker"].split()[-1] not in text:
+            problems.append(f"Say that {p['taker']}'s penalty at {p['clock']} was {p['outcome']}")
+    for r in facts.get("red_cards", []):
+        if r["player"].split()[-1] not in text:
+            problems.append(f"Say that {r['player']} was sent off at {r['clock']}")
+    home_goals = facts["teams"][facts["home"]]["goals"]
+    away_goals = facts["teams"][facts["away"]]["goals"]
+    if home_goals != away_goals:
+        behind = facts["away"] if home_goals > away_goals else facts["home"]
+        short = behind.split()[0]
+        for sentence in re.split(r"(?<=[.!?])\s+", text):
+            if short in sentence and WINNER.search(sentence):
+                problems.append(f"{behind} were behind: they needed an equaliser, not a winner")
+                break
+    return problems
 
 
 def _from_the_spot(events: list[MatchEvent], goal: MatchEvent, spot: set[Any]) -> bool:
@@ -121,6 +182,7 @@ def _from_the_spot(events: list[MatchEvent], goal: MatchEvent, spot: set[Any]) -
     return bool(shots) and "penalty" in shots[-1].tags
 
 
+WINNER = re.compile(r"\bwinner\b", re.I)
 CLOCK = re.compile(r"\b(\d{1,3})(?:\+(\d{1,2}))?:(\d{2})\b")
 
 
@@ -218,6 +280,7 @@ async def make_recap(ctx: MatchContext, kind: Kind, persona: Persona, lang: str 
         stray = _stray(out, facts)
         timing = goal_time_problems(" ".join([*out.paragraphs, *out.highlights]), facts["goals"])
         timing += jargon_problems(out, persona)
+        timing += must_mention(out, facts)
         if not stray and not timing:
             output = out.model_copy(update={"highlights": in_match_order(out.highlights)})
             trail.append(

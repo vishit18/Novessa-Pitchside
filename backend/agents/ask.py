@@ -39,12 +39,22 @@ LEADER_FIELDS: dict[str, tuple[str, float]] = {
     "sprints": ("sprints", 1.0),
     "passes": ("passes", 1.0),
     "pass_accuracy_pct": ("pass accuracy (%)", 100.0),
-    "xg": ("xG", 1.0),
+    "goals": ("goals", 1.0),
+    "assists": ("assists", 1.0),
+    "xg": ("xG from all their shots so far", 1.0),
     "shots": ("shots", 1.0),
     "hardest_pass": ("hardest completed pass (difficulty)", 1.0),
     "duels_won": ("duels won", 1.0),
 }
-PLAYER_FIELDS = LEADER_FIELDS
+# A player's whole line. Penalties and cards are part of their story even when they are zero
+# for most players, so they are read here but nobody is ranked on them.
+PLAYER_FIELDS: dict[str, tuple[str, float]] = {
+    **LEADER_FIELDS,
+    "penalties_taken": ("penalties taken", 1.0),
+    "penalties_scored": ("penalties scored", 1.0),
+    "yellows": ("yellow cards", 1.0),
+    "reds": ("red cards", 1.0),
+}
 COMPARE_METRICS = {
     "passes",
     "pass_accuracy_pct",

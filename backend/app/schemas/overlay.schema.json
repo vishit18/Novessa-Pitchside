@@ -177,7 +177,8 @@
         "milestone",
         "commentary_line",
         "recap",
-        "stat_compare"
+        "stat_compare",
+        "state_of_play"
       ],
       "title": "Kind",
       "type": "string"

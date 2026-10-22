@@ -101,22 +101,54 @@ def time_problems(text: str, clock: str) -> list[str]:
     return out
 
 
+# A booking is about one player. Text that says it changed how a team plays is a guess.
+CARD_CAUSE = re.compile(
+    r"\b(shift(s|ed)?|trigger(s|ed)?|forc(es|ed|ing)|tactic(s|al)|reshap\w*|containment)\b", re.I
+)
+DESPITE = re.compile(r"\bdespite\b", re.I)
+# States of mind: no number in the data can show them.
+MIND = re.compile(r"\b(composure|composed|confiden\w*|nerves|nervous|mentality)\b", re.I)
+
+
+def cause_problems(moment: Moment, text: str) -> list[str]:
+    """Causes the data cannot show: a card reshaping a team, or a pile of contrasts."""
+    out = []
+    if moment.kind == "card" and not moment.staff and CARD_CAUSE.search(text):
+        out.append("a booking is about the player; do not say it changed the team's tactics")
+    if MIND.search(text):
+        out.append("say what the numbers show, not how anyone feels")
+    if len(DESPITE.findall(text)) > 1:
+        out.append('one "despite" at most, and only for a contrast two numbers show')
+    return out
+
+
 def story_problems(
     book: NameBook, moment: Moment, teams: tuple[str, str], headline: str, body: str
 ) -> list[str]:
-    """Everything wrong with who and when in one headline and body. Empty means it passes."""
-    return team_problems(book, moment, teams, headline) + time_problems(
-        f"{headline} {body}", moment.clock
+    """Everything wrong with who, when and why in one headline and body. Empty means it passes."""
+    text = f"{headline} {body}"
+    return (
+        team_problems(book, moment, teams, headline)
+        + time_problems(text, moment.clock)
+        + cause_problems(moment, text)
     )
 
 
 def goal_time_problems(text: str, goals: list[dict[str, str]]) -> list[str]:
     """For recaps: a sentence that names a scorer and a time phrase must fit that goal's clock."""
     out = []
+    by_scorer: dict[str, list[str]] = {}
+    for g in goals:
+        by_scorer.setdefault(g["scorer"], []).append(g["clock"])
     for sentence in re.split(r"(?<=[.!?])\s+", text):
-        for g in goals:
-            surname = g["scorer"].split()[-1]
-            if re.search(rf"(?<!\w){re.escape(surname)}(?!\w)", sentence):
-                for problem in time_problems(sentence, g["clock"]):
-                    out.append(f"{g['scorer']}'s goal: {problem}")
+        for scorer, clocks in by_scorer.items():
+            surname = scorer.split()[-1]
+            if not re.search(rf"(?<!\w){re.escape(surname)}(?!\w)", sentence):
+                continue
+            # A scorer of two goals can be "early and late" in one sentence: a phrase only fails
+            # when it fits none of their goals.
+            for problem in time_problems(sentence, clocks[0]):
+                phrase = problem.split('"')[1]
+                if all(any(f'"{phrase}"' in p for p in time_problems(sentence, c)) for c in clocks):
+                    out.append(f"{scorer}'s goal: {problem}")
     return out

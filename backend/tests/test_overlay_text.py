@@ -38,9 +38,10 @@ async def test_table_translates_and_drops_lines_that_change_a_number(tmp_path: P
     assert changed and all(line not in table for line in changed)
 
     # Cached: a second gateway process gets the table without calling Translator again.
+    first = tr.calls
     again = OverlayText(tr, FileCache(tmp_path), store.names)
     assert await again.ready(match, "hi", timeout_s=5) == table
-    assert tr.calls == 1
+    assert tr.calls == first
 
 
 def test_apply_swaps_known_lines_and_marks_the_language() -> None:

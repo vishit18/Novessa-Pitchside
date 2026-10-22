@@ -33,18 +33,24 @@ class RecapTransport(ScriptedTransport):
         self.recap_calls = 0
 
     async def chat(self, deployment: str, system: str, user: str, timeout_s: float) -> str:
-        if "recap v1" not in system:
+        if "<!-- recap v" not in system:
             return await super().chat(deployment, system, user, timeout_s)
         self.recap_calls += 1
         facts: dict[str, Any] = json.loads(user.split("\n\nAnswer with")[0])["fact_sheet"]
         extra = " They have 777 fans here." if self.mode == "invent" else ""
+        # Like the real editor, it tells every penalty that was not scored and every red card.
+        told = [
+            f"{p['clock']} {p['taker']} penalty {p['outcome']}."
+            for p in facts["penalties_not_scored"]
+        ]
+        told += [f"{r['clock']} {r['player']} sent off." for r in facts["red_cards"]]
         if self.mode == "invent_once" and self.recap_calls == 1:
             extra = " They have 777 fans here."
         return json.dumps(
             {
                 "headline": "A match to remember",
                 "paragraphs": [f"{facts['score']}.{extra}", "It was a lively game."],
-                "highlights": ["Kick-off.", "Goals.", "Half-time whistle."],
+                "highlights": ["Kick-off.", "Goals.", "Half-time whistle.", *told],
             }
         )
 
@@ -136,3 +142,35 @@ def test_model_terms_are_for_analysts_only() -> None:
     assert not jargon_problems(out, "analyst")
     plain = out.model_copy(update={"paragraphs": ["Ashford had the better chances."]})
     assert not jargon_problems(plain, "casual")
+
+
+def test_a_recap_must_tell_missed_penalties_and_get_the_result_right() -> None:
+    from backend.agents.models import RecapOutput
+    from backend.agents.recap import must_mention
+
+    facts = {
+        "home": "Ashford Rovers",
+        "away": "Kestrel Bay FC",
+        "teams": {"Ashford Rovers": {"goals": 2}, "Kestrel Bay FC": {"goals": 1}},
+        "penalties_not_scored": [
+            {
+                "clock": "77:31",
+                "taker": "Tobias Wragg",
+                "team": "Ashford Rovers",
+                "outcome": "saved",
+            }
+        ],
+        "red_cards": [],
+    }
+    bad = RecapOutput(
+        headline="Ashford win",
+        paragraphs=["Kestrel Bay kept the ball but could not find a winner."],
+        highlights=["26:47 Wragg penalty", "77:31 Wragg again", "84:01 Wragg"],
+    )
+    problems = must_mention(bad, facts)
+    assert any("equaliser" in p for p in problems)
+    assert not any("saved" in p for p in problems)  # Wragg is named, so the miss can be told
+    quiet = RecapOutput(
+        headline="Ashford win", paragraphs=["A tight one."], highlights=["a", "b", "c"]
+    )
+    assert any("Tobias Wragg's penalty" in p for p in must_mention(quiet, facts))

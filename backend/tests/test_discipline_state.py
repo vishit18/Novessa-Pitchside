@@ -173,3 +173,14 @@ def test_player_stats_has_discipline_fields(client: TestClient) -> None:
     sent_off = [q for q in data["players"] if q["reds"]]
     assert len(sent_off) == 1 and sent_off[0]["on_pitch"] is False
     assert sum(1 for q in data["players"] if q["on_pitch"]) == 21  # ten men plus eleven
+
+
+def test_goals_assists_and_penalties_per_player(drama: StateRun) -> None:
+    ev = drama.match.events
+    goals = Counter(e.player_id for e in ev if e.type == EventType.GOAL)
+    pens = Counter(e.player_id for e in ev if e.type == EventType.SHOT and "penalty" in e.tags)
+    for pid, p in drama.engine.players.items():
+        assert p.goals == goals.get(pid, 0)
+        assert p.penalties_taken == pens.get(pid, 0)
+        assert p.penalties_scored <= p.penalties_taken
+    assert sum(p.assists for p in drama.engine.players.values()) <= sum(goals.values())

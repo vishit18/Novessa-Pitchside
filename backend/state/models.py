@@ -115,6 +115,10 @@ class PlayerStats(BaseModel):
     shots: int = 0
     xg: float = 0.0
     xa: float = 0.0
+    goals: int = 0
+    assists: int = 0
+    penalties_taken: int = 0
+    penalties_scored: int = 0
     duels_won: int = 0
     duels_lost: int = 0
     fouls: int = 0

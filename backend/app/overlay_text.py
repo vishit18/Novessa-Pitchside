@@ -40,6 +40,9 @@ class TimelineText(BaseModel):
 
     lang: str
     lines: dict[str, str]
+    # Every English line already sent to the Translator, kept or not, so a match that gains new
+    # lines (a new overlay kind) only translates those. Empty in tables saved before this existed.
+    tried: list[str] = []
 
 
 def english_lines(match: LoadedMatch) -> list[str]:
@@ -91,14 +94,16 @@ class OverlayText:
     async def _build(self, match: LoadedMatch, lang: str) -> None:
         key = cache_key(match.meta.seed, "timeline", "overlay_text", "*", lang)
         hit = self.cache.get(key, TimelineText)
-        if hit is not None:
-            self._tables[(match.meta.match_id, lang)] = hit.lines
-            return
         english = english_lines(match)
-        table: dict[str, str] = {}
+        table: dict[str, str] = dict(hit.lines) if hit else {}
+        tried = set(hit.tried) if hit else set()
+        missing = [en for en in english if en not in table and en not in tried]
+        if hit is not None and not missing:
+            self._tables[(match.meta.match_id, lang)] = table
+            return
         try:
-            for i in range(0, len(english), CHUNK):
-                chunk = english[i : i + CHUNK]
+            for i in range(0, len(missing), CHUNK):
+                chunk = missing[i : i + CHUNK]
                 for en, tr in zip(chunk, await self._chunk(match, chunk, lang), strict=True):
                     if tr != en:
                         table[en] = tr
@@ -108,7 +113,8 @@ class OverlayText:
             del self._tasks[(match.meta.match_id, lang)]
             return
         self._tables[(match.meta.match_id, lang)] = table
-        self.cache.put(key, TimelineText(lang=lang, lines=table))
+        done = sorted(tried | set(english))
+        self.cache.put(key, TimelineText(lang=lang, lines=table, tried=done))
 
     async def _chunk(self, match: LoadedMatch, chunk: list[str], lang: str) -> list[str]:
         """One chunk in `lang`; any line that would change a fact stays English."""

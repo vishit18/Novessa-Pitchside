@@ -46,7 +46,11 @@ PLAYER_METRICS = (
     "shots",
     "passes",
     "duels_won",
+    "goals",
+    "assists",
 )
+# Numbers about one action rather than a running total: the xG of the player's latest shot.
+EVENT_METRICS = ("shot_xg",)
 BALL_WIN_TYPES = {EventType.TACKLE, EventType.INTERCEPTION}
 
 
@@ -159,6 +163,8 @@ class MatchIntel:
         t_to: float | None = None,
     ) -> float:
         """Compute one claimable number from scratch. Raises on an unknown metric."""
+        if metric in EVENT_METRICS and player_id:
+            return self._shot_xg(player_id, t_to)
         if metric in PLAYER_METRICS and player_id:
             return self._player_metric(metric, player_id, t_to)
         if metric in WINDOW_METRICS and team:
@@ -212,6 +218,22 @@ class MatchIntel:
         if metric == "corners":
             return float(sum(e.type == EventType.CORNER for e in evs))
         raise UnknownMetricError(metric)
+
+    def latest_shot(self, player_id: str, t: float) -> MatchEvent | None:
+        """The player's latest shot at or before `t`, goals included."""
+        for e in reversed(self._window(0.0, t)):
+            mine = e.player_id == player_id and e.type in (EventType.SHOT, EventType.GOAL)
+            if mine and (e.type == EventType.SHOT or e.xg is not None):
+                return e
+        return None
+
+    def _shot_xg(self, player_id: str, t: float | None) -> float:
+        if t is None:
+            raise UnknownMetricError("shot_xg needs a time")
+        shot = self.latest_shot(player_id, t)
+        if shot is None:
+            raise ValueError(f"{player_id} has no shot by {t}")
+        return round(shot.xg or 0.0, 3)
 
     def _player_metric(self, metric: str, player_id: str, t: float | None) -> float:
         if t is None:

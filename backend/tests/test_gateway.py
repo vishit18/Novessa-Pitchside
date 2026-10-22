@@ -117,7 +117,14 @@ def test_websocket_streams_every_message_type(client: TestClient) -> None:
     with client.websocket_connect(f"/ws/matches/{MATCH}?t=1190&speed=60") as ws:
         first = ws.receive_json()
         assert first["type"] == "state"
-        msgs = [first, *_collect(ws, until="overlay")]
+        msgs = [first]
+        # The story so far (backfill) comes first; wait for the first overlay from the stream.
+        while not (
+            msgs[-1]["type"] == "overlay" and not msgs[-1]["data"]["payload"].get("backfill")
+        ):
+            msgs.append(ws.receive_json())
+    backfill = [m for m in msgs if m["type"] == "overlay" and m["data"]["payload"].get("backfill")]
+    assert backfill and all(m["data"]["show_at"] < 1190 for m in backfill)
     types = {m["type"] for m in msgs}
     assert {"state", "frame", "event", "overlay"} <= types
     frame = next(m for m in msgs if m["type"] == "frame")["data"]
@@ -190,6 +197,28 @@ def test_player_focus_and_metric_override_persona() -> None:
     assert for_viewer(goal, metric) is not None
 
 
+def test_player_focus_keeps_the_match_story() -> None:
+    focus = ViewerProfile(persona="casual", player="ASH-08")
+    card = _ov("insight", moment_kind="card", team="KES")
+    plain = {**_ov("state_of_play", variant="plain"), "persona": ["casual", "kids"]}
+    analyst = _ov("state_of_play", variant="analyst")
+    assert for_viewer(card, focus) is not None
+    assert for_viewer(plain, focus) is not None
+    assert for_viewer(analyst, focus) is None
+    assert for_viewer(_ov("insight", moment_kind="pressure_shift", team="KES"), focus) is None
+
+
+def test_a_goal_is_for_or_against_your_club() -> None:
+    goal = _ov("insight", moment_kind="goal", team="ASH")
+    goal["persona"] = ["analyst", "casual"]
+    ours = for_viewer(goal, ViewerProfile(persona="casual", club="ASH"))
+    theirs = for_viewer(goal, ViewerProfile(persona="casual", club="KES"))
+    assert ours is not None and ours["payload"]["for_you"] == "scored"
+    assert theirs is not None and theirs["payload"]["for_you"] == "conceded"
+    neutral = for_viewer(goal, ViewerProfile(persona="casual"))
+    assert neutral is not None and "for_you" not in neutral["payload"]
+
+
 def _seconds(clock: str) -> int:
     base, _, extra = clock.partition("+")
     m, sec = (extra or base).split(":")
@@ -225,7 +254,8 @@ def test_player_stats_is_sent_on_connect_with_every_field(client: TestClient) ->
     p = data["players"][0]
     expected = {
         "player_id", "team", "on_pitch", "passes", "passes_complete", "pass_accuracy",
-        "avg_difficulty", "longest_pass_m", "hardest_pass", "shots", "xg", "xa", "duels_won",
+        "avg_difficulty", "longest_pass_m", "hardest_pass", "shots", "xg", "xa", "goals", "assists",
+        "penalties_taken", "penalties_scored", "duels_won",
         "duels_lost", "fouls", "yellows", "reds", "distance_km", "top_speed_kmh", "top_shot_kmh",
         "sprints",
     }  # fmt: skip
@@ -295,3 +325,26 @@ async def test_every_offside_flag_becomes_a_lower_third() -> None:
         shown = [o for o in m.timeline.overlays if o.payload.get("milestone") == "offside"]
         assert len(shown) == len(flags)
         assert all(o.payload["headline"] == "Offside" for o in shown)
+
+
+def test_pulse_stops_at_the_viewers_clock(client: TestClient) -> None:
+    rows = client.get(f"/matches/{MATCH}/pulse", params={"t": 600}).json()
+    assert rows and rows[-1]["t_match"] <= 600
+    assert [r["t_match"] for r in rows] == sorted(r["t_match"] for r in rows)
+    assert {"momentum", "control", "tempo", "possession_home_5min"} <= set(rows[0])
+
+
+def test_state_of_play_fills_the_quiet(client: TestClient) -> None:
+    from backend.app.overlay import Overlay
+
+    rows = client.get(f"/matches/{MATCH}/overlays.jsonl").text.splitlines()
+    pulses = [Overlay.model_validate_json(r) for r in rows if '"state_of_play"' in r]
+    assert len(pulses) >= 40
+    plain = [p for p in pulses if p.payload["variant"] == "plain"]
+    assert plain and all("xG" not in p.payload["body"] for p in plain)
+    assert all(p.persona == ["analyst"] for p in pulses if p.payload["variant"] == "analyst")
+
+
+def test_overlay_export_can_stop_at_a_time(client: TestClient) -> None:
+    rows = client.get(f"/matches/{MATCH}/overlays.jsonl", params={"upto": 900}).text.splitlines()
+    assert rows and all(json.loads(r)["show_at"] <= 900 for r in rows)

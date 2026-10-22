@@ -103,6 +103,8 @@ class StateEngine:
         self.sent_off = {t: 0 for t in self.teams}
         self._goals_by: dict[str, int] = {}
         self._pending_key: dict[str, str] = {}
+        # Shooter -> the team-mate whose pass set up their latest shot, so a goal can credit them.
+        self._shot_passer: dict[str, str] = {}
         self._longest_pass = 0.0
         self._fastest = 0.0
         self._sprinting: dict[str, bool] = {}
@@ -614,7 +616,12 @@ class StateEngine:
         passer = self._pending_key.pop(ev.player_id, None)
         if passer:
             self.player(passer).xa += xg
+            self._shot_passer[ev.player_id] = passer
+        else:
+            self._shot_passer.pop(ev.player_id, None)
         self._penalty_taker = ev.player_id if "penalty" in (ev.tags or []) else None
+        if self._penalty_taker:
+            p.penalties_taken += 1
         self._momentum[ev.team] += 2.0 + 12.0 * xg
         speed = ev.ball_speed_kmh or 0.0
         p.top_shot_kmh = max(p.top_shot_kmh, speed)
@@ -650,6 +657,10 @@ class StateEngine:
         self._momentum[ev.team] += 10.0
         n = self._goals_by.get(ev.player_id, 0) + 1
         self._goals_by[ev.player_id] = n
+        self.player(ev.player_id).goals += 1
+        assist = self._shot_passer.pop(ev.player_id, None)
+        if assist:
+            self.player(assist).assists += 1
         if not self._first_goal_done:
             self._first_goal_done = True
             out.append(self._milestone(ev, "first_goal", 1))
@@ -657,6 +668,8 @@ class StateEngine:
             out.append(self._milestone(ev, "brace" if n == 2 else "hat_trick", n))
         penalty = self._penalty_taker == ev.player_id
         self._penalty_taker = None
+        if penalty:
+            self.player(ev.player_id).penalties_scored += 1
         how = "scored a penalty" if penalty else "scored"
         mo = self._moment(
             "goal",

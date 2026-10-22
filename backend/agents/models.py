@@ -45,7 +45,7 @@ class Claim(BaseModel):
 
 class AnalystOutput(BaseModel):
     headline: str = Field(max_length=90, description="At most 6 words")
-    why: str = Field(max_length=420, description="One or two sentences. Numbers only from claims.")
+    why: str = Field(max_length=420, description="One sentence, at most 30 words.")
     claims: list[Claim] = Field(min_length=1, max_length=4)
 
 

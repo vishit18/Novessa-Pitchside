@@ -17,6 +17,16 @@ from backend.state.models import Moment
 
 ID_PATTERN = re.compile(r"\b[A-Z]{3}-\d{2}\b")
 NUMBER = re.compile(r"\d+(?:\.\d+)?")
+# Running totals: correct as numbers, wrong if the prose says they belong to one action.
+TOTAL_METRICS = {"xg", "xg_total", "shots", "passes", "distance_km", "sprints"}
+ONE_ACTION = re.compile(
+    r"\b(penalty|spot[- ]kick|from the spot|(this|that|the|his|her|their) "
+    r"(shot|chance|effort|strike|finish|attempt)|shot's|chance's)\b",
+    re.I,
+)
+# How far before a number to look for the words that say what it is, never past its own clause.
+SCOPE_LOOKBACK = 45
+CLAUSE_BREAK = re.compile(r"[;:.,!?]|\b(?:and|but|while|after|whereas)\b", re.I)
 ABS_TOL = 0.51
 REL_TOL = 0.02
 
@@ -55,6 +65,40 @@ def _check_claim(intel: MatchIntel, i: int, claim: Claim) -> ClaimCheck:
     )
 
 
+def _spellings(value: float) -> set[str]:
+    """How a number may be written in prose: 0.002, 0.00, 22, 22.0."""
+    out = {f"{value:g}", f"{value:.2f}", f"{value:.1f}", f"{value:.3f}"}
+    if float(value).is_integer():
+        out.add(str(int(value)))
+    return out
+
+
+def scope_problems(analysis: AnalystOutput) -> list[str]:
+    """A running total described as one action ("his penalty xG is 0.002").
+
+    The number check cannot see this: the total is real, it is just not what the sentence says it
+    is. Looks at the words just before each place a total's number is written.
+    """
+    out: list[str] = []
+    prose = f"{analysis.headline} {analysis.why}"
+    for c in analysis.claims:
+        if c.metric not in TOTAL_METRICS:
+            continue
+        for text in (prose, c.text):
+            for spelling in _spellings(c.value):
+                for hit in re.finditer(rf"(?<![\d.]){re.escape(spelling)}(?!\d)", text):
+                    before = text[max(0, hit.start() - SCOPE_LOOKBACK) : hit.start()]
+                    before = CLAUSE_BREAK.split(before)[-1]
+                    words = ONE_ACTION.search(before)
+                    if words:
+                        hint = "; use shot_xg for one shot" if c.metric.startswith("xg") else ""
+                        out.append(
+                            f'"{words.group(0)} ... {spelling}": {c.metric} {spelling} is a '
+                            f"total so far, not one action's{hint}"
+                        )
+    return list(dict.fromkeys(out))
+
+
 def allowed_numbers(moment: Moment, analysis: AnalystOutput) -> list[float]:
     allowed = [c.value for c in analysis.claims]
     allowed += [e.value for e in moment.evidence]
@@ -78,8 +122,9 @@ def allowed_numbers(moment: Moment, analysis: AnalystOutput) -> list[float]:
 def verify(
     intel: MatchIntel, moment: Moment, analysis: AnalystOutput, book: NameBook | None = None
 ) -> Verdict:
-    """Check every claim, then the prose for numbers nobody proved, then (given the names) that
-    the headline credits the right club and its time phrases fit the clock."""
+    """Check every claim, then the prose for numbers nobody proved, then that no running total is
+    passed off as one action's number, then (given the names) that the headline credits the right
+    club and its time phrases fit the clock."""
     checks = [_check_claim(intel, i, c) for i, c in enumerate(analysis.claims)]
     allowed = allowed_numbers(moment, analysis)
     text = f"{analysis.headline} {analysis.why} " + " ".join(c.text for c in analysis.claims)
@@ -88,6 +133,7 @@ def verify(
     story = (
         story_problems(book, moment, intel.teams, analysis.headline, analysis.why) if book else []
     )
+    story += scope_problems(analysis)
     if bad or stray or story:
         parts = [c.reason for c in bad]
         if stray:

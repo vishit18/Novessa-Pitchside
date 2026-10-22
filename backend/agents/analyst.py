@@ -17,7 +17,22 @@ from backend.state.models import Moment
 
 PROMPT = (Path(__file__).parent / "prompts" / "analyst.md").read_text("utf-8")
 WINDOW_S = 300.0
-PLAYER_MENU = ("top_speed_kmh", "distance_km", "pass_accuracy_pct", "xg", "shots", "passes")
+PLAYER_MENU = (
+    "goals",
+    "top_speed_kmh",
+    "distance_km",
+    "pass_accuracy_pct",
+    "xg",
+    "shots",
+    "passes",
+)
+# Moments about one shot get that shot's own xG, so nobody has to describe a total as one shot.
+SHOT_KINDS = {"goal", "big_chance"}
+# What each kind of number covers, said in the menu so the prose can say it too.
+SCOPE_STATE = "right now"
+SCOPE_WINDOW = "last 5 minutes"
+SCOPE_PLAYER = "whole match so far, all of it added up"
+SCOPE_SHOT = "this one shot"
 TEAM_STATE_MENU = ("pressure_index", "possession_5min", "score")
 GLOBAL_STATE_MENU = ("momentum", "control_chaos", "events_per_min")
 WINDOW_MENU = ("passes", "pass_accuracy_pct", "shots", "xg_total", "ball_wins", "pressure_events")
@@ -30,21 +45,27 @@ def evidence_menu(ctx: MatchContext, m: Moment) -> list[dict[str, Any]]:
     t_from = max(0.0, t - WINDOW_S)
     rows: list[dict[str, Any]] = []
 
-    def add(metric: str, value: float, **where: Any) -> None:
-        rows.append({"metric": metric, "value": round(value, 3), **where})
+    def add(metric: str, value: float, scope: str, **where: Any) -> None:
+        rows.append({"metric": metric, "value": round(value, 3), "covers": scope, **where})
 
     for metric in GLOBAL_STATE_MENU:
-        add(metric, intel.measure(metric, t_to=t), t_to=t)
+        add(metric, intel.measure(metric, t_to=t), SCOPE_STATE, t_to=t)
     for team in intel.teams:
         for metric in TEAM_STATE_MENU:
-            add(metric, intel.measure(metric, team=team, t_to=t), team=team, t_to=t)
+            scope = SCOPE_WINDOW if metric.endswith("5min") else SCOPE_STATE
+            add(metric, intel.measure(metric, team=team, t_to=t), scope, team=team, t_to=t)
         for metric in WINDOW_MENU:
             value = intel.measure(metric, team=team, t_from=t_from, t_to=t)
-            add(metric, value, team=team, t_from=t_from, t_to=t)
+            add(metric, value, SCOPE_WINDOW, team=team, t_from=t_from, t_to=t)
     for pid in m.player_ids[:2]:
         for metric in PLAYER_MENU:
             value = intel.measure(metric, player_id=pid, t_to=t)
-            add(metric, value, player_id=pid, t_to=t)
+            add(metric, value, SCOPE_PLAYER, player_id=pid, t_to=t)
+    if m.kind in SHOT_KINDS and m.player_ids:
+        pid = m.player_ids[0]
+        if intel.latest_shot(pid, t) is not None:
+            value = intel.measure("shot_xg", player_id=pid, t_to=t)
+            add("shot_xg", value, SCOPE_SHOT, player_id=pid, t_to=t)
     return rows
 
 
