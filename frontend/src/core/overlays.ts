@@ -48,7 +48,17 @@ export function activeOverlays(all: OverlayEnvelope[], t: number): OverlayEnvelo
         break
       case 'update': {
         const prev = live.get(id)
-        live.set(id, prev ? { ...prev, payload: { ...prev.payload, ...o.payload } } : o)
+        // An update may lengthen the card (agent text takes longer to read), never shorten it.
+        live.set(
+          id,
+          prev
+            ? {
+                ...prev,
+                duration_s: Math.max(prev.duration_s, o.duration_s),
+                payload: { ...prev.payload, ...o.payload },
+              }
+            : o,
+        )
         break
       }
       case 'hide':

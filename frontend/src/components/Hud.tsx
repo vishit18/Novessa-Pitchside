@@ -1,3 +1,4 @@
+import type { StringKey } from '@/i18n/strings'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { sentenceCase } from '@/core/headline'
 import { useEffect, useRef, useState } from 'react'
@@ -8,6 +9,24 @@ import { outcomeLabel } from '@/i18n/strings'
 import { metricName } from '@/i18n/strings.more'
 import { useSession, useSessionState, useT } from '@/state/useSession'
 import type { OverlayEnvelope } from '@/types/overlay'
+
+const MILESTONE_KEYS = new Set([
+  'first_goal',
+  'brace',
+  'hat_trick',
+  'longest_pass',
+  'fastest_sprint',
+  'offside',
+])
+
+const MODEL_INDICES = new Set([
+  'momentum',
+  'momentum_swing',
+  'control_chaos',
+  'pressure_index',
+  'pressure_gap_swing',
+  'events_per_min',
+])
 
 const colour = (code: string) => CLUBS[code]?.primary_color ?? '#9aa5b1'
 
@@ -183,10 +202,12 @@ function toneColour(o: OverlayEnvelope): string {
 function Headline({ o }: { o: OverlayEnvelope }) {
   const lang = useSessionState((s) => s.profile.lang)
   const persona = useSessionState((s) => s.profile.persona)
-  const head = String(o.payload['headline'] ?? '')
+  const t = useT()
+  const milestone = o.payload['milestone']
+  const known = typeof milestone === 'string' && MILESTONE_KEYS.has(milestone)
+  const head = known ? t(`ms_${milestone}` as StringKey) : String(o.payload['headline'] ?? '')
   const body = String(o.payload['body'] ?? '')
   const late = lateness(o)
-  const t = useT()
   const analyst = persona === 'analyst'
   const kids = persona === 'kids'
   // The score bug already shows the score, so score rows never take a chip; nor does a full
@@ -195,6 +216,8 @@ function Headline({ o }: { o: OverlayEnvelope }) {
     ? o.provenance.evidence
         .filter((e) => !e.metric.startsWith('score'))
         .filter((e) => !(e.metric === 'men_on_pitch' && e.value >= 11))
+        // Model indices have no scale a viewer knows; they stay in "Why am I seeing this?".
+        .filter((e) => !MODEL_INDICES.has(e.metric))
         .slice(0, 4)
     : []
   const headSize = analyst

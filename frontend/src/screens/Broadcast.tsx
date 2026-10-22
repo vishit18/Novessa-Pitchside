@@ -134,8 +134,14 @@ function MatchCentre({
 
           <div
             ref={monitor}
-            className="mx-auto aspect-video w-full overflow-hidden bg-[#101418]"
-            style={full.on ? undefined : { maxWidth: `calc((100dvh - ${CHROME_PX}px) * 16 / 9)` }}
+            className={`mx-auto w-full overflow-hidden bg-[#101418] ${
+              small && !full.on ? 'aspect-[4/5]' : 'aspect-video'
+            }`}
+            style={
+              full.on || small
+                ? undefined
+                : { maxWidth: `calc((100dvh - ${CHROME_PX}px) * 16 / 9)` }
+            }
           >
             <BroadcastPane
               session={session}

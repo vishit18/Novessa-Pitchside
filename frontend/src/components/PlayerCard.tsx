@@ -8,6 +8,7 @@ import type { PlayerStatsEntry } from '@/types/overlay'
 const positionOf = (id: string) => PLAYERS[id]?.position as Position | undefined
 
 const DASH = '—'
+const RANK_AFTER_S = 300
 
 type StatKey =
   'distance' | 'topSpeed' | 'passes' | 'passAccuracy' | 'avgDifficulty' | 'sprints' | 'shots' | 'xg'
@@ -41,8 +42,10 @@ export function PlayerCard() {
   const speed = useSessionState((s) => s.focusSpeed)
   const all = useSessionState((s) => s.playerStats?.players ?? null)
   const stats = all?.find((p) => p.player_id === id) ?? null
+  const statsT = useSessionState((s) => s.playerStats?.t_match ?? 0)
+  // Five minutes in, a rank starts to mean something; before that it ranks a few touches.
   const rank = (f: (p: PlayerStatsEntry) => number | null): Rank | null =>
-    all && id ? rankAmong(all, id, f, positionOf) : null
+    all && id && statsT >= RANK_AFTER_S ? rankAmong(all, id, f, positionOf) : null
   if (!id) return null
   const info = PLAYERS[id]
   const team = id.split('-')[0] ?? ''

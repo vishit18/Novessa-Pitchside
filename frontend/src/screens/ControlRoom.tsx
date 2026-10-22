@@ -25,7 +25,13 @@ export function ControlRoom({ query }: { query: URLSearchParams }) {
   const counts = useMemo(() => tally(insights), [insights])
   const progress = health?.matches[matchId]
   // Spoiler-safe by default: moments and cues only as far as this viewer has watched the match.
-  const seen = useMemo(() => seenUpTo(matchId), [matchId])
+  // A clock in the link wins (the control room opened from a match at that minute), else how far
+  // this viewer has watched.
+  const tParam = query.get('t')
+  const seen = useMemo(
+    () => (tParam !== null ? Number(tParam) : seenUpTo(matchId)),
+    [matchId, tParam],
+  )
   const [whole, setWhole] = useState(false)
   const upto = whole ? null : seen
   const shown = useMemo(
@@ -53,7 +59,10 @@ export function ControlRoom({ query }: { query: URLSearchParams }) {
           </h1>
           <p className="mt-2 max-w-[70ch] text-[15px] text-muted">
             The agent team behind every broadcast, live. Switch any agent off to watch the others
-            recover.
+            recover.{' '}
+            <a href="#feed-h" className="text-amber underline underline-offset-4">
+              See the overlay feed a graphics engine receives
+            </a>
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">

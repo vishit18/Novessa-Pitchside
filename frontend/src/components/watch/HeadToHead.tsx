@@ -53,13 +53,16 @@ export function HeadToHead() {
       {rows.map((r) => {
         const total = r.home + r.away
         const share = total ? r.home / total : 0.5
-        const fmt = (v: number) => (r.pct ? `${v.toFixed(0)}%` : String(v))
+        // Rounded shares must still add up to 100.
+        const homePct = Math.round(r.home)
+        const fmt = (side: 'home' | 'away') =>
+          r.pct ? `${side === 'home' ? homePct : 100 - homePct}%` : String(r[side])
         return (
           <div key={r.key}>
             <div className="flex items-baseline justify-between">
-              <dd className="num m-0 text-[19px] leading-none">{fmt(r.home)}</dd>
+              <dd className="num m-0 text-[19px] leading-none">{fmt('home')}</dd>
               <dt className="text-[13px] text-muted">{t(r.key)}</dt>
-              <dd className="num m-0 text-[19px] leading-none">{fmt(r.away)}</dd>
+              <dd className="num m-0 text-[19px] leading-none">{fmt('away')}</dd>
             </div>
             <div className="mt-1 flex h-[5px] gap-[3px]" aria-hidden>
               {total === 0 ? (

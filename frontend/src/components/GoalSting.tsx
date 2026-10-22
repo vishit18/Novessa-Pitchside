@@ -95,27 +95,23 @@ export function GoalSting({ compact = false }: { compact?: boolean }) {
             <div
               className={`flex flex-1 flex-wrap items-end gap-x-8 gap-y-1 ${compact ? 'px-5 py-3' : 'px-10 py-5'}`}
             >
-              <span
-                className={`font-display font-bold uppercase leading-[0.8] tracking-tight ${
-                  against
-                    ? compact
-                      ? 'text-[44px] text-text/75'
-                      : 'text-[80px] text-text/75'
-                    : compact
-                      ? 'text-[64px]'
-                      : 'text-[120px]'
-                }`}
-                style={
-                  against ? undefined : { color: kit, textShadow: '0 0 30px rgb(0 0 0 / 0.5)' }
-                }
-              >
-                {t('kind_goal')}
-              </span>
+              {/* The conceding fan gets the news without the shout: no giant GOAL. */}
+              {!against && (
+                <span
+                  className={`font-display font-bold uppercase leading-[0.8] tracking-tight ${
+                    compact ? 'text-[64px]' : 'text-[120px]'
+                  }`}
+                  style={{ color: kit, textShadow: '0 0 30px rgb(0 0 0 / 0.5)' }}
+                >
+                  {t('kind_goal')}
+                </span>
+              )}
               <span className="flex flex-col pb-1.5">
                 <span
                   className={`font-display font-semibold leading-none ${compact ? 'text-[24px]' : 'text-[40px]'}`}
                 >
                   {against ? t('goalFor', { club: name }) : name}
+                  {ours && ' '}
                   {ours && (
                     <span
                       className={`ms-3 inline-block bg-amber px-2 align-middle font-semibold text-ink ${compact ? 'text-[14px]' : 'text-[20px]'}`}

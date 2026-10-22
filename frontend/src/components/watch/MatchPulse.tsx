@@ -5,6 +5,9 @@ import { useSession, useSessionState, useT } from '@/state/useSession'
 import { usePulse } from '@/state/usePulse'
 import type { StringKey } from '@/i18n/strings'
 
+/** "Kestrel Bay FC" -> "Kestrel Bay": the panel is narrow, the full name gets cut off. */
+const shortName = (name: string) => name.replace(/\s+(FC|AFC|United|City|Rovers|Athletic)$/, '')
+
 const W = 400
 const H = 96
 const colour = (code: string) => CLUBS[code]?.primary_color ?? '#9aa5b1'
@@ -144,7 +147,7 @@ export function MatchPulse() {
                 : 'var(--color-muted)'
           }
           level={label === 'chaotic' ? 3 : label === 'balanced' ? 2 : 1}
-          detail={analyst && snap ? snap.control_chaos.value.toFixed(0) : null}
+          detail={null}
         />
         <Reading
           label={t('tempoLabel')}
@@ -160,7 +163,7 @@ export function MatchPulse() {
               <span className="h-4 w-[5px] shrink-0" style={{ background: colour(presser) }} />
             )}
             <span className="truncate font-display text-[19px] font-bold leading-none">
-              {presser ? (CLUBS[presser]?.name ?? presser) : t('evenWord')}
+              {presser ? shortName(CLUBS[presser]?.name ?? presser) : t('evenWord')}
             </span>
           </dd>
         </div>
