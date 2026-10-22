@@ -7,6 +7,7 @@ import { WebSocketSource } from '@/net/wsSource'
 import type { MatchSource, SourceOptions } from '@/net/source'
 import type { OverlayEnvelope, WireMessage } from '@/types/overlay'
 import { StreamBuffers } from './buffers'
+import { rememberSeen } from './seen'
 import { createUIStore, type UIState } from './store'
 
 /** Jitter buffer on top of any deliberate delay, in match seconds. */
@@ -38,6 +39,7 @@ export class Session {
   private lastFeedMs = 0
   private lastFeedSig = ''
   private lastTimeMs = 0
+  private lastSeenMs = 0
 
   constructor(readonly opts: SourceOptions) {
     this.store = createUIStore(opts.profile)
@@ -163,6 +165,10 @@ export class Session {
       patch.t = t
       const seen = this.store.getState().seenUpTo
       if (t > seen) patch.seenUpTo = t
+    }
+    if (!this.opts.ambient && nowMs - this.lastSeenMs > 5000 && t > 0) {
+      this.lastSeenMs = nowMs
+      rememberSeen(this.opts.matchId, this.store.getState().seenUpTo)
     }
     if (nowMs - this.lastFeedMs > 400) {
       this.lastFeedMs = nowMs

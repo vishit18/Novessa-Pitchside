@@ -26,6 +26,7 @@ export type OverlayKind =
   | 'commentary_line'
   | 'recap'
   | 'stat_compare'
+  | 'state_of_play'
 
 export type Anchor = { type: 'player'; id: string } | { type: 'pitch'; x: number; y: number } | null
 
@@ -71,6 +72,10 @@ export interface PlayerStatsEntry {
   shots: number
   xg: number
   xa: number
+  goals: number
+  assists: number
+  penalties_taken: number
+  penalties_scored: number
   duels_won: number
   duels_lost: number
   fouls: number

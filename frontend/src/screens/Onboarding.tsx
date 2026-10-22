@@ -40,8 +40,10 @@ const kit = (code: string) => CLUBS[code]?.primary_color ?? '#9aa5b1'
 export function Onboarding({ query }: { query: URLSearchParams }) {
   const saved = useMemo(() => loadProfile(), [])
   const [profile, setProfile] = useState<ViewerProfile>(() => saved ?? defaultProfile())
+  // Always start by picking the match: a match in the link is only highlighted, never chosen
+  // for the viewer, so nobody lands on "How do you watch?" for a fixture they did not pick.
   const [matchId, setMatchId] = useState<string | null>(query.get('match'))
-  const [step, setStep] = useState<Step>(query.get('match') ? 'persona' : 'match')
+  const [step, setStep] = useState<Step>('match')
   const [matches, setMatches] = useState<MatchSummary[] | null>(null)
   const [meta, setMeta] = useState<MatchMeta | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -75,9 +77,9 @@ export function Onboarding({ query }: { query: URLSearchParams }) {
     setProfile(p)
     next(p)
   }
-  const finish = (p: ViewerProfile) => {
+  const finish = (p: ViewerProfile, match: string | null = matchId) => {
     saveProfile(p)
-    navigate(withParams('/watch', { match: matchId ?? 'derby_01' }))
+    navigate(withParams('/watch', { match: match ?? 'derby_01' }))
   }
 
   return (
@@ -102,6 +104,20 @@ export function Onboarding({ query }: { query: URLSearchParams }) {
 
           {step === 'match' && (
             <Question title="Pick a match" hint="Three fixtures from matchday one.">
+              {saved && matches && matches.length > 0 && (
+                <Choice
+                  selected={false}
+                  onClick={() => finish(saved, matchId ?? matches[0]!.match_id)}
+                >
+                  <span className="font-display text-[26px] font-semibold leading-none text-amber">
+                    Same as last time
+                  </span>
+                  <span className="mt-1 block text-[14px] text-text/80">
+                    {fixtureLine(matches.find((m) => m.match_id === matchId) ?? matches[0]!)}, as{' '}
+                    {savedLine(saved)}
+                  </span>
+                </Choice>
+              )}
               {error && (
                 <p className="border-s-2 border-chaos ps-3 text-[15px] text-text">
                   Couldn’t reach the match server ({error}). Check the gateway is running, then
@@ -136,14 +152,6 @@ export function Onboarding({ query }: { query: URLSearchParams }) {
 
           {step === 'persona' && (
             <Question title="How do you watch?" hint={fixture ? fixtureLine(fixture) : undefined}>
-              {saved && (
-                <Choice selected={false} onClick={() => finish(saved)}>
-                  <span className="font-display text-[26px] font-semibold leading-none text-amber">
-                    Same as last time
-                  </span>
-                  <span className="mt-1 block text-[14px] text-text/80">{savedLine(saved)}</span>
-                </Choice>
-              )}
               {PERSONAS.map((p) => (
                 <Choice
                   key={p.id}
@@ -407,7 +415,7 @@ function Progress({ total, at }: { total: number; at: number }) {
 /** The selected match playing quietly behind the questions. */
 function Backdrop({ matchId }: { matchId: string }) {
   const profile = useMemo(() => defaultProfile({ persona: 'casual' }), [])
-  const session = useLiveSession({ matchId, profile, startAt: 600, speed: 1 })
+  const session = useLiveSession({ matchId, profile, startAt: 600, speed: 1, ambient: true })
   return (
     <div className="absolute inset-0" aria-hidden="true">
       <div className="absolute inset-0 opacity-60 sm:left-[22%]">

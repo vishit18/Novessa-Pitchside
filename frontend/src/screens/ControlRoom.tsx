@@ -2,12 +2,14 @@ import { useEffect, useMemo, useState } from 'react'
 import { AgentGraph } from '@/components/control/AgentGraph'
 import { Gauges } from '@/components/control/Gauges'
 import { MomentQueue } from '@/components/control/MomentQueue'
+import { OverlayFeed } from '@/components/control/OverlayFeed'
 import { AppNav } from '@/components/AppNav'
 import { tally } from '@/core/control'
 import { GATEWAY_HTTP, listMatches, type MatchSummary } from '@/net/api'
 import { killAgent, startAgents } from '@/net/control'
 import { navigate, withParams } from '@/router'
 import { useControlData } from '@/state/useControlData'
+import { seenUpTo } from '@/state/seen'
 
 const KILL_SECONDS = 30
 
@@ -22,6 +24,14 @@ export function ControlRoom({ query }: { query: URLSearchParams }) {
   const { health, insights, lit, offline, refresh } = useControlData(matchId)
   const counts = useMemo(() => tally(insights), [insights])
   const progress = health?.matches[matchId]
+  // Spoiler-safe by default: moments and cues only as far as this viewer has watched the match.
+  const seen = useMemo(() => seenUpTo(matchId), [matchId])
+  const [whole, setWhole] = useState(false)
+  const upto = whole ? null : seen
+  const shown = useMemo(
+    () => (upto === null ? insights : insights.filter((i) => i.moment.t_match <= upto)),
+    [insights, upto],
+  )
   const running = !!progress && !progress.finished
 
   useEffect(() => {
@@ -95,13 +105,28 @@ export function ControlRoom({ query }: { query: URLSearchParams }) {
       <AgentGraph agents={health?.agents ?? {}} tally={counts} lit={lit} onKill={kill} />
 
       <div className="grid flex-1 gap-8 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] lg:gap-10">
-        {insights.length ? (
-          <MomentQueue insights={insights} />
+        {shown.length ? (
+          <MomentQueue insights={shown} />
         ) : (
           <EmptyQueue enabled={health?.enabled ?? false} started={!!progress} />
         )}
         <Gauges health={health} progress={progress} />
       </div>
+
+      {seen !== null && (
+        <label className="flex items-center gap-2 self-start text-[14px] text-muted">
+          <input
+            type="checkbox"
+            checked={whole}
+            onChange={(e) => setWhole(e.target.checked)}
+            className="size-4 accent-[var(--color-amber)]"
+          />
+          Show the whole match (you have watched up to {Math.floor(seen / 60)}’; this gives away the
+          result)
+        </label>
+      )}
+
+      <OverlayFeed matchId={matchId} upto={upto} />
     </main>
   )
 }

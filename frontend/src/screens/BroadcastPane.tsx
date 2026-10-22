@@ -26,6 +26,10 @@ interface Props {
   corner?: ReactNode
   /** Leave out the match line and wordmark: the pitch is zoomed in and they sit on players. */
   focus?: boolean
+  /** The page around the pane already names the fixture, so leave the match line out. */
+  framed?: boolean
+  /** Offer Ask the Analyst over the pitch. On by default unless the pane is compact. */
+  ask?: boolean
 }
 
 /**
@@ -38,15 +42,24 @@ export function BroadcastPane({
   transport = true,
   corner,
   focus = false,
+  framed = false,
+  ask,
 }: Props) {
   return (
     <SessionContext.Provider value={session}>
-      <PaneBody compact={compact} transport={transport} corner={corner} focus={focus} />
+      <PaneBody
+        compact={compact}
+        transport={transport}
+        corner={corner}
+        focus={focus}
+        framed={framed}
+        ask={ask ?? !compact}
+      />
     </SessionContext.Provider>
   )
 }
 
-function PaneBody({ compact, transport, corner, focus }: Omit<Props, 'session'>) {
+function PaneBody({ compact, transport, corner, focus, framed, ask }: Omit<Props, 'session'>) {
   const lang = useSessionState((s) => s.profile.lang)
   const status = useSessionState((s) => s.status)
   const detail = useSessionState((s) => s.statusDetail)
@@ -66,7 +79,7 @@ function PaneBody({ compact, transport, corner, focus }: Omit<Props, 'session'>)
         className={`pointer-events-none absolute inset-x-0 top-0 flex flex-col items-start gap-2 p-4 sm:flex-row sm:justify-between sm:gap-3 sm:p-6 ${compact ? 'hud-compact' : ''}`}
       >
         <div className="flex w-[min(100%,380px)] flex-col gap-3">
-          <ScoreBug showMatchLine={!compact && !focus} />
+          <ScoreBug showMatchLine={!compact && !focus && !framed} />
           <MetricReadout />
           <BallChip />
         </div>
@@ -97,7 +110,7 @@ function PaneBody({ compact, transport, corner, focus }: Omit<Props, 'session'>)
 
       <GoalSting compact={compact} />
       <Stalled />
-      {!compact && <AskLayer />}
+      {ask && <AskLayer />}
       {(!meta || !snapshot) && !failed && <KickOffCard compact={compact} />}
       {failed && <FeedDown detail={detail} />}
     </div>

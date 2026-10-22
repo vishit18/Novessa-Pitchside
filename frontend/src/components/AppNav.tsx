@@ -19,17 +19,9 @@ export const NAV_ITEMS: { path: string; key: StringKey; who: string }[] = [
 /** Where a nav item goes, keeping the match the viewer is on. */
 function hrefFor(path: string, match: string | null): string {
   if (path === '/') return withParams('/')
-  if (path === '/watch') {
-    // First-timers set up how they watch first; returning viewers go straight in.
-    const saved = (() => {
-      try {
-        return window.localStorage.getItem('pitchside.profile.v1') !== null
-      } catch {
-        return false
-      }
-    })()
-    return withParams(saved ? '/watch' : '/start', match ? { match } : {})
-  }
+  // Watch always starts by picking a match and how to watch it. A returning viewer's first
+  // option there is "Same as last time", so it is still one click for them.
+  if (path === '/watch') return withParams('/start', match ? { match } : {})
   if (path === '/real') return withParams('/real')
   return withParams(path, match ? { match } : {})
 }

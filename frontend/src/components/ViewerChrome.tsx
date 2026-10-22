@@ -11,7 +11,7 @@ import { useWake } from '@/state/useWake'
  * Top-right of the broadcast. The chip says who is watching and how, always. Commentary and the
  * menu (every other page) fade in when the pointer moves or focus lands, and out after three seconds.
  */
-export function ViewerChrome() {
+export function ViewerChrome({ onChoose }: { onChoose?: () => void } = {}) {
   const session = useSession()
   const t = useT()
   const profile = useSessionState((s) => s.profile)
@@ -32,7 +32,7 @@ export function ViewerChrome() {
     <div className="flex flex-col items-end gap-2" onFocusCapture={wake}>
       <button
         className="plate-chip group flex items-center gap-3 bg-raised/90 py-2 pl-4 pr-3 text-start hover:bg-hairline"
-        onClick={() => navigate(withParams('/start', { match: matchId }))}
+        onClick={onChoose ?? (() => navigate(withParams('/start', { match: matchId })))}
         aria-label={`${persona}, ${lang}${who ? `, ${who}` : ''}. ${t('changeHow')}`}
       >
         <span className="flex flex-col">

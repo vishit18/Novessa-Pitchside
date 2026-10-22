@@ -35,4 +35,6 @@ export interface SourceOptions {
   startAt?: number
   /** Mock only: replay speed multiplier. */
   speed?: number
+  /** A backdrop or preview, not the viewer watching: do not count it as seen. */
+  ambient?: boolean
 }

@@ -4,7 +4,7 @@ import { CLUBS, PLAYERS } from '@/data/league'
 import { useSession, useSessionState, useT } from '@/state/useSession'
 import type { OverlayEnvelope } from '@/types/overlay'
 
-const HOLD_MS = 2600
+const HOLD_MS = 4200
 
 interface Sting {
   id: string
@@ -67,6 +67,7 @@ export function GoalSting({ compact = false }: { compact?: boolean }) {
   const club = sting ? CLUBS[sting.team] : undefined
   const kit = club?.primary_color ?? 'var(--color-amber)'
   const against = !!sting && !!fan && fan !== sting.team
+  const ours = !!sting && fan === sting.team
   const name = club?.name ?? sting?.team ?? ''
   const details = sting
     ? [sting.scorer, sting.penalty ? t('kind_penalty') : null, sting.clock].filter(
@@ -115,6 +116,13 @@ export function GoalSting({ compact = false }: { compact?: boolean }) {
                   className={`font-display font-semibold leading-none ${compact ? 'text-[24px]' : 'text-[40px]'}`}
                 >
                   {against ? t('goalFor', { club: name }) : name}
+                  {ours && (
+                    <span
+                      className={`ms-3 inline-block bg-amber px-2 align-middle font-semibold text-ink ${compact ? 'text-[14px]' : 'text-[20px]'}`}
+                    >
+                      {t('tagYourGoal')}
+                    </span>
+                  )}
                 </span>
                 <span
                   className={`num mt-1.5 text-muted ${compact ? 'text-[16px]' : 'text-[22px]'}`}

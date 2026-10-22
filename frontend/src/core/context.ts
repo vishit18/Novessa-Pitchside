@@ -15,7 +15,7 @@ const MIN_GROUP = 3
 /**
  * Rank a player on one measure against everyone in the same position who has played in this
  * match (on the pitch now, or with any minutes before going off). Ties share the better rank.
- * Returns null when the player has no value yet or the group is too small to compare.
+ * Returns null when the player has no value yet (or zero) or the group is too small to compare.
  */
 export function rankAmong(
   players: PlayerStatsEntry[],
@@ -26,7 +26,8 @@ export function rankAmong(
   const group = positionOf(id)
   const me = players.find((p) => p.player_id === id)
   const mine = me ? value(me) : null
-  if (!group || mine == null) return null
+  // Nothing yet ranks nothing: "#1 of 4" at 0 passes only means nobody has passed.
+  if (!group || mine == null || mine <= 0) return null
   const peers = players
     .filter((p) => positionOf(p.player_id) === group && (p.on_pitch || p.distance_km > 0))
     .map(value)

@@ -43,8 +43,8 @@ export function DesignLab({ query }: { query: URLSearchParams }) {
   const analyst = useMemo(() => defaultProfile({ persona: 'analyst', lang: 'en' }), [])
   const casual = useMemo(() => defaultProfile({ persona: 'casual', lang: 'es' }), [])
   const [startAt] = useState(() => Number(query.get('t') ?? START_T))
-  const a = useLiveSession({ matchId: MATCH, profile: analyst, startAt, speed: 1 })
-  const b = useLiveSession({ matchId: MATCH, profile: casual, startAt, speed: 1 })
+  const a = useLiveSession({ matchId: MATCH, profile: analyst, startAt, speed: 1, ambient: true })
+  const b = useLiveSession({ matchId: MATCH, profile: casual, startAt, speed: 1, ambient: true })
 
   const pick = (id: DirectionId) => {
     const next = DIRECTIONS.find((d) => d.id === id)

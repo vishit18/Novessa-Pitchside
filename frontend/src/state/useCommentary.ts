@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { GATEWAY_HTTP } from '@/net/api'
-import { useSessionState } from './useSession'
+import { useSession, useSessionState } from './useSession'
 
 /** One audio element at a time: starting a line stops the one before it. */
 export function useAudio() {
@@ -25,23 +25,29 @@ export function useAudio() {
 
 /**
  * Spoken commentary on or off. With it on, each new card is spoken once, as it arrives, in the
- * viewer's language. Needs a session in context.
+ * viewer's language. Audio-described viewers start with it on. Cards from before it was switched
+ * on (the story so far sent on join) are never spoken. Needs a session in context.
  */
 export function useCommentary() {
+  const session = useSession()
   const feed = useSessionState((s) => s.feed)
-  const [on, setOn] = useState(false)
+  const persona = useSessionState((s) => s.profile.persona)
+  const [on, setOn] = useState(persona === 'accessibility')
+  const since = useRef(session.store.getState().t)
   const player = useAudio()
   const spoken = useRef(new Set<string>())
   const newest = feed[0]
 
   useEffect(() => {
     if (!on || !newest?.audioUrl || spoken.current.has(newest.id)) return
+    if (newest.showAt < since.current) return
     spoken.current.add(newest.id)
     player.play(`${GATEWAY_HTTP}${newest.audioUrl}`)
   }, [on, newest, player])
 
   const toggle = () => {
     if (on) player.stop()
+    else since.current = session.store.getState().t
     setOn(!on)
   }
   return { on, toggle, player }

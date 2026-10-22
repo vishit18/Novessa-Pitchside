@@ -1,6 +1,7 @@
 import { rankAmong, type Position, type Rank } from '@/core/context'
 import { CLUBS, PLAYERS } from '@/data/league'
 import type { StringKey } from '@/i18n/strings'
+import type { Persona } from '@/state/profile'
 import { useSessionState, useT } from '@/state/useSession'
 import type { PlayerStatsEntry } from '@/types/overlay'
 
@@ -8,19 +9,38 @@ const positionOf = (id: string) => PLAYERS[id]?.position as Position | undefined
 
 const DASH = '—'
 
+type StatKey =
+  'distance' | 'topSpeed' | 'passes' | 'passAccuracy' | 'avgDifficulty' | 'sprints' | 'shots' | 'xg'
+
+/** What each kind of viewer is shown about their player. Model numbers stay with the analyst. */
+const STATS: Record<Persona, StatKey[]> = {
+  analyst: [
+    'distance',
+    'topSpeed',
+    'passes',
+    'passAccuracy',
+    'avgDifficulty',
+    'sprints',
+    'shots',
+    'xg',
+  ],
+  casual: ['distance', 'topSpeed', 'passes', 'shots'],
+  kids: ['distance', 'topSpeed'],
+  accessibility: ['distance', 'passes', 'shots'],
+}
+
 /**
- * The live card for player focus mode. Every number comes from the stream: speed from the
- * latest tracking frame, the rest from the state engine's player_stats. Nothing is computed
- * here beyond formatting and a rank against the players in the same position, so each number
- * comes with its context (player-performance context in the brief).
+ * The followed player, beside the match in player focus. Their story first (goals, assists,
+ * penalties, cards), then the numbers this kind of viewer wants, each ranked against the same
+ * position on this pitch once there is something to rank. Every number comes from the stream.
  */
 export function PlayerCard() {
   const t = useT()
   const id = useSessionState((s) => s.profile.player)
+  const persona = useSessionState((s) => s.profile.persona)
   const speed = useSessionState((s) => s.focusSpeed)
   const all = useSessionState((s) => s.playerStats?.players ?? null)
   const stats = all?.find((p) => p.player_id === id) ?? null
-  /** This player's place among the same position on this pitch, for one measure. */
   const rank = (f: (p: PlayerStatsEntry) => number | null): Rank | null =>
     all && id ? rankAmong(all, id, f, positionOf) : null
   if (!id) return null
@@ -28,98 +48,94 @@ export function PlayerCard() {
   const team = id.split('-')[0] ?? ''
   const club = CLUBS[team]
 
+  const story: string[] = []
+  if (stats) {
+    if (stats.goals) story.push(t(stats.goals === 1 ? 'oneGoal' : 'nGoals', { n: stats.goals }))
+    if (stats.assists)
+      story.push(t(stats.assists === 1 ? 'oneAssist' : 'nAssists', { n: stats.assists }))
+    const missed = stats.penalties_taken - stats.penalties_scored
+    if (missed > 0) story.push(t('penMissed', { n: missed }))
+    if (stats.reds) story.push(t('sentOff'))
+    else if (stats.yellows) story.push(t('booked'))
+  }
+
+  const cells: Record<StatKey, { value: string; unit?: string; rank?: Rank | null }> = {
+    distance: {
+      value: fmt(stats, (s) => s.distance_km.toFixed(2)),
+      unit: 'km',
+      rank: rank((p) => p.distance_km),
+    },
+    topSpeed: {
+      value: fmt(stats, (s) => s.top_speed_kmh.toFixed(1)),
+      unit: 'km/h',
+      rank: rank((p) => p.top_speed_kmh),
+    },
+    passes: {
+      value: fmt(stats, (s) => `${s.passes_complete}/${s.passes}`),
+      rank: rank((p) => p.passes_complete),
+    },
+    passAccuracy: {
+      value: fmt(stats, (s) =>
+        s.pass_accuracy == null ? DASH : `${Math.round(s.pass_accuracy * 100)}%`,
+      ),
+      rank: rank((p) => (p.passes >= 5 ? p.pass_accuracy : null)),
+    },
+    avgDifficulty: {
+      value: fmt(stats, (s) => (s.avg_difficulty == null ? DASH : s.avg_difficulty.toFixed(0))),
+      rank: rank((p) => (p.passes >= 5 ? p.avg_difficulty : null)),
+    },
+    sprints: { value: fmt(stats, (s) => String(s.sprints)), rank: rank((p) => p.sprints) },
+    shots: { value: fmt(stats, (s) => String(s.shots)), rank: rank((p) => p.shots) },
+    xg: { value: fmt(stats, (s) => s.xg.toFixed(2)), rank: rank((p) => p.xg) },
+  }
+
   return (
-    <section className="plate-shadow h-full" aria-label={`${t('following')} ${info?.name ?? id}`}>
-      <div className="plate flex h-full flex-col gap-6 p-6" style={{ ['--cut' as string]: '18px' }}>
-        <div className="flex items-center gap-2.5 text-[14px] text-muted">
-          <span className="h-4 w-[5px]" style={{ background: club?.primary_color ?? '#9aa5b1' }} />
-          {club?.name ?? team}
-        </div>
-
-        <div className="flex items-end gap-4">
-          <span className="num text-[96px] font-bold leading-[0.8] text-amber" dir="ltr">
-            {info?.shirt ?? ''}
-          </span>
-          <div className="min-w-0 pb-1">
-            <h2 className="font-display text-[38px] font-bold leading-[0.95]">
-              {info?.name ?? id}
-            </h2>
-            {info && (
-              <p className="mt-1 text-[14px] text-muted">
-                {t(`pos_${info.position}` as StringKey)}
-              </p>
-            )}
-          </div>
-        </div>
-
-        {stats && !stats.on_pitch && (
-          <p
-            className={`self-start px-2.5 py-1 font-display text-[22px] font-semibold leading-none ${
-              stats.reds > 0 ? 'bg-red-card text-white' : 'bg-text/10 text-text'
-            }`}
-            role="status"
-          >
-            {t(stats.reds > 0 ? 'sentOff' : 'subbedOff')}
+    <section aria-label={`${t('following')} ${info?.name ?? id}`} className="flex flex-col gap-3">
+      <div className="flex items-end gap-3">
+        <span className="num text-[64px] font-bold leading-[0.8] text-amber" dir="ltr">
+          {info?.shirt ?? ''}
+        </span>
+        <div className="min-w-0 pb-0.5">
+          <p className="flex items-center gap-2 text-[13px] text-muted">
+            <span
+              className="h-3.5 w-[4px]"
+              style={{ background: club?.primary_color ?? '#9aa5b1' }}
+            />
+            {club?.name ?? team}
+            {info && <span>· {t(`pos_${info.position}` as StringKey)}</span>}
           </p>
-        )}
-
-        <div>
-          <p className="text-[13px] text-muted">{t('speedNow')}</p>
-          <p className="num text-[64px] font-bold leading-none" dir="ltr">
-            {speed == null ? DASH : speed.toFixed(1)}
-            <span className="ml-2 text-[18px] font-medium text-muted">km/h</span>
+          <h2 className="truncate font-display text-[30px] font-bold leading-none">
+            {info?.name ?? id}
+          </h2>
+        </div>
+        <div className="ms-auto text-end">
+          <p className="text-[12px] text-muted">{t('speedNow')}</p>
+          <p className="num text-[30px] font-bold leading-none" dir="ltr">
+            {speed == null ? DASH : speed.toFixed(0)}
+            <span className="ms-1 text-[13px] font-medium text-muted">km/h</span>
           </p>
         </div>
-
-        <dl className="grid grid-cols-2 gap-x-6 gap-y-5 border-t border-text/10 pt-5 max-lg:grid-cols-3">
-          <Stat
-            label={t('distance')}
-            rank={rank((p) => p.distance_km)}
-            value={fmt(stats, (s) => s.distance_km.toFixed(2))}
-            unit="km"
-          />
-          <Stat
-            label={t('topSpeed')}
-            rank={rank((p) => p.top_speed_kmh)}
-            value={fmt(stats, (s) => s.top_speed_kmh.toFixed(1))}
-            unit="km/h"
-          />
-          <Stat
-            label={t('passes')}
-            value={fmt(stats, (s) => `${s.passes_complete}/${s.passes}`)}
-            rank={rank((p) => p.passes_complete)}
-          />
-          <Stat
-            label={t('passAccuracy')}
-            rank={rank((p) => (p.passes >= 5 ? p.pass_accuracy : null))}
-            value={fmt(stats, (s) =>
-              s.pass_accuracy == null ? DASH : `${Math.round(s.pass_accuracy * 100)}%`,
-            )}
-          />
-          <Stat
-            label={t('avgDifficulty')}
-            rank={rank((p) => (p.passes >= 5 ? p.avg_difficulty : null))}
-            value={fmt(stats, (s) =>
-              s.avg_difficulty == null ? DASH : s.avg_difficulty.toFixed(0),
-            )}
-          />
-          <Stat
-            label={t('sprints')}
-            rank={rank((p) => p.sprints)}
-            value={fmt(stats, (s) => String(s.sprints))}
-          />
-          <Stat label={t('shots')} value={fmt(stats, (s) => String(s.shots))} />
-          <Stat
-            label={t('xg')}
-            rank={rank((p) => p.xg)}
-            value={fmt(stats, (s) => s.xg.toFixed(2))}
-          />
-        </dl>
-
-        <p className="mt-auto text-[13px] leading-snug text-muted">
-          {stats ? t('heatmapNote') : `${t('statsPending')} ${t('heatmapNote')}`}
-        </p>
       </div>
+
+      {stats && !stats.on_pitch && (
+        <p
+          className="self-start bg-text px-2 py-1 text-[14px] font-semibold text-ink"
+          role="status"
+        >
+          {t(stats.reds > 0 ? 'sentOff' : 'subbedOff')}
+        </p>
+      )}
+      {story.length > 0 && (
+        <p className="font-display text-[22px] font-bold leading-tight text-amber">
+          {story.join(', ')}
+        </p>
+      )}
+
+      <dl className="grid grid-cols-4 gap-x-4 gap-y-3 border-t border-hairline pt-3">
+        {STATS[persona].map((k) => (
+          <Stat key={k} label={t(k)} {...cells[k]} />
+        ))}
+      </dl>
     </section>
   )
 }
@@ -142,20 +158,16 @@ function Stat({
   const t = useT()
   return (
     <div className="min-w-0">
-      <dt className="text-[13px] leading-tight text-muted">{label}</dt>
-      <dd className="num mt-1 text-[32px] font-semibold leading-none" dir="ltr">
+      <dt className="truncate text-[12px] leading-tight text-muted">{label}</dt>
+      <dd className="num m-0 mt-0.5 text-[22px] font-semibold leading-none" dir="ltr">
         {value}
         {unit && value !== DASH && (
-          <span className="ml-1 text-[14px] font-medium text-muted">{unit}</span>
+          <span className="ms-0.5 text-[12px] font-medium text-muted">{unit}</span>
         )}
       </dd>
       {rank && (
-        <dd className={`mt-1 text-[13px] ${rank.rank === 1 ? 'text-amber' : 'text-muted'}`}>
-          {t('rankLine', {
-            rank: rank.rank,
-            n: rank.of,
-            group: t(`grp_${rank.group}` as StringKey),
-          })}
+        <dd className={`m-0 mt-0.5 text-[12px] ${rank.rank === 1 ? 'text-amber' : 'text-muted'}`}>
+          {t('rankShort', { rank: rank.rank, n: rank.of })}
         </dd>
       )}
     </div>

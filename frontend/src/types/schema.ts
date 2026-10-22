@@ -90,6 +90,19 @@ export interface StateSnapshot {
   pressure: Record<string, number>
   control_chaos: ControlChaos
   rhythm: { events_per_min: number; avg_possession_len: number; broken: boolean }
+  /** Running discipline and set-piece counts per team (docs/05 team_stats). */
+  team_stats: Record<string, TeamStats>
+}
+
+export interface TeamStats {
+  fouls: number
+  yellows: number
+  reds: number
+  corners: number
+  free_kicks: number
+  penalties: number
+  shots: number
+  offsides: number
 }
 
 export type Group = 'GK' | 'DEF' | 'MID' | 'FWD'

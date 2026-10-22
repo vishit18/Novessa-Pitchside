@@ -9,6 +9,7 @@ import { navigate, withParams } from '@/router'
 import { ViewerChooser } from '@/components/ViewerChooser'
 import { defaultProfile, loadProfile } from '@/state/profile'
 import { useRecap } from '@/state/useRecap'
+import { revealAll, seenUpTo } from '@/state/seen'
 import { AlertIcon, CheckIcon } from '@/components/icons'
 
 /** Story column, then the numbers. Centred as a pair so wide screens have no empty middle. */
@@ -49,6 +50,12 @@ export function Recap({ query }: { query: URLSearchParams }) {
   const go = (patch: Record<string, string>) =>
     navigate(withParams('/recap', { match: matchId, kind, persona, lang, ...patch }))
 
+  // A viewer who has only watched part of this match is asked before the result is shown.
+  const [revealed, setRevealed] = useState(false)
+  const seen = useMemo(() => seenUpTo(matchId), [matchId])
+  const covers = state.status === 'ready' ? state.recap.t_match : kind === 'half_time' ? 2700 : 5400
+  const gated = !revealed && seen !== null && seen < covers
+
   const rtl = lang === 'ar'
   const recap = state.status === 'ready' ? state.recap : null
   const catchUp = state.status === 'ready' || state.status === 'off' ? state.catchUp : null
@@ -63,7 +70,20 @@ export function Recap({ query }: { query: URLSearchParams }) {
 
         <Toolbar kind={kind} persona={persona} lang={lang} onChange={go} />
 
-        <div lang={lang} dir={rtl ? 'rtl' : 'ltr'} className="contents">
+        {gated && (
+          <SpoilerGate
+            seen={seen}
+            kind={kind}
+            onHalfTime={
+              kind === 'full_time' && seen >= 2700 ? () => go({ kind: 'half_time' }) : null
+            }
+            onReveal={() => {
+              revealAll(matchId)
+              setRevealed(true)
+            }}
+          />
+        )}
+        <div lang={lang} dir={rtl ? 'rtl' : 'ltr'} className={gated ? 'hidden' : 'contents'}>
           {state.status === 'loading' && (
             <Loading slow={state.slow} preview={state.preview} codes={codes} />
           )}
@@ -86,6 +106,47 @@ export function Recap({ query }: { query: URLSearchParams }) {
         </div>
       </main>
     </div>
+  )
+}
+
+/** Asked first, before a recap that covers more of the match than this viewer has watched. */
+function SpoilerGate({
+  seen,
+  kind,
+  onHalfTime,
+  onReveal,
+}: {
+  seen: number
+  kind: RecapKind
+  onHalfTime: (() => void) | null
+  onReveal: () => void
+}) {
+  return (
+    <section className="max-w-[62ch] border-s-4 border-amber ps-5" aria-labelledby="gate-h">
+      <h2 id="gate-h" className="font-display text-[30px] font-bold leading-tight">
+        You’ve watched up to {Math.floor(seen / 60)}’.
+      </h2>
+      <p className="mt-2 text-[17px] leading-relaxed text-text/80">
+        The {kind === 'half_time' ? 'half-time' : 'full-time'} recap covers more than that, so it
+        gives away what happens next. Nothing is shown until you say so.
+      </p>
+      <div className="mt-5 flex flex-wrap gap-3">
+        {onHalfTime && (
+          <button
+            onClick={onHalfTime}
+            className="h-11 border border-text px-4 text-[15px] font-semibold hover:border-amber hover:text-amber"
+          >
+            Show the half-time recap
+          </button>
+        )}
+        <button
+          onClick={onReveal}
+          className="h-11 bg-amber px-4 text-[15px] font-semibold text-white hover:bg-[#a10f1a]"
+        >
+          Show it, I don’t mind
+        </button>
+      </div>
+    </section>
   )
 }
 

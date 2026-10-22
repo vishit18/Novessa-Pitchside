@@ -21,12 +21,25 @@ export interface FeedItem {
   verified: boolean
   /** state_engine for the instant card, agent:analyst once the agent text has attached. */
   source: string
+  /** goal, card, penalty, ... for insights; null for milestones and the state of play. */
+  momentKind: string | null
+  /** A goal for or against the viewer's club (docs/05 Persona filtering). */
+  forYou: 'scored' | 'conceded' | null
+  /** About the viewer's club, or their player. */
+  favouriteClub: boolean
+  yourPlayer: boolean
 }
 
 /** Overlays that read as a story beat. Tags, speed bursts and the like stay on the pitch. */
 export function isStoryOverlay(o: OverlayEnvelope): boolean {
-  return o.slot === 'lower_third' && (o.kind === 'insight' || o.kind === 'milestone')
+  return (
+    o.slot === 'lower_third' &&
+    (o.kind === 'insight' || o.kind === 'milestone' || o.kind === 'state_of_play')
+  )
 }
+
+/** A state-of-play beat: the commentator filling the quiet, not a moment. */
+export const isPulse = (item: FeedItem): boolean => item.kind === 'state_of_play'
 
 const str = (v: unknown): string => (typeof v === 'string' ? v : '')
 
@@ -66,6 +79,13 @@ export function momentFeed(log: OverlayEnvelope[], t: number): FeedItem[] {
       evidence: o.provenance.evidence.length ? o.provenance.evidence : (prev?.evidence ?? []),
       verified: o.provenance.verified,
       source: o.provenance.source,
+      momentKind: str(p['moment_kind']) || prev?.momentKind || null,
+      forYou:
+        p['for_you'] === 'scored' || p['for_you'] === 'conceded'
+          ? p['for_you']
+          : (prev?.forYou ?? null),
+      favouriteClub: p['favourite_club'] === true || (prev?.favouriteClub ?? false),
+      yourPlayer: p['your_player'] === true || (prev?.yourPlayer ?? false),
     })
   }
   return [...items.values()].sort((a, b) => b.showAt - a.showAt)

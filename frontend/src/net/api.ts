@@ -61,6 +61,26 @@ export interface CatchUp {
 export const getCatchUp = (id: string, t: number) =>
   getJson<CatchUp>(`/matches/${encodeURIComponent(id)}/catchup?t=${Math.max(0, t).toFixed(1)}`)
 
+/** One sample of the match's shape, every 30 match seconds (docs/05 Match pulse). */
+export interface PulseSample {
+  t_match: number
+  clock: string
+  period: number
+  /** -100 (away on top) to 100 (home on top). */
+  momentum: number
+  /** 0 chaos to 100 control. */
+  control: number
+  /** Events per minute. */
+  tempo: number
+  possession_home_5min: number
+  pressure_home: number
+  pressure_away: number
+}
+
+/** The match's shape up to `t` and nothing after it. */
+export const getPulse = (id: string, t: number) =>
+  getJson<PulseSample[]>(`/matches/${encodeURIComponent(id)}/pulse?t=${Math.max(0, t).toFixed(0)}`)
+
 export type RecapKind = 'half_time' | 'full_time'
 
 /** What the Recap Editor wrote. Mirrors backend/agents/models.py Recap. */

@@ -6,7 +6,7 @@ import { Stage } from '@/components/Stage'
 import { CLUBS } from '@/data/league'
 import { getMomentText } from '@/net/api'
 import { navigate, withParams } from '@/router'
-import { defaultProfile, loadProfile, type Lang } from '@/state/profile'
+import { defaultProfile, type Lang } from '@/state/profile'
 import { SessionContext, useLiveSession } from '@/state/useSession'
 
 /** derby_01, 26:47: Tobias Wragg's penalty puts Ashford Rovers ahead. */
@@ -106,7 +106,7 @@ export function Home() {
     }
   }, [])
 
-  const watch = () => navigate(withParams(loadProfile() ? '/watch' : '/start', { match: MATCH }))
+  const watch = () => navigate(withParams('/start', { match: MATCH }))
   const split = () => navigate(withParams('/split', { match: MATCH, t: String(GOAL_T) }))
 
   return (
@@ -169,7 +169,13 @@ export function Home() {
 /** The goal itself, playing quietly behind the headline. */
 function HeroPitch() {
   const profile = useMemo(() => defaultProfile({ persona: 'casual' }), [])
-  const session = useLiveSession({ matchId: MATCH, profile, startAt: GOAL_T - 40, speed: 1 })
+  const session = useLiveSession({
+    matchId: MATCH,
+    profile,
+    startAt: GOAL_T - 40,
+    speed: 1,
+    ambient: true,
+  })
   return (
     <div className="absolute inset-0 -z-10" aria-hidden="true">
       <div className="absolute inset-0 opacity-50 max-lg:opacity-30 lg:left-[30%]">
@@ -255,11 +261,7 @@ function WaysIn() {
         Try it
       </h2>
       <div className="mt-8 grid gap-4 lg:grid-cols-3">
-        <Way
-          title="Watch your way"
-          who="For fans"
-          onClick={() => go(loadProfile() ? '/watch' : '/start')}
-        >
+        <Way title="Watch your way" who="For fans" onClick={() => go('/start')}>
           Pick how you watch, your club, your player and your language. The broadcast reshapes
           itself around you: what it shows, how it says it, and what it leaves out.
         </Way>

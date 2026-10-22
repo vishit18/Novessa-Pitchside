@@ -1,5 +1,6 @@
 import type { Lang } from '@/state/profile'
 import { fr, hi, NAV, pt } from './strings.more'
+import { WATCH } from './strings.watch'
 
 /**
  * Interface strings for the broadcast chrome. Match prose (insights, commentary) arrives from
@@ -73,7 +74,7 @@ const en = {
 }
 
 type BaseKey = keyof typeof en
-export type StringKey = BaseKey | keyof (typeof NAV)['en']
+export type StringKey = BaseKey | keyof (typeof NAV)['en'] | keyof (typeof WATCH)['en']
 
 const es: Record<BaseKey, string> = {
   sentOff: 'Expulsado',
@@ -212,9 +213,10 @@ const ar: Record<BaseKey, string> = {
 // Typed per language, so a key missing from any table fails the build.
 const base: Record<Lang, Record<BaseKey, string>> = { en, es, fr, ar, hi, pt }
 const nav: Record<Lang, Record<keyof (typeof NAV)['en'], string>> = NAV
+const watch: Record<Lang, Record<keyof (typeof WATCH)['en'], string>> = WATCH
 
 export const STRINGS = Object.fromEntries(
-  (Object.keys(base) as Lang[]).map((l) => [l, { ...base[l], ...nav[l] }]),
+  (Object.keys(base) as Lang[]).map((l) => [l, { ...base[l], ...nav[l], ...watch[l] }]),
 ) as Record<Lang, Record<StringKey, string>>
 
 /** Look up a string and fill {placeholders}. Falls back to English, then to the key. */
