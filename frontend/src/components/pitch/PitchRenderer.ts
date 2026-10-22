@@ -8,6 +8,7 @@ import type { Persona } from '@/state/profile'
 import type { OverlayEnvelope } from '@/types/overlay'
 import { PITCH_LENGTH, PITCH_WIDTH } from '@/types/schema'
 import type { TrackingFrame } from '@/types/schema'
+import { FLOODLIGHTS, type PitchPalette } from './palette'
 
 export interface TeamLook {
   primary: string
@@ -19,12 +20,6 @@ export interface Point {
   y: number
 }
 
-const APRON = 0x143a28
-const GRASS_A = 0x1b4a33
-const GRASS_B = 0x1e5237
-const LINE = 0xe9eef2
-const AMBER = 0xffb020
-const INK = 0x0d1014
 /** Heatmap ramp: cool to hot, each band a flat colour so the edges stay crisp. */
 const HEAT_BANDS = [
   { upTo: 0.3, color: 0xf2a516, alpha: 0.3 },
@@ -32,9 +27,6 @@ const HEAT_BANDS = [
   { upTo: 0.8, color: 0xff5a1f, alpha: 0.75 },
   { upTo: 1, color: 0xfff0c8, alpha: 0.9 },
 ]
-/** Pressing opponents on the analyst layer. Not used anywhere else on the pitch. */
-const PRESS = 0xe05cff
-
 const hex = (c: string) => parseInt(c.replace('#', ''), 16)
 
 interface PlayerSprite {
@@ -82,6 +74,9 @@ export class PitchRenderer {
   private ox = 0
   private oy = 0
   private pad = 0
+
+  /** `pal` repaints the surface and highlights; the default is the floodlights broadcast look. */
+  constructor(private readonly pal: PitchPalette = FLOODLIGHTS) {}
 
   async mount(host: HTMLElement): Promise<void> {
     await this.app.init({
@@ -204,17 +199,18 @@ export class PitchRenderer {
     this.heatDirty = true
     const g = new Graphics()
     // Mown apron around the touchlines gives the surface some depth.
-    g.rect(-3, -3, PITCH_LENGTH + 6, PITCH_WIDTH + 6).fill(APRON)
-    const stripes = 14
+    g.rect(-3, -3, PITCH_LENGTH + 6, PITCH_WIDTH + 6).fill(this.pal.apron)
+    const stripes = this.pal.stripes
+    if (!stripes) g.rect(0, 0, PITCH_LENGTH, PITCH_WIDTH).fill(this.pal.grassA)
     const sw = PITCH_LENGTH / stripes
     for (let i = 0; i < stripes; i++) {
-      g.rect(i * sw, 0, sw + 0.01, PITCH_WIDTH).fill(i % 2 ? GRASS_A : GRASS_B)
+      g.rect(i * sw, 0, sw + 0.01, PITCH_WIDTH).fill(i % 2 ? this.pal.grassA : this.pal.grassB)
     }
     g.setFromMatrix(m)
     this.grass.addChild(g)
 
     // Floodlight falloff: lit toward the far touchline, darker near the camera.
-    if (!this.portrait) {
+    if (!this.portrait && this.pal.light) {
       const light = new Graphics()
       const grad = new FillGradient({
         type: 'linear',
@@ -232,20 +228,26 @@ export class PitchRenderer {
     }
 
     const L = this.lines
-    const lw = 0.2
-    const stroke = { width: lw, color: LINE, alpha: 0.7 }
+    const lw = this.pal.lineWidth
+    const stroke = { width: lw, color: this.pal.line, alpha: this.pal.lineAlpha }
     L.rect(0, 0, PITCH_LENGTH, PITCH_WIDTH).stroke(stroke)
     L.moveTo(PITCH_LENGTH / 2, 0)
       .lineTo(PITCH_LENGTH / 2, PITCH_WIDTH)
       .stroke(stroke)
     L.circle(PITCH_LENGTH / 2, PITCH_WIDTH / 2, 9.15).stroke(stroke)
-    L.circle(PITCH_LENGTH / 2, PITCH_WIDTH / 2, 0.35).fill({ color: LINE, alpha: 0.7 })
+    L.circle(PITCH_LENGTH / 2, PITCH_WIDTH / 2, 0.35).fill({
+      color: this.pal.line,
+      alpha: this.pal.lineAlpha,
+    })
     for (const side of [0, 1]) {
       const sx = side ? PITCH_LENGTH : 0
       const dir = side ? -1 : 1
       L.rect(side ? PITCH_LENGTH - 16.5 : 0, (PITCH_WIDTH - 40.32) / 2, 16.5, 40.32).stroke(stroke)
       L.rect(side ? PITCH_LENGTH - 5.5 : 0, (PITCH_WIDTH - 18.32) / 2, 5.5, 18.32).stroke(stroke)
-      L.circle(sx + dir * 11, PITCH_WIDTH / 2, 0.35).fill({ color: LINE, alpha: 0.7 })
+      L.circle(sx + dir * 11, PITCH_WIDTH / 2, 0.35).fill({
+        color: this.pal.line,
+        alpha: this.pal.lineAlpha,
+      })
       // penalty arc, the part outside the box
       const a = Math.acos((16.5 - 11) / 9.15)
       const cx = sx + dir * 11
@@ -263,7 +265,7 @@ export class PitchRenderer {
       // goal mouth
       L.rect(side ? PITCH_LENGTH : -1.6, (PITCH_WIDTH - 7.32) / 2, 1.6, 7.32).stroke({
         width: lw,
-        color: LINE,
+        color: this.pal.line,
         alpha: 0.45,
       })
     }
@@ -353,7 +355,12 @@ export class PitchRenderer {
         const p1 = this.trail[i]!
         fx.moveTo(p0.x, p0.y)
           .lineTo(p1.x, p1.y)
-          .stroke({ width: 1 + k * r * 0.9, color: AMBER, alpha: 0.06 + k * 0.3, cap: 'round' })
+          .stroke({
+            width: 1 + k * r * 0.9,
+            color: this.pal.accent,
+            alpha: 0.06 + k * 0.3,
+            cap: 'round',
+          })
       }
 
       // Ring on whoever is closest to the ball, when they are close enough to be on it.
@@ -369,7 +376,7 @@ export class PitchRenderer {
       if (near && nearD < pr * 2.6) {
         // Thin white ring for the ball carrier; amber is kept for the viewer's own player.
         const followed = this.focus !== null
-        const color = followed ? LINE : AMBER
+        const color = followed ? this.pal.line : this.pal.accent
         const ring = (followed ? 1.5 : 2) * (big ? 2.2 : 1)
         fx.circle(near.x, near.y, pr + 5).stroke({ width: ring, color, alpha: 0.85 })
         if (!followed) fx.circle(near.x, near.y, pr + 9).stroke({ width: 6, color, alpha: 0.12 })
@@ -380,8 +387,8 @@ export class PitchRenderer {
       // The followed player: a steady ring with a soft halo.
       const me = this.focus ? at.get(this.focus) : undefined
       if (me) {
-        fx.circle(me.x, me.y, pr + 4).stroke({ width: 2.5, color: AMBER, alpha: 1 })
-        fx.circle(me.x, me.y, pr + 10).stroke({ width: 8, color: AMBER, alpha: 0.14 })
+        fx.circle(me.x, me.y, pr + 4).stroke({ width: 2.5, color: this.pal.accent, alpha: 1 })
+        fx.circle(me.x, me.y, pr + 10).stroke({ width: 8, color: this.pal.accent, alpha: 0.14 })
       }
 
       // The one orchestrated moment: a ring rolls out from the scorer.
@@ -393,7 +400,7 @@ export class PitchRenderer {
         const e = 1 - Math.pow(1 - k, 3)
         fx.circle(who.x, who.y, pr + e * pr * 7).stroke({
           width: 3 * (1 - k) + 1,
-          color: AMBER,
+          color: this.pal.accent,
           alpha: 0.8 * (1 - k),
         })
       }
@@ -405,8 +412,8 @@ export class PitchRenderer {
       this.ball
         .clear()
         .circle(b.x, b.y, r)
-        .fill(0xf6f7f4)
-        .stroke({ width: 1.2, color: INK, alpha: 0.8 })
+        .fill(this.pal.ball)
+        .stroke({ width: 1.2, color: this.pal.ink, alpha: 0.8 })
     }
     this.drawAnnotations(overlays, t)
     this.app.renderer.render(this.app.stage)
@@ -422,13 +429,15 @@ export class PitchRenderer {
       for (const o of optionsFor(frame, c)) {
         const op = at.get(o.id)
         if (!op) continue
-        fx.moveTo(cp.x, cp.y).lineTo(op.x, op.y).stroke({ width: 1.25, color: LINE, alpha: 0.7 })
+        fx.moveTo(cp.x, cp.y)
+          .lineTo(op.x, op.y)
+          .stroke({ width: 1.25, color: this.pal.line, alpha: 0.7 })
       }
       for (const p of pressersOf(frame, c)) {
         const pp = at.get(p.id)
         if (!pp) continue
-        fx.circle(pp.x, pp.y, pr + 4).stroke({ width: 2, color: PRESS, alpha: 0.95 })
-        fx.circle(pp.x, pp.y, pr + 9).stroke({ width: 7, color: PRESS, alpha: 0.18 })
+        fx.circle(pp.x, pp.y, pr + 4).stroke({ width: 2, color: this.pal.press, alpha: 0.95 })
+        fx.circle(pp.x, pp.y, pr + 9).stroke({ width: 7, color: this.pal.press, alpha: 0.18 })
       }
       return
     }
@@ -509,12 +518,12 @@ export class PitchRenderer {
       const y = a.y + (b.y - a.y) * grow
       g.moveTo(a.x, a.y)
         .lineTo(x, y)
-        .stroke({ width: width + 4, color: AMBER, alpha: 0.16 * fade })
+        .stroke({ width: width + 4, color: this.pal.accent, alpha: 0.16 * fade })
       g.moveTo(a.x, a.y)
         .lineTo(x, y)
-        .stroke({ width, color: AMBER, alpha: 0.95 * fade, cap: 'round' })
-      g.circle(a.x, a.y, 5).stroke({ width: 1.5, color: AMBER, alpha: fade })
-      if (grow >= 1) g.circle(b.x, b.y, 4).fill({ color: AMBER, alpha: fade })
+        .stroke({ width, color: this.pal.accent, alpha: 0.95 * fade, cap: 'round' })
+      g.circle(a.x, a.y, 5).stroke({ width: 1.5, color: this.pal.accent, alpha: fade })
+      if (grow >= 1) g.circle(b.x, b.y, 4).fill({ color: this.pal.accent, alpha: fade })
     }
   }
 }

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useContext, useEffect, useRef, useState } from 'react'
 import { CLUBS } from '@/data/league'
 import { makeTilt, type Tilt } from '@/core/tilt'
 import { isGoal } from '@/core/overlays'
@@ -8,6 +8,7 @@ import { frameAt } from '@/core/timeline'
 import type { TrackingFrame } from '@/types/schema'
 import { useSession, useSessionState } from '@/state/useSession'
 import { PitchRenderer } from './pitch/PitchRenderer'
+import { PitchPaletteContext } from './pitch/palette'
 import { TagLayer, type TagRegistry, resolveTagPoint } from './TagLayer'
 
 /** Camera tilt in landscape. Portrait shows the pitch top-down so it can fill the screen. */
@@ -33,12 +34,13 @@ export function Stage() {
   const goalOn = useSessionState((s) => s.active.some(isGoal))
   const focus = useSessionState((s) => s.profile.player)
   const persona = useSessionState((s) => s.profile.persona)
+  const palette = useContext(PitchPaletteContext)
 
   useEffect(() => {
     const host = hostRef.current
     const tiltEl = tiltRef.current
     if (!host || !tiltEl) return
-    const r = new PitchRenderer()
+    const r = new PitchRenderer(palette)
     let cancelled = false
     let raf = 0
     let tilt: Tilt = makeTilt(1, 1, 0)
@@ -92,7 +94,7 @@ export function Stage() {
       cancelAnimationFrame(raf)
       r.destroy()
     }
-  }, [session])
+  }, [session, palette])
 
   useEffect(() => {
     renderer?.setFocus(focus)
