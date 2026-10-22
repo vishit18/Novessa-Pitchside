@@ -1,5 +1,8 @@
 # Handoff: move the whole app to "Matchday broadcast" (look 6)
 
+> **On hold. VJ is choosing the colours.** Don't start until this note is gone. The colour values
+> below are placeholders until he signs them off.
+
 For whoever picks this up, human or Claude Code. Read this whole file, then `CLAUDE.md`, then
 `docs/07_FRONTEND_DESIGN.md`, before touching code. CLAUDE.md's rules all still apply.
 
