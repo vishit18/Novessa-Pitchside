@@ -7,7 +7,8 @@ and goal times in recaps.
 
 `--stale-names` takes a file with one player name per line that no longer exists (after a
 rename); any cached text naming one fails. `--drop-ask` clears cached Ask the Analyst answers
-and `--drop-recaps` every cached recap (after the recap fact sheet changes).
+and `--drop-recaps` every cached recap (after the recap fact sheet changes). `--redo-kinds
+goal,penalty` clears every insight of those moment kinds (after the engine's facts change).
 `--drop` removes the failing entries (and their translations) so the next agent run rewrites
 them under the current rules. Re-warm with `scripts.run_agents` afterwards.
 """
@@ -34,7 +35,9 @@ def stale_in(entry: dict[str, Any], stale: list[str]) -> list[str]:
     return [f"names {n}, who no longer exists" for n in stale if n in text]
 
 
-async def main(drop: bool, stale: list[str], drop_ask: bool, drop_recaps: bool) -> None:
+async def main(
+    drop: bool, stale: list[str], drop_ask: bool, drop_recaps: bool, redo: set[str]
+) -> None:
     store = MatchStore()
     by_seed = {}
     for mid in store.match_ids():
@@ -56,6 +59,8 @@ async def main(drop: bool, stale: list[str], drop_ask: bool, drop_recaps: bool) 
                 problems.append("cached answer cleared")
             if stage == "recap" and drop_recaps:
                 problems.append("recap cleared")
+            if stage == "aired" and redo and intel.get_moment(moment_id).kind in redo:
+                problems.append("moment kind cleared for a rewrite")
             if stage == "aired" and entry.get("status") == "verified":
                 m = intel.get_moment(moment_id)
                 a = entry.get("analysis") or {}
@@ -87,8 +92,15 @@ if __name__ == "__main__":
     ap.add_argument("--stale-names", type=Path)
     ap.add_argument("--drop-ask", action="store_true")
     ap.add_argument("--drop-recaps", action="store_true")
+    ap.add_argument("--redo-kinds", default="")
     args = ap.parse_args()
     names = args.stale_names.read_text("utf-8").splitlines() if args.stale_names else []
     asyncio.run(
-        main(args.drop, [n.strip() for n in names if n.strip()], args.drop_ask, args.drop_recaps)
+        main(
+            args.drop,
+            [n.strip() for n in names if n.strip()],
+            args.drop_ask,
+            args.drop_recaps,
+            {k for k in args.redo_kinds.split(",") if k},
+        )
     )

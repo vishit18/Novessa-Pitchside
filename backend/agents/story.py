@@ -12,6 +12,8 @@ import re
 from backend.app.timeline import NameBook
 from backend.state.models import Moment
 
+ID_IN = re.compile(r"\b[A-Z]{3}-\d{2}\b")
+
 # Moments that belong to one club. For these, the headline must not credit only the other one.
 TEAM_KINDS = {"goal", "penalty", "big_chance", "card"}
 
@@ -125,6 +127,44 @@ def cause_problems(moment: Moment, text: str) -> list[str]:
     return out
 
 
+# A metric's code name (pressure_index) in prose: the number was pasted, not explained.
+CODE_NAME = re.compile(r"\b[a-z]+_[a-z_]+\b")
+FOULED = re.compile(r"\b(was|were|got|been|being) fouled\b", re.I)
+
+
+def wording_problems(
+    book: NameBook, moment: Moment, teams: tuple[str, str], text: str
+) -> list[str]:
+    """Code names in prose, a fouler called the victim, and a pressure card that says the other
+    side is the one pressing harder."""
+    out = []
+    if CODE_NAME.search(text):
+        out.append("write metrics in words, not code names like pressure_index")
+    if re.search(rf"\b({'|'.join(map(re.escape, teams))})\b", text):
+        out.append("use club names, never their codes")
+    if moment.kind == "penalty":
+        fouler = ID_IN.search(moment.summary)
+        if fouler and "fouled in the box" in moment.summary:
+            parts = book.player(fouler.group(0)).split()
+            for sentence in re.split(r"(?<=[.!?])\s+", text):
+                if FOULED.search(sentence) and any(p in sentence for p in parts):
+                    out.append(f"{' '.join(parts)} committed the foul; he was not fouled")
+    if moment.kind == "pressure_shift" and moment.team:
+        other = next((t for t in teams if t != moment.team), None)
+        for name in club_names(book, other) if other else []:
+            # "Ashford's pressure index increased" on a card about Kestrel Bay pressing harder.
+            theirs_rose = re.compile(
+                rf"(?<!\w){re.escape(name)}(?:'s|\u2019s)?\s+(?:\w+\s+){{0,2}}"
+                r"(?:pressure|pressing)\w*[^.,;]{0,40}?\b(?:increas\w*|ris\w*|rose|higher|spik\w*)\b",
+                re.I,
+            )
+            if theirs_rose.search(text):
+                own = club_names(book, moment.team)[0]
+                out.append(f"this is {own} pressing harder; do not say the other side's rose")
+                break
+    return out
+
+
 def story_problems(
     book: NameBook, moment: Moment, teams: tuple[str, str], headline: str, body: str
 ) -> list[str]:
@@ -134,6 +174,7 @@ def story_problems(
         team_problems(book, moment, teams, headline)
         + time_problems(text, moment.clock)
         + cause_problems(moment, text)
+        + wording_problems(book, moment, teams, text)
     )
 
 

@@ -271,7 +271,10 @@ class PulseWriter:
         wins = {c: recent.ball_wins(c) for c in (h, a)}
         winner = max((h, a), key=lambda c: wins[c])
         loser = a if winner == h else h
-        if wins[winner] >= wins[loser] + 3 and self.last_extra != "wins":
+        # "Keep the ball" and "the other side keep winning it back" in one breath reads as a
+        # contradiction, so that pairing is skipped.
+        kept = self.last_angle == "keep_ball"
+        if wins[winner] >= wins[loser] + 3 and self.last_extra != "wins" and not kept:
             self.last_extra = "wins"
             club = short_club(self.clubs.get(winner, winner))
             return (

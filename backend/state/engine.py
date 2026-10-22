@@ -63,6 +63,14 @@ def _swing_words(points: float) -> str:
     return "clearly"
 
 
+# What a turn to control or chaos looks like on the pitch, for the instant card.
+CONTROL_LINES = {
+    "chaotic": "Possession keeps changing hands and neither side can settle.",
+    "controlled": "One side has settled on the ball and the turnovers have stopped.",
+    "balanced": "Neither side is in control any more.",
+}
+
+
 class StateEngine:
     """Feed it events and frames in match-time order; read snapshots and moments out."""
 
@@ -118,6 +126,8 @@ class StateEngine:
         self._first_goal_done = False
         # Who took the last shot from the spot, so the goal that follows can say penalty.
         self._penalty_taker: str | None = None
+        # The latest foul, so a penalty can say who gave it away.
+        self._last_foul: MatchEvent | None = None
 
     # ---- geometry ------------------------------------------------------------------------
 
@@ -320,7 +330,7 @@ class StateEngine:
                 mo = self._moment(
                     "control_chaos_flip",
                     45,
-                    f"The match has turned {cc.label}.",
+                    CONTROL_LINES[cc.label],
                     evidence=[Evidence(metric="control_chaos", value=cc.value, window="3min")],
                 )
                 if mo:
@@ -540,10 +550,16 @@ class StateEngine:
             return []
         self.team_stats[ev.team].penalties += 1
         self._momentum[ev.team] += 6.0
+        foul = self._last_foul
+        given = (
+            f"{foul.player_id} fouled in the box and "
+            if foul and foul.player_id and ev.t_match - foul.t_match < 60
+            else ""
+        )
         mo = self._moment(
             "penalty",
             75,
-            f"{ev.player_id} steps up to take a penalty for {ev.team}.",
+            f"{given}{ev.player_id} steps up to take a penalty for {ev.team}.",
             team=ev.team,
             players=[ev.player_id] if ev.player_id else [],
             evidence=[Evidence(metric="penalties", value=self.team_stats[ev.team].penalties)],
@@ -553,6 +569,7 @@ class StateEngine:
 
     def _on_foul(self, ev: MatchEvent) -> list[Output]:
         self._fouls.append(ev.t_match)
+        self._last_foul = ev
         if ev.team:
             self.team_stats[ev.team].fouls += 1
         if ev.player_id:
@@ -636,14 +653,19 @@ class StateEngine:
                 )
             )
         if ev.outcome != "goal" and xg >= self.cfg.moments.big_chance_xg:
+            spot = "penalty" in (ev.tags or [])
+            how = (ev.outcome or "missed").replace("_", " ")
             mo = self._moment(
                 "big_chance",
                 40 + 60 * xg,
-                f"{ev.player_id} had a chance worth {xg:.2f} xG ({ev.outcome}).",
+                f"{ev.player_id}'s penalty was {how}."
+                if spot
+                else f"{ev.player_id} had a chance worth {xg:.2f} xG ({ev.outcome}).",
                 team=ev.team,
                 players=[ev.player_id],
                 evidence=[Evidence(metric="xg", value=round(xg, 3))],
                 cooldown=False,
+                penalty=spot,
             )
             if mo:
                 out.append(mo)

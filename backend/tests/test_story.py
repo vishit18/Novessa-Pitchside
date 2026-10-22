@@ -100,3 +100,20 @@ def test_a_two_goal_scorer_can_be_early_and_late() -> None:
     ]
     assert not goal_time_problems("Brocard scored in the first half and again late on.", goals)
     assert goal_time_problems("Brocard scored in stoppage time.", goals)
+
+
+def test_wording_checks(intel: MatchIntel, names: NameBook) -> None:
+    pen = next(m for m in intel.loaded.timeline.moments if m.kind == "penalty")
+    fouler = names.player(pen.summary.split()[0])
+    said = f"Ashford got a penalty because {fouler.split()[0]} was fouled."
+    assert any(
+        "committed the foul" in p for p in story_problems(names, pen, intel.teams, "Pen", said)
+    )
+    assert story_problems(names, pen, intel.teams, "Pen", "The pressure_index hit 100.")
+    shift = next(m for m in intel.loaded.timeline.moments if m.kind == "pressure_shift" and m.team)
+    other = names.clubs[next(t for t in intel.teams if t != shift.team)]
+    own = names.clubs[shift.team or ""]
+    bad = f"{own} press harder while {other}'s pressure index increased."
+    assert story_problems(names, shift, intel.teams, "Pressing", bad)
+    fine = f"{own}'s pressure is rising, disrupting {other}'s rhythm."
+    assert not story_problems(names, shift, intel.teams, "Pressing", fine)

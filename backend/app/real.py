@@ -63,7 +63,12 @@ def mount_real(app: FastAPI) -> None:
     @app.get("/real/{clip}/overlay")
     async def overlay(clip: str) -> FileResponse:
         """Per-frame boxes, ball, events and speed bursts, in clip pixels."""
-        return FileResponse(_clip_dir(clip) / "overlay.json", media_type="application/json")
+        # Revalidate every time: a re-run of the pipeline must reach viewers who loaded the old one.
+        return FileResponse(
+            _clip_dir(clip) / "overlay.json",
+            media_type="application/json",
+            headers={"Cache-Control": "no-cache"},
+        )
 
     @app.get("/real/{clip}/video")
     async def video(clip: str) -> FileResponse:

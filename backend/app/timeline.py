@@ -33,7 +33,7 @@ STATE_EVERY_S = 1.0
 ENGINE_FRAME_HZ = 5.0
 # State of play (docs/05): how often, when the first one may go out, and how long it waits after
 # a story overlay or after the ball last moved before it speaks.
-PULSE_EVERY_S = 75.0
+PULSE_EVERY_S = 60.0
 PULSE_FIRST_S = 90.0
 PULSE_QUIET_S = 30.0
 PULSE_DEAD_BALL_S = 20.0
@@ -520,6 +520,8 @@ class TimelineBuilder:
         headline, tone = HEADLINES[m.kind]
         if m.kind == "control_chaos_flip":
             headline = f"Match turns {m.snapshot.control_chaos.label}"
+        elif m.kind == "big_chance" and m.penalty:
+            headline = "Penalty missed" if "missed" in m.summary else "Penalty saved"
         elif m.kind == "card" and m.card:
             if m.staff:
                 headline = "Manager sent off" if m.card == "red" else "Manager booked"

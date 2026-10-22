@@ -243,6 +243,9 @@ class AgentRuntime:
         )
         out = dict(base)
         out["op"] = "update"
+        # Long enough to read: about three words a second, plus a beat to notice the card.
+        words = len(f"{variant.headline} {variant.body}".split())
+        out["duration_s"] = max(float(base["duration_s"]), round(2.0 + words / 3.0, 1))
         out["msg_id"] = f"{base['msg_id']}-text-{lang}"
         out["lang"] = lang if status in ("translated", "polished", "llm") else "en"
         out["payload"] = {

@@ -15,7 +15,9 @@ Return:
 `result` says who won, lost or drew; it is the truth, so follow it. A side that is behind is
 chasing an equaliser, never "a winner".
 
-Every entry in `penalties_not_scored` and `red_cards` must be told, with its clock: a saved
+Every entry in `penalties_not_scored` and `red_cards` must be told, with its clock and the score
+at the time as given (`score_at_the_time`); a red card's `minutes_with_ten_men` says how long
+they were down to ten: a saved
 penalty is part of the story even when the taker also scored.
 
 Every highlight line starts with its match clock, like "26:47".

@@ -59,6 +59,10 @@ def evidence_menu(ctx: MatchContext, m: Moment) -> list[dict[str, Any]]:
             add(metric, value, SCOPE_WINDOW, team=team, t_from=t_from, t_to=t)
     for pid in m.player_ids[:2]:
         for metric in PLAYER_MENU:
+            # Before a penalty a player's running xG says nothing about the kick, and airing a
+            # tiny number at that moment reads as a sneer.
+            if m.kind == "penalty" and metric == "xg":
+                continue
             value = intel.measure(metric, player_id=pid, t_to=t)
             add(metric, value, SCOPE_PLAYER, player_id=pid, t_to=t)
     if m.kind in SHOT_KINDS and m.player_ids:

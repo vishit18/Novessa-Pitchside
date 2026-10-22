@@ -61,13 +61,20 @@ def recap_facts(ctx: MatchContext, kind: Kind) -> dict[str, Any]:
         for e in intel.events
         if e.type == EventType.GOAL and e.t_match <= t
     ]
+
     # Penalties that did not go in, and red cards: part of the story, so the recap must tell them.
+    def score_at(when: float) -> str:
+        s = intel.get_state(when)["score"]
+        return f"{club[home]} {s[home]}, {club[away]} {s[away]}"
+
+    end_minute = int(state["clock"].split(":")[0].split("+")[0])
     missed = [
         {
             "clock": e.clock,
             "taker": ctx.names.player(e.player_id),
             "team": club.get(e.team or "", e.team),
             "outcome": (e.outcome or "missed").replace("_", " "),
+            "score_at_the_time": score_at(e.t_match),
         }
         for e in intel.events
         if e.type == EventType.SHOT
@@ -76,7 +83,13 @@ def recap_facts(ctx: MatchContext, kind: Kind) -> dict[str, Any]:
         and e.t_match <= t
     ]
     reds = [
-        {"clock": e.clock, "player": ctx.names.player(e.player_id), "team": club.get(e.team or "")}
+        {
+            "clock": e.clock,
+            "player": ctx.names.player(e.player_id),
+            "team": club.get(e.team or ""),
+            "score_at_the_time": score_at(e.t_match),
+            "minutes_with_ten_men": max(0, end_minute - int(e.clock.split(":")[0].split("+")[0])),
+        }
         for e in intel.events
         if e.type == EventType.CARD
         and e.outcome == "red"
@@ -158,6 +171,22 @@ def must_mention(out: RecapOutput, facts: dict[str, Any]) -> list[str]:
     for r in facts.get("red_cards", []):
         if r["player"].split()[-1] not in text:
             problems.append(f"Say that {r['player']} was sent off at {r['clock']}")
+    for p in facts.get("penalties_not_scored", []):
+        level = p.get("score_at_the_time", "").split(", ")
+        goals = [x.rsplit(" ", 1)[-1] for x in level]
+        if len(goals) == 2 and goals[0] != goals[1]:
+            for sentence in re.split(r"(?<=[.!?])\s+", text):
+                if p["taker"].split()[-1] in sentence and LEVEL.search(sentence):
+                    problems.append(
+                        f"When {p['taker']}'s penalty was {p['outcome']} the score was "
+                        f"{p['score_at_the_time']}, not level"
+                    )
+    for r in facts.get("red_cards", []):
+        if r.get("minutes_with_ten_men", 90) < 45 and MOST_OF.search(text):
+            problems.append(
+                f"{r['team']} had ten men for about {r['minutes_with_ten_men']} minutes, "
+                "not most of the game"
+            )
     home_goals = facts["teams"][facts["home"]]["goals"]
     away_goals = facts["teams"][facts["away"]]["goals"]
     if home_goals != away_goals:
@@ -182,6 +211,12 @@ def _from_the_spot(events: list[MatchEvent], goal: MatchEvent, spot: set[Any]) -
     return bool(shots) and "penalty" in shots[-1].tags
 
 
+LEVEL = re.compile(r"\b(level|all square|equal|parity)\b", re.I)
+MOST_OF = re.compile(
+    r"\b(most|much|bulk) of the (game|match)\b[^.]*\bten men\b"
+    r"|\bten men\b[^.]*\b(most|much|bulk) of the (game|match)\b",
+    re.I,
+)
 WINNER = re.compile(r"\bwinner\b", re.I)
 CLOCK = re.compile(r"\b(\d{1,3})(?:\+(\d{1,2}))?:(\d{2})\b")
 

@@ -15,7 +15,8 @@ If a storyline in the input genuinely fits this insight, you may call back to it
 ("that's the pattern all half"). Never invent one and never add numbers from it.
 
 Only the analyst variant may mention xG, a momentum or pressure figure, or any other model
-number. If the insight says the goal was a penalty, every variant says penalty.
+number. If the insight says the goal was a penalty, every variant says penalty. Keep who did what exactly
+as the insight has it: the player who fouled is not the player who was fouled.
 
 Each variant has headline (at most 6 words), body, and commentary: one spoken line a commentator
 would say, under 25 words. Sound like a person who loves the game.
