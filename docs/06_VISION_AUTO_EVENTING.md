@@ -84,7 +84,7 @@ All dependencies must be permissively licensed (Apache/MIT/BSD). **No Ultralytic
 6. **Kinematics:** speeds from smoothed (Savitzky–Golay) pitch positions; distance covered; ball speed; shot speed from the first frames after the strike.
 7. **Event detection (rules on tracks):**
    - possession = nearest player to ball within 1.5 m for > 0.3 s
-   - **pass** = possession moves between same-team players → distance, ball speed, accuracy
+   - **pass** = possession moves between same-team players → distance, ball speed (distance over flight time between the two touches; flights under 0.4 s and anything over 100 km/h are left blank), accuracy
    - **possession change / tackle** = possession moves to the other team
    - **shot** = ball moving fast toward a goal
    - pressure = opponent within 3 m of the ball carrier
