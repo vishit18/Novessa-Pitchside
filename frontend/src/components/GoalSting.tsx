@@ -87,7 +87,7 @@ export function GoalSting({ compact = false }: { compact?: boolean }) {
           initial={reduce ? { opacity: 0 } : { clipPath: 'inset(0 100% 0 0)' }}
           animate={reduce ? { opacity: 1 } : { clipPath: 'inset(0 0% 0 0)' }}
           exit={{ opacity: 0, transition: { duration: 0.15 } }}
-          transition={{ duration: 0.26, ease: [0.25, 1, 0.5, 1] }}
+          transition={{ duration: 0.18, ease: [0.25, 1, 0.5, 1] }}
         >
           <div className="flex items-stretch bg-ink/92 shadow-[0_10px_40px_rgb(0_0_0/0.6)]">
             <span className="w-[18px] shrink-0" style={{ background: kit }} />

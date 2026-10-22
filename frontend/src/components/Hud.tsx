@@ -150,10 +150,10 @@ export function LowerThird() {
         {o && (
           <motion.div
             key={`${o.moment_id}-${o.kind}`}
-            initial={{ clipPath: 'inset(-20px 100% -20px 0)', opacity: reduce ? 0 : 1 }}
-            animate={{ clipPath: 'inset(-20px -20px -20px 0)', opacity: 1 }}
+            initial={reduce ? { opacity: 0 } : { clipPath: 'inset(-20px 100% -20px 0)' }}
+            animate={reduce ? { opacity: 1 } : { clipPath: 'inset(-20px -20px -20px 0)' }}
             exit={{ opacity: 0, transition: { duration: reduce ? 0.12 : 0.15 } }}
-            transition={{ duration: reduce ? 0.12 : 0.28, ease: [0.25, 1, 0.5, 1] }}
+            transition={{ duration: reduce ? 0.12 : 0.18, ease: [0.25, 1, 0.5, 1] }}
           >
             <div className="plate-shadow">
               <div className="plate" style={{ ['--cut' as string]: '18px' }}>

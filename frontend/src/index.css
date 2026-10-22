@@ -129,7 +129,19 @@ body {
   background: #101418;
 }
 
-/* TV-style entrances. 150-250 ms, ease-out, nothing bounces. */
+/*
+ * TV-style entrances: plates and tags wipe in left to right in 180 ms, ease-out, nothing bounces.
+ * The wipe runs on a wrapper, never on .plate itself, whose clip-path is its shape. `backwards`
+ * drops the clip once the wipe ends, so shadows and leader lines are never cut off.
+ */
+@keyframes plate-wipe {
+  from {
+    clip-path: inset(-40px 100% -40px -40px);
+  }
+  to {
+    clip-path: inset(-40px -40px -40px -40px);
+  }
+}
 @keyframes tag-in {
   from {
     opacity: 0;
@@ -152,14 +164,14 @@ body {
 }
 .tag {
   animation:
-    tag-in 0.2s var(--ease-out) both,
-    tag-out 0.2s var(--ease-out) both;
-  animation-delay: 0s, calc(var(--life, 4s) - 0.2s);
+    plate-wipe 0.18s var(--ease-out) backwards,
+    tag-out 0.15s var(--ease-out) both;
+  animation-delay: 0s, calc(var(--life, 4s) - 0.15s);
 }
 
 /* A card joining the Companion feed. Same entrance as an overlay tag. */
 .feed-in {
-  animation: tag-in 0.2s var(--ease-out) both;
+  animation: plate-wipe 0.18s var(--ease-out) backwards;
 }
 
 /* Indeterminate progress: a short bar sweeping across. Transform only. */

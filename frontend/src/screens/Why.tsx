@@ -323,7 +323,7 @@ function Proof({ tellings }: { tellings: Telling[] }) {
             key={c.persona}
             initial={reduce ? false : { clipPath: 'inset(-20px 100% -20px 0)' }}
             animate={{ clipPath: 'inset(-20px -20px -20px 0)' }}
-            transition={{ duration: 0.26, delay: 0.2 + i * 0.18, ease: [0.25, 1, 0.5, 1] }}
+            transition={{ duration: 0.18, delay: 0.2 + i * 0.18, ease: [0.25, 1, 0.5, 1] }}
             className="flex flex-col"
           >
             <p className="mb-1 text-[13px] text-muted">{c.who}</p>
