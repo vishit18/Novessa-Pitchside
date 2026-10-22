@@ -75,7 +75,7 @@ const STEPS: { name: string; does: string; on: string }[] = [
   {
     name: 'Prove',
     does: 'The Verifier recomputes every claim from the match data. A wrong number never airs.',
-    on: 'Our match MCP server',
+    on: 'Plain code, the same match tools our MCP server exposes',
   },
   {
     name: 'Tell',
