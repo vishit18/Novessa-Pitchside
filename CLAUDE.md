@@ -40,7 +40,7 @@ A synthetic match engine streams a full 90 minutes of football-realistic events 
 ### Git — team commits, no AI attribution
 - Do all the git work: init, branch, commit often with clear messages, push, open PRs if asked.
 - **Never add AI attribution to anything.** No `Co-Authored-By:` trailers, no "Generated with Claude Code", no `Claude-Session:` trailers, no AI mentions in commit messages, PR descriptions, code comments, README or docs.
-- VJ and his teammates commit under their own git identity (whatever `git config user.name` / `user.email` is on the machine you're running on). Never change the git identity. Never pass `--author`. Teammates work on a branch and open a PR; only VJ merges to `main`.
+- VJ and his teammates commit under their own git identity (whatever `git config user.name` / `user.email` is on the machine you're running on). Never change the git identity. Never pass `--author`. Teammates may commit and push straight to `main` (pull and rebase first, never force-push).
 - `.claude/settings.json` disables attribution and `.githooks/commit-msg` strips any trailer that slips through. On first setup run:
   ```bash
   git config core.hooksPath .githooks

@@ -40,7 +40,8 @@ screen is the reference. Its exact values are in:
 4. **No AI attribution** in commits, PRs, comments or docs (see CLAUDE.md). Team members commit
    under their own git identity. Never change someone else's, never `--author`, never force-push
    `main`.
-5. **Work on a branch** (`look6-app` off `design-lab-and-why`) and open a PR. Don't push to `main`.
+5. **Work on `main`.** Pull before you start and before every push (`git pull --rebase`). Commit
+   one step at a time and push as you go. Never force-push. Never commit with `--no-verify`.
 6. Overlay motion stays under 300ms, and `prefers-reduced-motion` still turns it into plain fades.
 
 ## Skills and tools to use (same workflow VJ uses)
@@ -231,8 +232,8 @@ Contrast against each background:
 - Reduced motion checked (Playwright `emulateMedia({ reducedMotion: 'reduce' })`).
 - `docs/07` describes what shipped. Tick the matching boxes in `docs/00_REQUIREMENTS_CHECKLIST.md`
   if any change. Add a line to the Status section of `docs/08_BUILD_PLAN.md`.
-- PR description: what changed, the before/after sheet, anything you weren't sure about. No AI
-  attribution.
+- Tell VJ when it's done: what changed, where the before/after sheet is, anything you weren't sure
+  about. No AI attribution in commits or docs.
 
 ## Not in scope (ask VJ first)
 
