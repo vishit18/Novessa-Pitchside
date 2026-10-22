@@ -8,7 +8,7 @@ import type { Persona } from '@/state/profile'
 import type { OverlayEnvelope } from '@/types/overlay'
 import { PITCH_LENGTH, PITCH_WIDTH } from '@/types/schema'
 import type { TrackingFrame } from '@/types/schema'
-import { FLOODLIGHTS, type PitchPalette } from './palette'
+import { MATCHDAY, type PitchPalette } from './palette'
 
 export interface TeamLook {
   primary: string
@@ -76,7 +76,7 @@ export class PitchRenderer {
   private pad = 0
 
   /** `pal` repaints the surface and highlights; the default is the floodlights broadcast look. */
-  constructor(private readonly pal: PitchPalette = FLOODLIGHTS) {}
+  constructor(private readonly pal: PitchPalette = MATCHDAY) {}
 
   async mount(host: HTMLElement): Promise<void> {
     await this.app.init({

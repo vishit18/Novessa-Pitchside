@@ -21,7 +21,7 @@ export interface PitchPalette {
   light: boolean
 }
 
-/** The broadcast look from docs/07. Every page uses this unless a provider says otherwise. */
+/** The pitch before look 6. The design lab still shows it as the Floodlights baseline. */
 export const FLOODLIGHTS: PitchPalette = {
   apron: 0x143a28,
   grassA: 0x1b4a33,
@@ -37,5 +37,21 @@ export const FLOODLIGHTS: PitchPalette = {
   light: true,
 }
 
+/** The broadcast look from docs/07 (Matchday broadcast). Every page uses this unless a provider says otherwise. */
+export const MATCHDAY: PitchPalette = {
+  apron: 0x277a3e,
+  grassA: 0x2e8b48,
+  grassB: 0x349650,
+  stripes: 14,
+  line: 0xffffff,
+  lineAlpha: 0.95,
+  lineWidth: 0.24,
+  accent: 0xffd100,
+  press: 0x8e24aa,
+  ball: 0xffffff,
+  ink: 0x101418,
+  light: false,
+}
+
 /** Lets a parent (the design lab) repaint the pitch without touching the screens that use it. */
-export const PitchPaletteContext = createContext<PitchPalette>(FLOODLIGHTS)
+export const PitchPaletteContext = createContext<PitchPalette>(MATCHDAY)
