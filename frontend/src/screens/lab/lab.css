@@ -15,6 +15,7 @@
 @import '@fontsource/caveat-brush/400';
 @import '@fontsource/atkinson-hyperlegible/400';
 @import '@fontsource/atkinson-hyperlegible/700';
+@import '@fontsource-variable/inter';
 
 /*
  * Every direction sets two groups of variables:
@@ -35,6 +36,27 @@
   color: var(--color-text);
   font-family: var(--font-sans);
   min-height: 100%;
+}
+
+/*
+ * The app's plates and stage flip to light ink (index.css). Looks 1-5 colour their own plates, so
+ * they keep the look's tokens instead, and the app's heavier live numbers.
+ */
+:is(.lab-matchday, .lab-magazine, .lab-broadcast, .lab-tactics, .lab-floodlights)
+  :is(.plate, .stage-bg) {
+  --color-ink: inherit;
+  --color-text: inherit;
+  --color-muted: inherit;
+  --color-hairline: inherit;
+  --color-raised: inherit;
+  --color-amber: inherit;
+  color: inherit;
+}
+:is(.lab-matchday, .lab-magazine, .lab-broadcast, .lab-tactics) :is(.num, .latin) {
+  font-weight: inherit;
+}
+.lab-matchday :is(.num, .latin) {
+  font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif;
 }
 
 /* ---------- 1. Matchday bright ---------- */
@@ -370,7 +392,6 @@
 }
 .lab-floodlights .plate {
   --cut: 12px;
-  color: inherit;
   background: linear-gradient(180deg, rgb(27 33 41 / 0.95), rgb(17 21 27 / 0.95));
   box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.08);
   clip-path: polygon(
