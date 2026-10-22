@@ -103,7 +103,10 @@ def time_problems(text: str, clock: str) -> list[str]:
 
 # A booking is about one player. Text that says it changed how a team plays is a guess.
 CARD_CAUSE = re.compile(
-    r"\b(shift(s|ed)?|trigger(s|ed)?|forc(es|ed|ing)|tactic(s|al)|reshap\w*|containment)\b", re.I
+    r"\b(shift(s|ed)?|trigger(s|ed)?|forc(es|ed|ing)|tactic(s|al)|reshap\w*|shap(es|ed|ing)|"
+    r"containment|halt(s|ed)?|kill(s|ed)?|stall(s|ed)?|disrupt\w*|change(s|d)?|"
+    r"momentum|defence|defense|approach)\b",
+    re.I,
 )
 DESPITE = re.compile(r"\bdespite\b", re.I)
 # States of mind: no number in the data can show them.
