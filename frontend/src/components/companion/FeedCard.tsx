@@ -34,7 +34,11 @@ export function FeedCard({ item, open, onToggle, onListen }: Props) {
   return (
     <article className="feed-in plate-shadow">
       <div className="plate flex" style={{ ['--cut' as string]: '14px' }}>
-        <span aria-hidden className="w-[6px] shrink-0" style={{ background: strip(item) }} />
+        <span
+          aria-hidden
+          className="plate-edge w-[6px] shrink-0"
+          style={{ background: strip(item) }}
+        />
         <div className="min-w-0 flex-1 px-4 py-3">
           <div className="flex items-baseline gap-3">
             {item.clock && (

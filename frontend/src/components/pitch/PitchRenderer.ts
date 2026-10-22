@@ -436,6 +436,18 @@ export class PitchRenderer {
       for (const p of pressersOf(frame, c)) {
         const pp = at.get(p.id)
         if (!pp) continue
+        if (this.pal.outline !== undefined) {
+          fx.circle(pp.x, pp.y, pr + 2.25).stroke({
+            width: 1.5,
+            color: this.pal.outline,
+            alpha: 0.9,
+          })
+          fx.circle(pp.x, pp.y, pr + 5.75).stroke({
+            width: 1.5,
+            color: this.pal.outline,
+            alpha: 0.9,
+          })
+        }
         fx.circle(pp.x, pp.y, pr + 4).stroke({ width: 2, color: this.pal.press, alpha: 0.95 })
         fx.circle(pp.x, pp.y, pr + 9).stroke({ width: 7, color: this.pal.press, alpha: 0.18 })
       }

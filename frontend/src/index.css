@@ -281,6 +281,16 @@ button:not(:disabled):active {
   outline-offset: -5px;
 }
 
+/*
+ * A colour strip on a plate's leading edge, skewed to run parallel to it. Without this the skew
+ * shaves the strip down to a sliver. Net width stays 6px: a 16px band pulled back 10px.
+ */
+.plate-edge {
+  width: 16px;
+  margin-inline-end: -10px;
+  clip-path: polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%);
+}
+
 /* A small chip in the plate shape, so it belongs with the score bug. */
 .plate-chip {
   clip-path: polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%);

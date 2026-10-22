@@ -205,7 +205,7 @@ function Headline({ o }: { o: OverlayEnvelope }) {
       : 'max-w-[56ch] text-[16px] sm:text-[20px]'
   return (
     <div className="flex">
-      <span className="w-[7px] shrink-0" style={{ background: toneColour(o) }} />
+      <span className="plate-edge w-[7px] shrink-0" style={{ background: toneColour(o) }} />
       <div className="min-w-0 py-3 pr-8 pl-4">
         <div className={`font-display font-bold leading-[0.95] ${headSize}`}>
           {sentenceCase(head, lang)}
@@ -265,7 +265,7 @@ function ShotSpeed({ o }: { o: OverlayEnvelope }) {
   const lang = useSessionState((s) => s.profile.lang)
   return (
     <div className="flex">
-      <span className="w-[7px] shrink-0 bg-amber" />
+      <span className="plate-edge w-[7px] shrink-0 bg-amber" />
       <div className="flex items-end gap-5 py-3 pr-9 pl-4">
         <div
           className="num text-[44px] sm:text-[64px] font-bold leading-[0.85] text-amber"
@@ -494,7 +494,7 @@ export function MetricReadout() {
       <div className="plate-shadow">
         <div className="plate flex items-stretch" style={{ ['--cut' as string]: '10px' }}>
           <span
-            className="w-[6px] shrink-0"
+            className="plate-edge w-[6px] shrink-0"
             style={{ background: team ? colour(team) : 'transparent' }}
           />
           <div className="min-w-0 py-2.5 pl-3 pr-4">

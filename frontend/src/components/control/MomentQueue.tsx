@@ -13,7 +13,7 @@ const DECISION: Record<Decision, string> = {
 const PROOF: Record<Proof, { mark: ReactNode; text: string; tone: string }> = {
   proven: { mark: <CheckIcon />, text: 'Proven', tone: 'text-control' },
   retried: { mark: <CheckIcon />, text: 'Proven on retry', tone: 'text-amber' },
-  failed: { mark: <CrossIcon />, text: 'Not proven', tone: 'text-chaos' },
+  failed: { mark: <CrossIcon />, text: 'Not proven', tone: 'text-text [&_svg]:text-chaos' },
   skipped: { mark: <DashIcon />, text: 'Not checked', tone: 'text-muted' },
 }
 

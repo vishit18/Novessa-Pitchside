@@ -103,7 +103,7 @@ export function Onboarding({ query }: { query: URLSearchParams }) {
           {step === 'match' && (
             <Question title="Pick a match" hint="Three fixtures from matchday one.">
               {error && (
-                <p className="text-[15px] text-chaos">
+                <p className="border-s-2 border-chaos ps-3 text-[15px] text-text">
                   Couldn’t reach the match server ({error}). Check the gateway is running, then
                   reload.
                 </p>
@@ -378,7 +378,7 @@ function Choice({
         style={{ ['--cut' as string]: dense ? '8px' : '12px' }}
       >
         <span
-          className={`w-[4px] shrink-0 transition-colors ${selected ? 'bg-amber' : 'bg-transparent group-hover:bg-amber/50'}`}
+          className={`plate-edge w-[4px] shrink-0 transition-colors ${selected ? 'bg-amber' : 'bg-transparent group-hover:bg-amber/50'}`}
         />
         <span className={`block min-w-0 flex-1 ${dense ? 'px-3 py-2.5' : 'px-5 py-4'}`}>
           {children}

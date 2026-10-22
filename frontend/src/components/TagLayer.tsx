@@ -43,7 +43,7 @@ function PlayerTag({ o }: { o: OverlayEnvelope }) {
     <div className="flex -translate-x-1/2 -translate-y-full flex-col items-center pb-[18px]">
       <div className="plate-shadow">
         <div className="plate flex items-stretch" style={{ ['--cut' as string]: '8px' }}>
-          <span className="w-[5px]" style={{ background: teamColour(team) }} />
+          <span className="plate-edge w-[5px]" style={{ background: teamColour(team) }} />
           <div className="flex items-baseline gap-2 py-1 pr-3.5 pl-2.5">
             <span className="num text-[16px] font-semibold text-muted">{info?.shirt ?? ''}</span>
             <span className="font-display text-[19px] font-semibold leading-none whitespace-nowrap">

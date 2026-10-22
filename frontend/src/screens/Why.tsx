@@ -329,7 +329,7 @@ function Proof({ tellings }: { tellings: Telling[] }) {
             <p className="mb-1 text-[13px] text-muted">{c.who}</p>
             <div className="plate-shadow flex-1">
               <div className="plate flex h-full" style={{ ['--cut' as string]: '14px' }}>
-                <span className="w-[6px] shrink-0" style={{ background: kit }} />
+                <span className="plate-edge w-[6px] shrink-0" style={{ background: kit }} />
                 <div className="min-w-0 py-3 pe-5 ps-4" lang={c.lang}>
                   <p className="font-display text-[24px] font-bold leading-[0.95]">
                     {sentenceCase(c.headline, c.lang)}

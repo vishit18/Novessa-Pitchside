@@ -55,7 +55,7 @@ export function PlayerCard() {
         {stats && !stats.on_pitch && (
           <p
             className={`self-start px-2.5 py-1 font-display text-[22px] font-semibold leading-none ${
-              stats.reds > 0 ? 'bg-chaos text-white' : 'bg-text/10 text-text'
+              stats.reds > 0 ? 'bg-chaos text-ink' : 'bg-text/10 text-text'
             }`}
             role="status"
           >

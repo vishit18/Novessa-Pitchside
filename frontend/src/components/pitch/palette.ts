@@ -19,6 +19,8 @@ export interface PitchPalette {
   ink: number
   /** Floodlight falloff across the pitch in landscape. */
   light: boolean
+  /** A thin edge drawn around coloured marks so they separate from the grass. None if unset. */
+  outline?: number
 }
 
 /** The pitch before look 6. The design lab still shows it as the Floodlights baseline. */
@@ -51,6 +53,7 @@ export const MATCHDAY: PitchPalette = {
   ball: 0xffffff,
   ink: 0x101418,
   light: false,
+  outline: 0xffffff,
 }
 
 /** Lets a parent (the design lab) repaint the pitch without touching the screens that use it. */

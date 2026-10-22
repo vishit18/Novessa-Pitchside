@@ -160,7 +160,7 @@ function FlowArcs({
         Rejected claim goes back, once{loopOn && ` (${rejected} so far)`}
       </span>
       <span
-        className={`absolute top-[78px] -translate-x-1/2 bg-ink px-2 text-[12px] ${bypassOn ? 'text-chaos' : 'text-muted'}`}
+        className={`absolute top-[78px] -translate-x-1/2 bg-ink px-2 text-[12px] ${bypassOn ? 'text-text' : 'text-muted'}`}
         style={{ left: '60%' }}
       >
         Numbers-only card when a step is down or a claim fails
