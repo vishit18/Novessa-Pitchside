@@ -27,6 +27,15 @@ A bright matchday afternoon with TV graphics on top. White page, black broadcast
 - **Motion:** plates and tags wipe in left to right in 180 ms, ease-out. Numbers count up, nothing bounces. `prefers-reduced-motion` turns every entrance into a plain fade.
 - **Density:** broadcast graphics are sparse. Lower thirds with one headline and one line. The analyst view can be denser but still aligned to a strict grid. Tight spacing, 2px radius.
 
+As shipped (22 Oct), details the values above don't cover:
+
+- The black stage (`.stage-bg`) sits only behind the pitch and the real-footage video. Every other page, Companion, Control room, Recap and Real footage included, is on the white page.
+- Plates and the stage flip all the tokens to light ink, `--color-ink` included (to `#101418`), so an accent button inside a plate is yellow with dark text.
+- Skewed controls (primary buttons, plate chips) clip an outside focus ring, so theirs sits 5px inside, in the control's own text colour.
+- A colour strip on a plate's edge (`.plate-edge`) is skewed to run parallel to it.
+- Pressure halos on the pitch get a thin white edge (`outline` in the `MATCHDAY` pitch palette).
+- Jersey numbers on the pitch canvas and the real-footage labels still draw in Barlow Condensed, as in the `/design-lab` reference.
+
 ## Screens
 
 Every screen except the full-screen broadcast carries the same header: wordmark (home) and one link per screen, the current one underlined in amber. The broadcast has a single Menu button in its corner instead, so nothing sits on the football.
