@@ -36,4 +36,17 @@ describe('possession', () => {
     expect(attackDirection(frame(50, 34), 'ASH')).toBe(1)
     expect(attackDirection(frame(50, 34), 'KES')).toBe(-1)
   })
+
+  it('is not fooled by a striker on the far byline', () => {
+    const f = frame(50, 34)
+    // Ashford push up: their keeper well off his line, a striker level with the far goal line.
+    const pushed = {
+      ...f,
+      players: f.players.map((p) =>
+        p.id === 'ASH-01' ? { ...p, x: 30 } : p.id === 'ASH-11' ? { ...p, x: 104 } : p,
+      ),
+    }
+    expect(attackDirection(pushed, 'ASH', (id) => id.endsWith('-01'))).toBe(1)
+    expect(attackDirection(pushed, 'ASH')).toBe(1)
+  })
 })

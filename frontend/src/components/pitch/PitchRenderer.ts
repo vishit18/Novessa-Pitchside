@@ -36,8 +36,12 @@ interface PlayerSprite {
   team: string
 }
 
-/** How far the camera zooms in on a followed player. */
-const FOCUS_ZOOM = { landscape: 2.1, portrait: 1.6 }
+/** How far the camera zooms in on a followed player, at most. */
+const FOCUS_ZOOM = { landscape: 1.6, portrait: 1.35 }
+/** How much the framing leans to the followed player over the ball (1 = player only). */
+const PLAYER_WEIGHT = 0.65
+/** Room kept around the player and the ball when zooming out to fit both, in pixels. */
+const FRAME_PAD = 120
 
 /**
  * Draws the 2D tactical pitch with PixiJS. Pitch coordinates are metres (105 x 68, origin
@@ -338,9 +342,9 @@ export class PitchRenderer {
         at.set(p.id, pt)
         if (p.id === this.focus && this.heatmap.sample(p.x, p.y, t)) this.heatDirty = true
       }
-      this.moveCamera(this.focus ? (at.get(this.focus) ?? null) : null, dt)
-      if (this.heatDirty) this.drawHeat()
       const b = this.project(frame.ball.x, frame.ball.y)
+      this.moveCamera(this.focus ? (at.get(this.focus) ?? null) : null, b, dt)
+      if (this.heatDirty) this.drawHeat()
       const big = this.layers === 'accessibility'
       const r = Math.max(3.5, this.scale * 0.42) * (big ? 1.6 : 1)
       // Disc radius on screen after the camera, matching the sprite counter-scale.
@@ -455,7 +459,7 @@ export class PitchRenderer {
     }
     // First match: a chevron in the carrier's kit, out ahead of them, pointing the way they attack.
     const team = c.id.split('-')[0] ?? ''
-    const dir = attackDirection(frame, team)
+    const dir = attackDirection(frame, team, (id) => PLAYERS[id]?.position === 'GK')
     const ahead = this.project(c.x + dir, c.y)
     const dx = ahead.x - cp.x
     const dy = ahead.y - cp.y
@@ -475,9 +479,21 @@ export class PitchRenderer {
       .stroke({ width: 2, color: hex(look?.secondary ?? '#0d1014'), alpha: 0.9, join: 'round' })
   }
 
-  private moveCamera(target: Point | null, dt: number): void {
-    const zoom = target ? (this.portrait ? FOCUS_ZOOM.portrait : FOCUS_ZOOM.landscape) : 1
-    const goal = target ? { ...target, zoom } : { x: this.w / 2, y: this.h / 2, zoom: 1 }
+  /**
+   * Follow a player while keeping the ball in shot: aim between the two, leaning to the player,
+   * and zoom out as far as needed (never past the whole pitch) so the play is always visible.
+   */
+  private moveCamera(target: Point | null, ball: Point, dt: number): void {
+    const most = this.portrait ? FOCUS_ZOOM.portrait : FOCUS_ZOOM.landscape
+    let goal = { x: this.w / 2, y: this.h / 2, zoom: 1 }
+    if (target) {
+      const x = target.x * PLAYER_WEIGHT + ball.x * (1 - PLAYER_WEIGHT)
+      const y = target.y * PLAYER_WEIGHT + ball.y * (1 - PLAYER_WEIGHT)
+      const spanX = Math.abs(target.x - ball.x) * 2 + FRAME_PAD * 2
+      const spanY = Math.abs(target.y - ball.y) * 2 + FRAME_PAD * 2
+      const fit = Math.min(this.w / spanX, this.h / spanY)
+      goal = { x, y, zoom: Math.max(1, Math.min(most, fit)) }
+    }
     const pw = (this.portrait ? PITCH_WIDTH : PITCH_LENGTH) * this.scale
     const ph = (this.portrait ? PITCH_LENGTH : PITCH_WIDTH) * this.scale
     this.cam = followCamera(

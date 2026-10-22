@@ -54,7 +54,7 @@ export function ScoreBug({ showMatchLine = true }: { showMatchLine?: boolean }) 
           <div
             className="relative h-[4px] bg-black/40"
             role="img"
-            aria-label={t('momentum', { v: Math.abs(m), team: lead ?? '-' })}
+            aria-label={t('momentum', { v: Math.round(Math.abs(m)), team: lead ?? '-' })}
             dir="ltr"
           >
             <div className="absolute inset-y-0 left-1/2 w-px bg-text/30" />
@@ -189,9 +189,13 @@ function Headline({ o }: { o: OverlayEnvelope }) {
   const t = useT()
   const analyst = persona === 'analyst'
   const kids = persona === 'kids'
-  // The score bug already shows the score, so score rows never take a chip.
+  // The score bug already shows the score, so score rows never take a chip; nor does a full
+  // team of eleven, which only says something once someone has been sent off.
   const evidence = analyst
-    ? o.provenance.evidence.filter((e) => !e.metric.startsWith('score')).slice(0, 4)
+    ? o.provenance.evidence
+        .filter((e) => !e.metric.startsWith('score'))
+        .filter((e) => !(e.metric === 'men_on_pitch' && e.value >= 11))
+        .slice(0, 4)
     : []
   const headSize = analyst
     ? 'text-[24px] sm:text-[34px]'

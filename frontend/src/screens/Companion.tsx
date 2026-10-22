@@ -1,3 +1,4 @@
+import { storyFeed } from '@/core/feed'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { AskSheet } from '@/components/AskSheet'
 import { FeedCard } from '@/components/companion/FeedCard'
@@ -51,7 +52,7 @@ function useTicker(session: Session): void {
 function CompanionBody({ matchId }: { matchId: string }) {
   const session = useSession()
   const lang = useSessionState((s) => s.profile.lang)
-  const feed = useSessionState((s) => s.feed)
+  const feed = storyFeed(useSessionState((s) => s.feed))
   const status = useSessionState((s) => s.status)
   const t = useT()
   const [sheetOpen, setSheetOpen] = useState(false)

@@ -1,3 +1,4 @@
+import type { StringKey } from '@/i18n/strings'
 import type { MutableRefObject } from 'react'
 import { CLUBS, PLAYERS } from '@/data/league'
 import { useSessionState, useT } from '@/state/useSession'
@@ -85,7 +86,7 @@ function PassTag({ o }: { o: OverlayEnvelope }) {
           </div>
           {factors[0] && (
             <div className="border-t border-text/10 px-3 py-1 text-[12px] text-muted">
-              {factors[0].name.replaceAll('_', ' ')} +{Math.round(factors[0].points)}
+              {t(`factor_${factors[0].name}` as StringKey)} +{Math.round(factors[0].points)}
             </div>
           )}
         </div>

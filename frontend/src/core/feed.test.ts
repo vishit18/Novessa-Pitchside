@@ -94,3 +94,18 @@ describe('labels', () => {
     expect(metricLabel('pressure_index')).toBe('pressure index')
   })
 })
+
+describe('storyFeed', () => {
+  it('keeps every moment and only the newest state of play between two', async () => {
+    const { storyFeed } = await import('./feed')
+    const item = (id: string, kind: 'insight' | 'state_of_play') => ({ id, kind }) as never
+    const out = storyFeed([
+      item('p3', 'state_of_play'),
+      item('p2', 'state_of_play'),
+      item('m1', 'insight'),
+      item('p1', 'state_of_play'),
+      item('p0', 'state_of_play'),
+    ])
+    expect(out.map((x: { id: string }) => x.id)).toEqual(['p3', 'm1', 'p1'])
+  })
+})

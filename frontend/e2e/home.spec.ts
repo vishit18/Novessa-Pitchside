@@ -26,7 +26,8 @@ test('first-time viewers go from home to the setup questions', async ({ page }) 
   await page.evaluate(() => localStorage.clear())
   await page.getByRole('button', { name: 'Start watching' }).click()
   await expect(page).toHaveURL(/\/start/)
-  await expect(page.getByRole('heading', { name: 'How do you watch?' })).toBeVisible()
+  // Setup always starts by picking the match, never with one picked for the viewer.
+  await expect(page.getByRole('heading', { name: 'Pick a match' })).toBeVisible()
 })
 
 test('the timeline seeks the broadcast', async ({ page }) => {

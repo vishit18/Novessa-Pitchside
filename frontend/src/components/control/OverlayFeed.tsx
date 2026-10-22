@@ -7,6 +7,19 @@ const ROWS = 14
 /** The slots a graphics operator cares about; tags and pitch marks stack on the feed itself. */
 const SHOWN = new Set(['lower_third', 'player_tag', 'pitch_annotation'])
 
+const PERSONA_NAME: Record<string, string> = {
+  analyst: 'Analyst',
+  casual: 'Casual',
+  kids: 'First match',
+  accessibility: 'Audio-described',
+}
+
+/** Who a cue goes to: one variant of a state of play is for analysts, the other for everyone else. */
+function audience(o: OverlayEnvelope): string {
+  if (o.persona.length >= 4) return 'everyone'
+  return o.persona.map((p) => PERSONA_NAME[p] ?? p).join(', ')
+}
+
 const mmss = (t: number) =>
   `${String(Math.floor(t / 60)).padStart(2, '0')}:${String(Math.floor(t % 60)).padStart(2, '0')}`
 
@@ -98,7 +111,7 @@ export function OverlayFeed({ matchId, upto }: { matchId: string; upto: number |
                 <button
                   onClick={() => setPick(o.msg_id)}
                   aria-pressed={chosen?.msg_id === o.msg_id}
-                  className="grid w-full grid-cols-[3.5rem_7.5rem_1fr] items-baseline gap-3 px-2 py-2 text-start hover:bg-raised aria-pressed:bg-raised"
+                  className="grid w-full grid-cols-[3.5rem_7.5rem_1fr_auto] items-baseline gap-3 px-2 py-2 text-start hover:bg-raised aria-pressed:bg-raised"
                 >
                   <span className="num text-[16px] text-amber" dir="ltr">
                     {mmss(o.show_at)}
@@ -107,6 +120,7 @@ export function OverlayFeed({ matchId, upto }: { matchId: string; upto: number |
                     {o.slot.replace('_', ' ')}
                   </span>
                   <span className="truncate text-[15px]">{cueText(o)}</span>
+                  <span className="truncate text-[13px] text-muted">{audience(o)}</span>
                 </button>
               </li>
             ))}

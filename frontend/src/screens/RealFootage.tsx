@@ -4,9 +4,11 @@ import {
   activeBursts,
   activePasses,
   boxesAt,
+  clipSeconds,
   foot,
   matchClock,
   passLine,
+  teamOf,
   trackOf,
   type Box,
   type RealEvent,
@@ -116,8 +118,9 @@ function Player({ clip, overlay }: { clip: RealClip; overlay: RealOverlay }) {
   return (
     <>
       <p className="max-w-[70ch] text-[15px] leading-relaxed text-muted">
-        A real university match, filmed from one fixed camera. A model found every player, the ball,
-        each pass and each sprint from the pixels. Nothing here is hand-tagged.
+        A real university match, filmed from one fixed camera. A vision model tracked the players,
+        the ball, the passes and the sprints straight from the pixels, with no hand-tagging. It is
+        not perfect, and the scores below say exactly how good it is.
       </p>
 
       <section aria-label="Match video" className="flex flex-col gap-3">
@@ -148,6 +151,10 @@ function Player({ clip, overlay }: { clip: RealClip; overlay: RealOverlay }) {
                   preload="auto"
                   className="block size-full bg-black"
                   onClick={() => togglePlay(video.current)}
+                  // Paint the first frame before play, so the page never opens on black.
+                  onLoadedData={(e) => {
+                    if (e.currentTarget.currentTime === 0) e.currentTarget.currentTime = 0.04
+                  }}
                 />
               ) : (
                 <div className="grid size-full place-items-center bg-black/60 p-6 text-center text-[15px]">
@@ -181,7 +188,14 @@ function Player({ clip, overlay }: { clip: RealClip; overlay: RealOverlay }) {
                 {full.on ? 'Exit full screen' : 'Full screen'}
               </button>
             </div>
-            {clip.video && <VideoBar video={video} startS={overlay.start_s} passes={passes} />}
+            {clip.video && (
+              <VideoBar
+                video={video}
+                startS={overlay.start_s}
+                passes={passes}
+                lengthS={clipSeconds(overlay)}
+              />
+            )}
           </div>
         </div>
         <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
@@ -207,8 +221,10 @@ function Player({ clip, overlay }: { clip: RealClip; overlay: RealOverlay }) {
               </button>
             ))}
           </div>
-          <p className="text-[13px] text-muted">
-            {overlay.credit}. Marks painted on the pitch are removed.
+          <p className="max-w-[62ch] text-[13px] text-muted">
+            Tags show each player’s team and the number the tracker gave them; shirt numbers are too
+            small to read from this camera. {overlay.credit}. Marks painted on the pitch are
+            removed.
           </p>
         </div>
       </section>
@@ -232,8 +248,8 @@ function Player({ clip, overlay }: { clip: RealClip; overlay: RealOverlay }) {
                   <span className="num text-[22px] leading-none text-amber">{e.clock}</span>
                   <span>
                     <span className="block text-[15px]">
-                      {overlay.tracks[String(trackOf(e.player_id))]?.label ?? e.player_id} to{' '}
-                      {overlay.tracks[String(trackOf(e.receiver_id))]?.label ?? e.receiver_id}
+                      {teamOf(overlay, e.player_id)} player to{' '}
+                      {teamOf(overlay, e.receiver_id).toLowerCase()} team-mate
                     </span>
                     <span className="block text-[13px] text-muted">{passLine(e)}</span>
                   </span>
@@ -279,10 +295,13 @@ function VideoBar({
   video,
   startS,
   passes,
+  lengthS,
 }: {
   video: React.RefObject<HTMLVideoElement | null>
   startS: number
   passes: RealEvent[]
+  /** The clip's length, for the label before the video has loaded. */
+  lengthS: number
 }) {
   const t = useVideoTime(video)
   const [duration, setDuration] = useState(0)
@@ -360,7 +379,7 @@ function VideoBar({
         />
       </div>
       <span className="num hidden shrink-0 text-[14px] text-muted sm:inline" dir="ltr">
-        {matchClock(startS, 0)} to {matchClock(startS, duration)}
+        {matchClock(startS, 0)} to {matchClock(startS, duration || lengthS)}
       </span>
     </div>
   )

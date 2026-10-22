@@ -27,8 +27,11 @@ test('split view shows the same goal to both viewers', async ({ page }) => {
   await page.goto(`/split?match=derby_01&t=${PENALTY_GOAL_T}&speed=1`)
   const cards = page.locator('[aria-live="polite"]')
   await expect(cards).toHaveCount(2)
-  await expect(cards.nth(0)).toContainText('Goal', { timeout: 20_000 })
-  await expect(cards.nth(1)).toContainText('Goal', { timeout: 5_000 })
+  // Viewer 2 is a first-timer in Spanish, so their card says "Gol". Both land on the same goal.
+  await Promise.all([
+    expect(cards.nth(0)).toContainText('Goal', { timeout: 20_000 }),
+    expect(cards.nth(1)).toContainText(/Gol/, { timeout: 20_000 }),
+  ])
 })
 
 test('player focus follows one player and shows their live stats', async ({ page }) => {

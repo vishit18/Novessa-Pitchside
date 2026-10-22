@@ -46,13 +46,20 @@ export function optionsFor(frame: TrackingFrame, carrier: PlayerFrame, n = 2): P
 
 /**
  * Which way a team is attacking along the pitch: +1 toward x = 105, -1 toward x = 0. Read from
- * where their rearmost player stands (nearly always the goalkeeper), so it flips at half-time
- * with no extra data.
+ * the goalkeeper's half when `isKeeper` knows who that is, else from the team's average position
+ * against the other team's, so it flips at half-time with no extra data. (The nearest player to
+ * a goal line is no guide: a striker on the far byline is nearer than his own keeper.)
  */
-export function attackDirection(frame: TrackingFrame, team: string): 1 | -1 {
-  const xs = frame.players.filter((p) => teamOf(p.id) === team).map((p) => p.x)
-  if (xs.length === 0) return 1
-  const min = Math.min(...xs)
-  const max = Math.max(...xs)
-  return min < 105 - max ? 1 : -1
+export function attackDirection(
+  frame: TrackingFrame,
+  team: string,
+  isKeeper: (id: string) => boolean = () => false,
+): 1 | -1 {
+  const mine = frame.players.filter((p) => teamOf(p.id) === team)
+  if (mine.length === 0) return 1
+  const keeper = mine.find((p) => isKeeper(p.id))
+  if (keeper) return keeper.x < 52.5 ? 1 : -1
+  const mean = (ps: PlayerFrame[]) => ps.reduce((s, p) => s + p.x, 0) / Math.max(ps.length, 1)
+  const theirs = frame.players.filter((p) => teamOf(p.id) !== team)
+  return theirs.length === 0 || mean(mine) <= mean(theirs) ? 1 : -1
 }

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { isPulse, type FeedItem } from '@/core/feed'
+import { isPulse, storyFeed, type FeedItem } from '@/core/feed'
 import { sentenceCase } from '@/core/headline'
 import { CLUBS } from '@/data/league'
 import { metricName } from '@/i18n/strings.more'
@@ -29,7 +29,7 @@ function strip(item: FeedItem): string {
  */
 export function StoryFeed() {
   const t = useT()
-  const feed = useSessionState((s) => s.feed)
+  const feed = storyFeed(useSessionState((s) => s.feed))
   const lang = useSessionState((s) => s.profile.lang)
   return (
     <section aria-labelledby="story-h" className="flex min-h-0 flex-1 flex-col">
@@ -40,10 +40,9 @@ export function StoryFeed() {
         <p className="mt-3 text-[15px] leading-snug text-muted">{t('storyEmpty')}</p>
       ) : (
         <ol
-          className="mt-3 flex min-h-0 flex-1 flex-col gap-3.5 overflow-y-auto pe-1"
+          className="mt-3 flex max-h-[70dvh] min-h-0 flex-1 flex-col gap-3.5 overflow-y-auto pe-1 lg:max-h-none"
           lang={lang}
           dir={isRtl(lang) ? 'rtl' : 'ltr'}
-          aria-live="polite"
         >
           {feed.map((it) =>
             isPulse(it) ? <PulseLine key={it.id} it={it} /> : <Moment key={it.id} it={it} />,

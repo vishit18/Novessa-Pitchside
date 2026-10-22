@@ -92,6 +92,18 @@ export function trackOf(playerId: string | null): number | null {
   return m ? Number(m[1]) : null
 }
 
+/** "White" or "Blue": the team a tracked player was put in, from their tag. */
+export function teamOf(o: Pick<RealOverlay, 'tracks'>, playerId: string | null): string {
+  const label = o.tracks[String(trackOf(playerId))]?.label
+  return label ? (label.split(' ')[0] ?? 'A') : 'A'
+}
+
+/** Clip length in seconds, from the overlay, for before the video has loaded. */
+export function clipSeconds(o: Pick<RealOverlay, 'frames' | 'fps'>): number {
+  const last = o.frames.at(-1)
+  return last ? last[0] / o.fps : 0
+}
+
 /** Foot point of a box, where a line to or from the player should start. */
 export function foot(b: Box): [number, number] {
   return [(b.x1 + b.x2) / 2, b.y2]

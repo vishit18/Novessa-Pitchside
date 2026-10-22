@@ -41,6 +41,15 @@ export function isStoryOverlay(o: OverlayEnvelope): boolean {
 /** A state-of-play beat: the commentator filling the quiet, not a moment. */
 export const isPulse = (item: FeedItem): boolean => item.kind === 'state_of_play'
 
+/**
+ * The feed as a story to read back: every moment, and only the latest state of play between
+ * two moments. On screen each beat earns its place; in the record a run of them buries the
+ * moments. Expects newest first, as `momentFeed` returns it.
+ */
+export function storyFeed(feed: FeedItem[]): FeedItem[] {
+  return feed.filter((it, i) => !isPulse(it) || i === 0 || !isPulse(feed[i - 1]!))
+}
+
 const str = (v: unknown): string => (typeof v === 'string' ? v : '')
 
 /**

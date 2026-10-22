@@ -103,3 +103,12 @@ describe('matchClock', () => {
     expect(matchClock(0, 5)).toBe('00:05')
   })
 })
+
+describe('labels', () => {
+  it('names a tracked player by team, and knows the clip length before the video loads', async () => {
+    const { teamOf, clipSeconds } = await import('./real')
+    const o = { tracks: { '172': { team: 'WHT', label: 'White 172' } }, frames: [], fps: 25 }
+    expect(teamOf(o as never, 'real-WHT-T172')).toBe('White')
+    expect(clipSeconds({ frames: [[0], [2500]] as never, fps: 25 })).toBe(100)
+  })
+})

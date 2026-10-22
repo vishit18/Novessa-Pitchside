@@ -1,3 +1,4 @@
+import { storyFeed } from '@/core/feed'
 import { useEffect, useRef, useState } from 'react'
 import { sentenceCase } from '@/core/headline'
 import { AppNav } from '@/components/AppNav'
@@ -137,7 +138,7 @@ function Column({
 
 /** The last few story cards this viewer has been shown, in their words and language. */
 function Told({ n }: { n: number }) {
-  const feed = useSessionState((s) => s.feed)
+  const feed = storyFeed(useSessionState((s) => s.feed))
   const lang = useSessionState((s) => s.profile.lang)
   const items = feed.slice(0, TOLD)
   return (
