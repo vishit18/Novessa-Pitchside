@@ -19,12 +19,16 @@ const RealFootage = lazy(() =>
 )
 const Home = lazy(() => import('@/screens/Home').then((m) => ({ default: m.Home })))
 const Split = lazy(() => import('@/screens/Split').then((m) => ({ default: m.Split })))
+const Why = lazy(() => import('@/screens/Why').then((m) => ({ default: m.Why })))
+const DesignLab = lazy(() => import('@/screens/DesignLab').then((m) => ({ default: m.DesignLab })))
 
 const NAME = 'Novessa Pitchside'
 
 /** Tab title for a route, so several open tabs can be told apart. */
 export function titleFor(path: string): string {
   const screen = [
+    ['/why', 'Why it matters'],
+    ['/design-lab', 'Design lab'],
     ['/real', 'Real footage'],
     ['/recap', 'Recap'],
     ['/companion', 'Companion'],
@@ -59,6 +63,8 @@ export default function App() {
   }, [path])
 
   const screen = (() => {
+    if (path.startsWith('/why')) return <Why />
+    if (path.startsWith('/design-lab')) return <DesignLab query={query} />
     if (path.startsWith('/real')) return <RealFootage />
     if (path.startsWith('/recap')) return <Recap key={query.toString()} query={query} />
     if (path.startsWith('/companion')) return <Companion key={query.toString()} query={query} />

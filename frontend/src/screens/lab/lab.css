@@ -1,0 +1,562 @@
+/* Design lab only. Loaded with the lab's own chunk, so no other page downloads these fonts. */
+@import '@fontsource/bricolage-grotesque/600';
+@import '@fontsource/bricolage-grotesque/800';
+@import '@fontsource/figtree/400';
+@import '@fontsource/figtree/600';
+@import '@fontsource/fraunces/400';
+@import '@fontsource/fraunces/600';
+@import '@fontsource/fraunces/400-italic';
+@import '@fontsource/libre-franklin/400';
+@import '@fontsource/libre-franklin/600';
+@import '@fontsource/big-shoulders-display/700';
+@import '@fontsource/big-shoulders-display/800';
+@import '@fontsource/archivo/400';
+@import '@fontsource/archivo/600';
+@import '@fontsource/caveat-brush/400';
+@import '@fontsource/atkinson-hyperlegible/400';
+@import '@fontsource/atkinson-hyperlegible/700';
+
+/*
+ * Every direction sets two groups of variables:
+ * - the app's own tokens, so the real HUD components re-skin themselves
+ * - --fl-* for the first-impression layout around them
+ */
+.fl {
+  --fl-pad: clamp(16px, 3vw, 40px);
+  --fl-gap: 20px;
+  --fl-radius: 0px;
+  --fl-h1: clamp(40px, 5.4vw, 84px);
+  --fl-h1-weight: 700;
+  --fl-h1-track: -0.01em;
+  --fl-h1-lead: 0.95;
+  --fl-h1-case: none;
+  --fl-pane-h: min(40dvh, 460px);
+  background: var(--color-ink);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  min-height: 100%;
+}
+
+/* ---------- 1. Matchday bright ---------- */
+.lab-matchday {
+  --color-ink: #f3f6f4;
+  --color-raised: #ffffff;
+  --color-hairline: #d5ded8;
+  --color-text: #0f1d17;
+  --color-muted: #56645c;
+  --color-amber: #ff5b14;
+  --color-pressure: #c2006b;
+  --font-display: 'Bricolage Grotesque', system-ui, sans-serif;
+  --font-sans: 'Figtree', system-ui, sans-serif;
+  --fl-accent-2: #1c8c4e;
+  --fl-radius: 14px;
+  --fl-gap: 16px;
+  --fl-h1-weight: 800;
+  --fl-h1-track: -0.035em;
+  --fl-h1-lead: 0.92;
+}
+.lab-matchday .plate {
+  background: #ffffff;
+  box-shadow: 0 1px 0 rgb(15 29 23 / 0.06);
+  border-radius: 12px;
+  clip-path: none;
+}
+.lab-matchday .plate-shadow {
+  filter: drop-shadow(0 6px 14px rgb(15 29 23 / 0.16));
+}
+.lab-matchday .plate-chip {
+  clip-path: none;
+  border-radius: 999px;
+}
+.lab-matchday .stage-bg {
+  background: radial-gradient(100% 90% at 50% 40%, #e3ece6 0%, #f3f6f4 80%);
+}
+.lab-matchday .fl-pane {
+  border-radius: var(--fl-radius);
+  overflow: hidden;
+  box-shadow: 0 0 0 1px var(--color-hairline);
+}
+.lab-matchday .fl-who {
+  border-radius: 999px;
+  background: var(--color-text);
+  color: #fff;
+  padding: 6px 14px 6px 10px;
+}
+.lab-matchday .fl-who[data-side='b'] {
+  background: var(--fl-accent-2);
+}
+.lab-matchday .fl-cta {
+  border-radius: 999px;
+  background: var(--color-amber);
+  color: #fff;
+}
+.lab-matchday .fl-match {
+  border-radius: var(--fl-radius);
+  background: #fff;
+  box-shadow: 0 0 0 1px var(--color-hairline);
+}
+.lab-matchday .fl-same {
+  border-radius: 999px;
+  background: var(--color-amber);
+  color: #fff;
+}
+
+/* ---------- 2. Sports magazine ---------- */
+.lab-magazine {
+  --color-ink: #efe7d6;
+  --color-raised: #f7f1e4;
+  --color-hairline: #cdbfa6;
+  --color-text: #1e1b16;
+  --color-muted: #6b6253;
+  --color-amber: #b3261e;
+  --color-pressure: #1f4d3a;
+  --font-display: 'Fraunces', Georgia, serif;
+  --font-sans: 'Libre Franklin', system-ui, sans-serif;
+  --fl-accent-2: #1f4d3a;
+  --fl-pad: clamp(16px, 5vw, 88px);
+  --fl-gap: 28px;
+  --fl-h1: clamp(44px, 6.4vw, 104px);
+  --fl-h1-weight: 600;
+  --fl-h1-track: -0.03em;
+  --fl-h1-lead: 0.98;
+}
+.lab-magazine .plate {
+  background: #f7f1e4;
+  box-shadow: inset 0 0 0 1px #1e1b16;
+  clip-path: none;
+}
+.lab-magazine .plate-shadow {
+  filter: none;
+}
+.lab-magazine .plate-chip {
+  clip-path: none;
+}
+.lab-magazine .stage-bg {
+  background: #e6dcc6;
+}
+.lab-magazine .num,
+.lab-magazine .latin {
+  font-family: 'Libre Franklin', system-ui, sans-serif;
+  letter-spacing: 0;
+}
+.lab-magazine .fl-pane {
+  outline: 1px solid var(--color-text);
+  outline-offset: 6px;
+}
+.lab-magazine .fl-who {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 22px;
+}
+.lab-magazine .fl-hero {
+  border-bottom: 1px solid var(--color-text);
+  padding-bottom: 28px;
+}
+.lab-magazine .fl-cta {
+  background: var(--color-text);
+  color: var(--color-ink);
+}
+.lab-magazine .fl-match {
+  border-top: 1px solid var(--color-text);
+}
+.lab-magazine .fl-same {
+  font-family: var(--font-display);
+  font-style: italic;
+  color: var(--color-amber);
+}
+
+/* ---------- 3. Broadcast graphics ---------- */
+.lab-broadcast {
+  --color-ink: #07080a;
+  --color-raised: #000000;
+  --color-hairline: #2a2d33;
+  --color-text: #ffffff;
+  --color-muted: #a8adb5;
+  --color-amber: #ffd100;
+  --color-pressure: #e4002b;
+  --font-display: 'Big Shoulders Display', 'Arial Narrow', sans-serif;
+  --font-sans: 'Archivo', system-ui, sans-serif;
+  --fl-accent-2: #e4002b;
+  --fl-pad: clamp(12px, 1.6vw, 24px);
+  --fl-gap: 4px;
+  --fl-h1: clamp(44px, 6vw, 96px);
+  --fl-h1-weight: 800;
+  --fl-h1-track: 0.005em;
+  --fl-h1-lead: 0.88;
+  --fl-h1-case: uppercase;
+  --fl-pane-h: min(44dvh, 500px);
+}
+.lab-broadcast .plate {
+  background: #000;
+  box-shadow: inset 0 -3px 0 var(--color-amber);
+  clip-path: polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%);
+}
+.lab-broadcast .plate-shadow {
+  filter: drop-shadow(0 10px 18px rgb(0 0 0 / 0.7));
+}
+.lab-broadcast .num,
+.lab-broadcast .latin {
+  font-family: 'Big Shoulders Display', 'Arial Narrow', sans-serif;
+  font-weight: 800;
+}
+.lab-broadcast .stage-bg {
+  background: #000;
+}
+.lab-broadcast .fl-who {
+  background: var(--color-amber);
+  color: #000;
+  font-family: var(--font-display);
+  font-weight: 800;
+  text-transform: uppercase;
+  font-size: 20px;
+  padding: 4px 18px;
+  clip-path: polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%);
+}
+.lab-broadcast .fl-who[data-side='b'] {
+  background: var(--fl-accent-2);
+  color: #fff;
+}
+.lab-broadcast .fl-cta {
+  background: var(--color-amber);
+  color: #000;
+  text-transform: uppercase;
+  font-family: var(--font-display);
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  clip-path: polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%);
+}
+.lab-broadcast .fl-match {
+  background: #111317;
+}
+.lab-broadcast .fl-same {
+  background: #fff;
+  color: #000;
+  font-family: var(--font-display);
+  font-weight: 800;
+  text-transform: uppercase;
+}
+/* Strong overlay motion: tags wipe in from the left instead of rising. */
+@keyframes fl-tag-wipe {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+.lab-broadcast .tag {
+  animation:
+    fl-tag-wipe 0.18s var(--ease-out) both,
+    tag-out 0.15s var(--ease-out) both;
+  animation-delay: 0s, calc(var(--life, 4s) - 0.15s);
+}
+
+/* ---------- 4. Tactics board ---------- */
+.lab-tactics {
+  --color-ink: #1d2622;
+  --color-raised: #26312c;
+  --color-hairline: #3a4741;
+  --color-text: #eceae2;
+  --color-muted: #a9b2aa;
+  --color-amber: #f4d35e;
+  --color-pressure: #f28fa0;
+  --font-display: 'Caveat Brush', 'Comic Sans MS', cursive;
+  --font-sans: 'Atkinson Hyperlegible', system-ui, sans-serif;
+  --fl-accent-2: #f28fa0;
+  --fl-chalk-blue: #8fd3f4;
+  --fl-gap: 28px;
+  --fl-radius: 6px;
+  --fl-h1: clamp(44px, 5.8vw, 92px);
+  --fl-h1-weight: 400;
+  --fl-h1-track: 0;
+  --fl-h1-lead: 0.95;
+  background:
+    radial-gradient(60% 50% at 20% 10%, rgb(236 234 226 / 0.05), transparent 70%),
+    radial-gradient(50% 40% at 80% 80%, rgb(236 234 226 / 0.04), transparent 70%), var(--color-ink);
+}
+.lab-tactics .plate {
+  background: rgb(29 38 34 / 0.94);
+  box-shadow: inset 0 0 0 1.5px rgb(236 234 226 / 0.55);
+  border-radius: 6px;
+  clip-path: none;
+}
+.lab-tactics .plate-shadow {
+  filter: none;
+}
+.lab-tactics .plate-chip {
+  clip-path: none;
+  border-radius: 4px;
+}
+.lab-tactics .num,
+.lab-tactics .latin {
+  font-family: 'Atkinson Hyperlegible', system-ui, sans-serif;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+.lab-tactics .stage-bg {
+  background: transparent;
+}
+.lab-tactics .fl-pane {
+  border: 1.5px dashed rgb(236 234 226 / 0.45);
+  border-radius: var(--fl-radius);
+  padding: 6px;
+}
+.lab-tactics .fl-who {
+  font-family: var(--font-display);
+  font-size: 30px;
+  color: var(--color-amber);
+}
+.lab-tactics .fl-who[data-side='b'] {
+  color: var(--fl-accent-2);
+}
+.lab-tactics .fl-cta {
+  border: 2px solid var(--color-text);
+  border-radius: 6px;
+  font-family: var(--font-display);
+  font-size: 24px;
+}
+.lab-tactics .fl-match {
+  border: 1.5px dashed rgb(236 234 226 / 0.35);
+  border-radius: var(--fl-radius);
+}
+/* A chalk squiggle under what each viewer was told. */
+.lab-tactics .fl-told-h {
+  width: fit-content;
+  padding-bottom: 6px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 8'%3E%3Cpath d='M2 5c12-4 22 3 36-1s24-3 38 0 26 2 42-2' fill='none' stroke='%23f4d35e' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E")
+    left bottom / 100% 8px no-repeat;
+}
+.lab-tactics [data-side='b'] .fl-told-h {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 8'%3E%3Cpath d='M2 5c12-4 22 3 36-1s24-3 38 0 26 2 42-2' fill='none' stroke='%23f28fa0' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");
+}
+.lab-tactics .fl-same {
+  font-family: var(--font-display);
+  font-size: 26px;
+  color: var(--fl-chalk-blue);
+}
+
+/* ---------- 5. Floodlights: the app as it ships. Nothing overridden. ---------- */
+.lab-floodlights .fl-who {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 22px;
+}
+.lab-floodlights .fl-cta {
+  background: var(--color-amber);
+  color: var(--color-ink);
+}
+.lab-floodlights .fl-match {
+  background: var(--color-raised);
+}
+.lab-floodlights .fl-same {
+  color: var(--color-amber);
+}
+
+/* ---------- 6. Matchday broadcast: 1's daylight, 3's graphics ---------- */
+.lab-blend {
+  --color-ink: #eef1ed;
+  --color-raised: #ffffff;
+  --color-hairline: #cfd6d0;
+  --color-text: #101418;
+  --color-muted: #4f5a54;
+  --color-amber: #e4002b;
+  --color-pressure: #e4002b;
+  --font-display: 'Big Shoulders Display', 'Arial Narrow', sans-serif;
+  --font-sans: 'Figtree', system-ui, sans-serif;
+  --fl-accent-2: #ffd100;
+  --fl-radius: 2px;
+  --fl-gap: 16px;
+  --fl-h1: clamp(44px, 6vw, 96px);
+  --fl-h1-weight: 800;
+  --fl-h1-track: 0.005em;
+  --fl-h1-lead: 0.88;
+  --fl-h1-case: uppercase;
+}
+/* TV plates stay black on the bright page, so everything inside them flips to light ink. */
+.lab-blend .plate {
+  --color-text: #ffffff;
+  --color-muted: #b4bac2;
+  --color-hairline: #2c3037;
+  --color-raised: #1a1d22;
+  --color-amber: #ffd100;
+  color: var(--color-text);
+  background: #101418;
+  box-shadow: none;
+  clip-path: polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%);
+}
+.lab-blend .plate-shadow {
+  filter: drop-shadow(0 6px 12px rgb(16 20 24 / 0.35));
+}
+.lab-blend .num,
+.lab-blend .latin {
+  font-family: 'Big Shoulders Display', 'Arial Narrow', sans-serif;
+  font-weight: 800;
+}
+.lab-blend .stage-bg {
+  background: #101418;
+}
+/* Each feed is a monitor: a hard black frame, its viewer tab sitting on top of it. */
+.lab-blend .fl-pane {
+  border: 3px solid #101418;
+  border-radius: var(--fl-radius);
+  overflow: hidden;
+}
+.lab-blend .fl-who-row {
+  margin-bottom: -12px;
+}
+.lab-blend .fl-who {
+  background: var(--fl-accent-2);
+  color: #101418;
+  font-family: var(--font-display);
+  font-weight: 800;
+  text-transform: uppercase;
+  font-size: 20px;
+  padding: 6px 16px 5px;
+}
+.lab-blend .fl-who[data-side='b'] {
+  background: var(--color-amber);
+  color: #fff;
+}
+.lab-blend .fl-cta {
+  background: var(--color-amber);
+  color: #fff;
+  text-transform: uppercase;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 20px;
+  letter-spacing: 0.02em;
+  clip-path: polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%);
+  padding: 0 26px;
+}
+.lab-blend .fl-cta:hover {
+  background: #c40025;
+}
+.lab-blend .fl-match {
+  background: #fff;
+  border-top: 4px solid #101418;
+}
+.lab-blend .fl-same {
+  background: #101418;
+  color: #fff;
+  font-family: var(--font-display);
+  font-weight: 800;
+  text-transform: uppercase;
+  padding: 5px 14px;
+}
+.lab-blend .fl-same .num {
+  color: var(--fl-accent-2);
+}
+.lab-blend .tag {
+  animation:
+    fl-tag-wipe 0.18s var(--ease-out) both,
+    tag-out 0.15s var(--ease-out) both;
+  animation-delay: 0s, calc(var(--life, 4s) - 0.15s);
+}
+
+/* ---------- Shared layout ---------- */
+.fl-h1 {
+  font-family: var(--font-display);
+  font-size: var(--fl-h1);
+  font-weight: var(--fl-h1-weight);
+  letter-spacing: var(--fl-h1-track);
+  line-height: var(--fl-h1-lead);
+  text-transform: var(--fl-h1-case);
+  text-wrap: balance;
+}
+.fl-pane-box {
+  height: var(--fl-pane-h);
+  min-height: 260px;
+}
+.fl-who {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  line-height: 1;
+}
+.fl-cta {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 20px;
+  font-weight: 600;
+  font-size: 16px;
+}
+.fl-same {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  line-height: 1;
+}
+
+/*
+ * Phones: both fans have to be visible without scrolling, or the point is lost. The panes shrink
+ * to a strip each, the shared clock sits between them, the intro line goes, and the button moves
+ * below the second fan. `.fl.fl` outranks each look's own sizes.
+ */
+@media (min-width: 640px) {
+  .fl-cta-bottom {
+    display: none;
+  }
+}
+@media (max-width: 639px) {
+  .fl-cta-top {
+    display: none;
+  }
+  .fl.fl {
+    --fl-h1: 34px;
+    --fl-gap: 12px;
+    --fl-pane-h: 27dvh;
+  }
+  .fl-pane-box {
+    min-height: 200px;
+  }
+  .fl-who {
+    font-size: 15px;
+  }
+  .lab-tactics .fl-who {
+    font-size: 22px;
+  }
+  .lab-blend .fl-who,
+  .lab-broadcast .fl-who {
+    font-size: 16px;
+  }
+  .lab-magazine .fl-pane {
+    outline-offset: 3px;
+  }
+}
+
+/* Hand-drawn chalk marks: drawn on with stroke-dashoffset, once. */
+.fl-chalk path {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: fl-draw 0.28s var(--ease-out) forwards;
+}
+.fl-chalk path:nth-child(2) {
+  animation-delay: 0.28s;
+}
+.fl-chalk path:nth-child(3) {
+  animation-delay: 0.56s;
+}
+.fl-chalk path:nth-child(4) {
+  animation-delay: 0.84s;
+}
+@keyframes fl-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fl-chalk path {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+  .lab-broadcast .tag,
+  .lab-blend .tag {
+    animation:
+      tag-fade-in 0.15s linear both,
+      tag-out 0.15s linear both;
+    animation-delay: 0s, calc(var(--life, 4s) - 0.15s);
+  }
+}
