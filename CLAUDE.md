@@ -37,10 +37,10 @@ A synthetic match engine streams a full 90 minutes of football-realistic events 
 - No copyrighted music. No stock assets unless the licence is explicitly free for commercial use and is recorded in `docs/ASSET_LICENSES.md`.
 - Open-source dependencies must be licence-compatible with our MIT repo. **Do not use Ultralytics YOLO** (AGPL). Use permissively-licensed models only (see `docs/06`).
 
-### Git — VJ is the only author
+### Git — team commits, no AI attribution
 - Do all the git work: init, branch, commit often with clear messages, push, open PRs if asked.
 - **Never add AI attribution to anything.** No `Co-Authored-By:` trailers, no "Generated with Claude Code", no `Claude-Session:` trailers, no AI mentions in commit messages, PR descriptions, code comments, README or docs.
-- Commits are made with VJ's own git identity (`git config user.name` / `user.email` already set on his machine). Never change the git identity. Never pass `--author`.
+- VJ and his teammates commit under their own git identity (whatever `git config user.name` / `user.email` is on the machine you're running on). Never change the git identity. Never pass `--author`. Teammates work on a branch and open a PR; only VJ merges to `main`.
 - `.claude/settings.json` disables attribution and `.githooks/commit-msg` strips any trailer that slips through. On first setup run:
   ```bash
   git config core.hooksPath .githooks
