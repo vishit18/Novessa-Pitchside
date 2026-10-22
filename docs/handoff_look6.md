@@ -1,7 +1,8 @@
 # Handoff: move the whole app to "Matchday broadcast" (look 6)
 
-> **On hold. VJ is choosing the colours.** Don't start until this note is gone. The colour values
-> below are placeholders until he signs them off.
+> **Colours are final.** VJ chose every colour below himself (picker code `1B 2B 3A 4A 5A 6D 7A`).
+> Use them exactly. Don't swap, tune or "improve" any of them. If one doesn't work somewhere,
+> stop and ask VJ.
 
 For whoever picks this up, human or Claude Code. Read this whole file, then `CLAUDE.md`, then
 `docs/07_FRONTEND_DESIGN.md`, before touching code. CLAUDE.md's rules all still apply.
@@ -12,8 +13,14 @@ VJ chose look 6, "Matchday broadcast", from `/design-lab`. It replaces the curre
 "Floodlights" look across the whole frontend: every page, every on-pitch graphic, the pitch itself.
 
 **This is a re-skin, not a redesign.** Same screens, same copy, same behaviour, same routes, same
-components. Only colours, fonts, plate shapes, spacing tokens and entrance motion change. If you
-think something's layout or wording should change, write it down and ask VJ. Don't do it.
+components. Only colours, fonts, plate shapes and entrance motion change. If you think something's
+layout or wording should change, write it down and ask VJ. Don't do it.
+
+**Touch as little as possible.** Change only what the new look needs: `index.css`,
+`components/pitch/palette.ts`, the hard-coded colours listed in trap 3, `docs/07`, the font
+packages in `package.json`, and the lab's Floodlights pin (trap 4). Don't refactor, rename, reorder
+or "tidy" anything else, even if it looks wrong. No new components, no new dependencies beyond the
+two fonts.
 
 See it first: run the app (below) and open `http://localhost:5173/design-lab?look=blend`. That
 screen is the reference. Its exact values are in:
@@ -97,36 +104,43 @@ Rewrite the "Art direction" section of `docs/07_FRONTEND_DESIGN.md` from "floodl
 "Matchday broadcast". Use the values below. Keep the rest of the doc as it is. Commit this on its
 own (`docs: art direction moves to matchday broadcast`).
 
-## The look, as tokens
+## The look, as tokens (final, chosen by VJ)
 
 | Token (`index.css` `@theme`) | Now (Floodlights) | Look 6 |
 |---|---|---|
-| `--color-ink` (page) | `#0d1014` | `#eef1ed` |
-| `--color-raised` | `#161b22` | `#ffffff` |
-| `--color-hairline` | `#2a313b` | `#cfd6d0` |
+| `--color-ink` (page) | `#0d1014` | `#ffffff` |
+| `--color-raised` (cards, sheets on the page) | `#161b22` | `#f3f5f2` |
+| `--color-hairline` | `#2a313b` | `#d3d9d4` |
 | `--color-text` | `#e8edf2` | `#101418` |
 | `--color-muted` | `#9aa5b1` | `#4f5a54` |
-| `--color-amber` (the accent) | `#ffb020` | `#e4002b` on the page, `#ffd100` inside plates |
-| `--color-pressure` | `#e05cff` | see "Semantic colours" |
+| `--color-amber` (the accent) | `#ffb020` | `#c1121f` on the page, `#ffd100` inside black plates |
+| `--color-control` | `#5cc8ff` | `#1d4ed8` |
+| `--color-chaos` | `#ff4d4d` | `#c77700` |
+| `--color-pressure` | `#e05cff` | `#8e24aa` |
 | `--font-display` | Barlow Condensed | Big Shoulders Display 800, uppercase for headlines |
 | `--font-sans` | Inter | Figtree 400/600 |
 | `.num`, `.latin` | Barlow Condensed | Big Shoulders Display 800, keep `tabular-nums` |
+
+Keep the token *names* as they are (`--color-amber` stays `--color-amber` even though it's red now).
+Renaming would touch every file for no visible gain.
 
 - **Plates** (`.plate`: score bug, lower thirds, tags, cards, timeline, menus): solid `#101418`,
   parallelogram clip `polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%)`, no inner
   highlight, shadow `drop-shadow(0 6px 12px rgb(16 20 24 / .35))`. Inside a plate, re-point the
   tokens to light ink: `--color-text:#fff; --color-muted:#b4bac2; --color-hairline:#2c3037;
   --color-raised:#1a1d22; --color-amber:#ffd100; color: var(--color-text);`.
-- **Pitch**: in `components/pitch/palette.ts`, add a `MATCHDAY` palette with the values of `blend`
-  in `directions.ts`. Make it the context default (`createContext(MATCHDAY)`). Keep `FLOODLIGHTS`
-  exported, because the lab uses it.
+- **Pitch**: in `components/pitch/palette.ts`, add a `MATCHDAY` palette with exactly the values of
+  `blend` in `screens/lab/directions.ts` (grass `0x2e8b48`/`0x349650`, 14 stripes, white lines at
+  0.95, accent `0xffd100`, pressure `0x8e24aa`, ink `0x101418`, no light falloff). Make it the
+  context default (`createContext(MATCHDAY)`). Keep `FLOODLIGHTS` exported, because the lab uses it.
 - **Stage** (`.stage-bg`, behind the pitch): `#101418`. The pitch sits in a black frame, like a
   TV monitor.
-- **Buttons**: primary is red `#e4002b` with white uppercase display text and the parallelogram
-  clip, hover `#c40025`. Secondary is a `#101418` outline. Focus ring: 2px `#101418` with a 2px
-  offset (red on light is low contrast for a ring).
-- **Viewer labels** (split view): yellow tab for the first viewer, red tab for the second, sitting
-  on top of the pane frame (see `.lab-blend .fl-who`).
+- **Buttons**: primary is deep red `#c1121f` with white uppercase display text and the
+  parallelogram clip, hover `#a10f1a`. Secondary is a `#101418` outline. Focus ring: 2px `#101418`
+  with a 2px offset.
+- **Viewer labels** (split view and anywhere a viewer is named): first viewer is a yellow `#ffd100`
+  tab with `#101418` text, second viewer is a red `#c1121f` tab with white text, sitting on top of
+  the pane frame (see `.lab-blend .fl-who`).
 - **Motion**: plates and tags wipe in left to right in 180ms (`fl-tag-wipe` in `lab.css`), and
   reduced motion falls back to fades. Nothing bounces.
 - **Fonts**: move `@fontsource/big-shoulders-display` and `@fontsource/figtree` from
@@ -135,17 +149,26 @@ own (`docs: art direction moves to matchday broadcast`).
   imports only once nothing references them. Licences are already in `docs/ASSET_LICENSES.md`.
   Update that row to say the fonts are now used app-wide.
 
-### Semantic colours: decide, don't guess
+The live reference is `/design-lab?look=blend`. It already uses these exact values.
 
-On a light page, the current semantic colours need checking for WCAG AA contrast.
-`control #5cc8ff` fails as text on `#eef1ed`. `chaos #ff4d4d` now clashes with the red accent.
-Recommendation:
+### Where the stats colours need care (don't change the colours, change how they're drawn)
 
-- Keep each colour where it's drawn on the pitch or inside black plates. They read fine there.
-- Where they appear as text or thin lines on the light page, use darker variants that pass AA.
-- Make chaos visibly different from the accent red.
+VJ's stats colours read well on the white page, but some places put them on other backgrounds.
+Contrast against each background:
 
-Show VJ a swatch screenshot before committing to new values.
+| | on white | on grass `#2e8b48` | on black plate |
+|---|---|---|---|
+| control `#1d4ed8` | 6.7 | 1.6 | 2.8 |
+| chaos `#c77700` | 3.5 | 1.2 | 5.3 |
+| pressure `#8e24aa` | 7.0 | 1.6 | 2.6 |
+
+- **On the pitch** (pressure halos, any control/chaos marks drawn on grass): keep the colour, add a
+  thin white outline (1-2px) around the mark so it separates from the grass.
+- **Inside black plates** (momentum bar, gauges): keep the colour, put a thin white outline or
+  label next to it, so the bar isn't the only cue.
+- **Chaos as small text on the page** (3.5:1 is under AA for body text): only use it for large or
+  bold text (18px+, or 14px+ bold), or as a mark next to ink-coloured text.
+- If any of these still looks wrong in a screenshot, stop and show VJ. Don't pick a new colour.
 
 ## Traps already found (don't rediscover them)
 
@@ -191,7 +214,7 @@ Show VJ a swatch screenshot before committing to new values.
 5. Fix the hard-coded files from trap 3, page by page in this order: **/watch → /split → /** (the
    video's screens first), then /companion, /start, /recap, /control, /real, /why.
 6. Motion: tag and plate wipes app-wide. `review-animations` on the result.
-7. Semantic colours (after VJ signs off on the swatch).
+7. Stats colours: the outlines and size rules above, then a screenshot of every place they appear.
 8. `impeccable` critique and audit on every route. Fix P0/P1. `break-ui` on Home, Watch and
    Companion.
 9. Final pass (below).

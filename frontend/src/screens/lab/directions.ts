@@ -24,13 +24,14 @@
  * 5. Floodlights (baseline)
  *    Type: Barlow Condensed, Inter. Colour: graphite #0D1014, amber #FFB020. Spacing and motion
  *    as the app ships today (docs/07): plates wipe in 150-250ms.
- * 6. Matchday broadcast (1 + 3)
+ * 6. Matchday broadcast (1 + 3). VJ's pick for the whole app; colours chosen by him.
  *    Matchday's daylight with broadcast graphics on top. Type: Big Shoulders Display 800 caps
- *    (headlines), Figtree (text). Colour: floodlit-concrete white #EEF1ED, ink #101418, signal red
- *    #E4002B (buttons, clocks on the page), signal yellow #FFD100 (inside black plates and on the
- *    pitch), grass #2E8B48. Black skewed TV plates sit on the bright page; each feed gets a hard
- *    black frame with its viewer tab clipped to the top, so the two screens read as two monitors.
- *    No pills, no orange. Spacing: tight, 2px radius. Motion: broadcast wipes, 180ms.
+ *    (headlines), Figtree (text). Colour: white page #FFFFFF, ink #101418, deep red #C1121F
+ *    (buttons, clocks on the page, second viewer tab), signal yellow #FFD100 (inside black plates,
+ *    first viewer tab), grass #2E8B48/#349650, stats navy #1D4ED8 / amber #C77700 / violet #8E24AA.
+ *    Black skewed TV plates sit on the bright page; each feed gets a hard black frame with its
+ *    viewer tab clipped to the top, so the two screens read as two monitors. No pills, no orange.
+ *    Spacing: tight, 2px radius. Motion: broadcast wipes, 180ms.
  */
 import { FLOODLIGHTS, type PitchPalette } from '@/components/pitch/palette'
 
@@ -136,7 +137,7 @@ export const DIRECTIONS: Direction[] = [
       lineAlpha: 0.95,
       lineWidth: 0.24,
       accent: 0xffd100,
-      press: 0xe4002b,
+      press: 0x8e24aa,
       ball: 0xffffff,
       ink: 0x101418,
       light: false,

@@ -354,13 +354,15 @@
 
 /* ---------- 6. Matchday broadcast: 1's daylight, 3's graphics ---------- */
 .lab-blend {
-  --color-ink: #eef1ed;
-  --color-raised: #ffffff;
-  --color-hairline: #cfd6d0;
+  --color-ink: #ffffff;
+  --color-raised: #f3f5f2;
+  --color-hairline: #d3d9d4;
   --color-text: #101418;
   --color-muted: #4f5a54;
-  --color-amber: #e4002b;
-  --color-pressure: #e4002b;
+  --color-amber: #c1121f;
+  --color-control: #1d4ed8;
+  --color-chaos: #c77700;
+  --color-pressure: #8e24aa;
   --font-display: 'Big Shoulders Display', 'Arial Narrow', sans-serif;
   --font-sans: 'Figtree', system-ui, sans-serif;
   --fl-accent-2: #ffd100;
@@ -429,10 +431,10 @@
   padding: 0 26px;
 }
 .lab-blend .fl-cta:hover {
-  background: #c40025;
+  background: #a10f1a;
 }
 .lab-blend .fl-match {
-  background: #fff;
+  background: var(--color-raised);
   border-top: 4px solid #101418;
 }
 .lab-blend .fl-same {
