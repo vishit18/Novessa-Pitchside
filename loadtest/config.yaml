@@ -11,13 +11,13 @@ engineInstances: 2
 env:
   - name: TARGET_HOST
     value: https://ca-api-uirzml34ufpge.salmonocean-c33a3a80.swedencentral.azurecontainerapps.io
-  # Across both engines: 150 viewers, 5 more a second, for 5 minutes (about 14 virtual-user hours).
+  # Across both engines: 150 viewers, 5 more a second, for 300 seconds (LOCUST_RUN_TIME is seconds).
   - name: LOCUST_USERS
     value: 150
   - name: LOCUST_SPAWN_RATE
     value: 5
   - name: LOCUST_RUN_TIME
-    value: 5
+    value: 300
 failureCriteria:
   - percentage(error) > 2
   - percentiles(response_time_ms, 95) > 1500

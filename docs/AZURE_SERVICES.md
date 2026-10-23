@@ -64,6 +64,12 @@ Translator, Speech and Content Safety all live on the same Foundry resource, so 
 | **Alerts** | A test failing from two or more locations; more than 5 API 5xx in 5 minutes; more than 10 failed model calls in 15 minutes (the chaos switch is not counted). All go to one action group by email. | Created 23 Oct. Not fired yet. |
 | **Workbook "Pitchside operations"** | Availability, API p50 and p95, status codes, agent calls by outcome, calls per model deployment, requests turned away by the rate limit. | Every query run against the live workspace 23 Oct. |
 
+### Load test (23 Oct)
+
+| What | Detail | Status |
+|---|---|---|
+| **Azure Load Testing** | A Locust test of viewers reading match state, pulse, catch-up and moments, run from the same region as the API. Billed by virtual-user hour. | Run 23 Oct: 150 viewers, 5 minutes, 32,120 requests, 0 errors, p95 11 ms, API scaled 1 to 3 replicas and back to 0. Details and caveats in `docs/LOAD_TEST.md`. |
+
 ### Rate limits (23 Oct)
 
 `backend/app/ratelimit.py`, on in Azure (`RATE_LIMIT=on`), off locally and in tests. Fresh match runs: 5 an hour for the whole service. Ask the Analyst (typed or spoken): 12 a minute per client. Recaps: 20 a minute per client. Chaos switch: 10 a minute per client. Replays answer from the cache and are never limited. A limited call gets a 429 with `Retry-After`. Verified on the live API: 12 requests allowed, the 13th and 14th refused. Counters are per replica, so this is a guard against runaway spend, not a billing meter.
