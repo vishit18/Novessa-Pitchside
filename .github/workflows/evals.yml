@@ -1,0 +1,91 @@
+name: evals
+
+# Offline red team on every change to the agents: the model is assumed hijacked and the code's
+# guarantees are checked (scripts/eval_redteam.py). No Azure, no cost.
+# The live job runs only by hand (Actions > evals > Run workflow) and logs in to Azure with
+# OIDC, keyless. Setup: docs/02_AZURE_SETUP.md, "Evals and red team in CI".
+
+on:
+  pull_request:
+    paths:
+      - "backend/agents/**"
+      - "data/evals/**"
+      - "scripts/eval_*.py"
+      - ".github/workflows/evals.yml"
+  push:
+    branches: [main]
+    paths:
+      - "backend/agents/**"
+      - "data/evals/**"
+      - "scripts/eval_*.py"
+      - ".github/workflows/evals.yml"
+  workflow_dispatch:
+    inputs:
+      live:
+        description: "Also run the attacks against the real models (needs the Azure OIDC setup)"
+        type: boolean
+        default: false
+      foundry_scan:
+        description: "Also run the Foundry AI Red Teaming Agent (costs a few cents)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  redteam-offline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: uv python install 3.12
+      - run: uv sync
+      - name: Red team, hijacked model
+        run: uv run python -m scripts.eval_redteam --no-write | tee redteam.md
+      - name: Summary
+        if: always()
+        run: cat redteam.md >> "$GITHUB_STEP_SUMMARY"
+
+  live:
+    if: github.event_name == 'workflow_dispatch' && (inputs.live || inputs.foundry_scan) && vars.AZURE_CLIENT_ID != ''
+    needs: redteam-offline
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+      id-token: write # OIDC token for azure/login, no secret stored
+    env:
+      FOUNDRY_PROJECT_ENDPOINT: ${{ vars.FOUNDRY_PROJECT_ENDPOINT }}
+      FOUNDRY_OPENAI_ENDPOINT: ${{ vars.FOUNDRY_OPENAI_ENDPOINT }}
+      FOUNDRY_DEPLOYMENT_FAST: ${{ vars.FOUNDRY_DEPLOYMENT_FAST || 'chat-fast' }}
+      FOUNDRY_DEPLOYMENT_STRONG: ${{ vars.FOUNDRY_DEPLOYMENT_STRONG || 'chat-strong' }}
+      CONTENT_SAFETY_ENDPOINT: ${{ vars.CONTENT_SAFETY_ENDPOINT }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: uv python install 3.12
+      - run: uv sync
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      - name: Red team, live models
+        if: inputs.live
+        run: |
+          uv run python -m scripts.eval_redteam --live
+          cat docs/REDTEAM_LIVE.md >> "$GITHUB_STEP_SUMMARY"
+      - name: Foundry AI Red Teaming Agent
+        if: inputs.foundry_scan
+        run: uv run --group eval --with "azure-ai-evaluation[redteam]" python -m scripts.eval_redteam --foundry-scan
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: redteam-live
+          path: |
+            docs/REDTEAM_LIVE.md
+            data/redteam_live.json
+            data/redteam_foundry.json
+          if-no-files-found: ignore

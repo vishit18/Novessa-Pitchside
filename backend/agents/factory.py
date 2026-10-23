@@ -7,6 +7,7 @@ import os
 from backend.agents.cache import default_cache
 from backend.agents.context import MatchContext
 from backend.agents.foundry_agents import AgentServiceTransport, agent_service_enabled
+from backend.agents.guardrails import with_guardrails
 from backend.agents.intel import MatchIntel
 from backend.agents.llm import FoundryTransport, ResilientLLM, Transport
 from backend.agents.safety import default_safety
@@ -29,7 +30,7 @@ async def build_context(
         names=store.names,
         llm=ResilientLLM(transport or default_transport()),
         cache=default_cache(),
-        safety=default_safety(),
+        safety=with_guardrails(default_safety()),
         fast_model=os.environ.get("FOUNDRY_DEPLOYMENT_FAST", "chat-fast"),
         strong_model=os.environ.get("FOUNDRY_DEPLOYMENT_STRONG", "chat-strong"),
     )

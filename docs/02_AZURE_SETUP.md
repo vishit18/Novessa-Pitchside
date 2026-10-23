@@ -181,3 +181,21 @@ No code change and no new resource. Prompts and answers are not recorded.
    Expect seven agents, `pitchside-producer` to `pitchside-ask`, each `published version 1`. They then show under **Agents** in the portal with their instructions and model.
 3. Try it locally with `FOUNDRY_AGENT_SERVICE=true` in `.env` and `make dev`. The log says `calling pitchside-producer version 1 through Foundry Agent Service` once per agent. A line saying an agent `is not registered for this prompt and model` means step 2 was not run after a prompt edit; that agent is called directly, nothing breaks.
 4. For the deployed app, add `FOUNDRY_AGENT_SERVICE=true` to the api app's `env` in `main.bicep`, then `azd provision` and `azd deploy api`. Re-run step 2 after every prompt change before deploying.
+
+### Guardrails (item 5)
+
+`GUARDRAILS=true` puts deterministic rules ahead of Content Safety: no links, emails, markup or system prompt read back, in viewer questions or in anything that airs. No Azure resource. `backend/tests/test_guardrails.py` checks they pass every one of the 7,000-odd lines in the demo cache. Turn it on locally, watch a match, then add it to the api app's `env`.
+
+### Evals and red team in CI (item 5)
+
+`.github/workflows/evals.yml` runs the offline red team (`scripts/eval_redteam.py`, hijacked model, no Azure) on every change to `backend/agents/`. Results land in the run summary and in `docs/REDTEAM.md` when run locally.
+
+The live job (real models, Content Safety, optionally the Foundry AI Red Teaming Agent) only runs by hand and needs a keyless GitHub login to Azure. Person A, once:
+
+1. Portal, **Microsoft Entra ID** > **App registrations** > **New registration**, name `pitchside-github`, register. Note the **Application (client) ID** and **Directory (tenant) ID**.
+2. In that app: **Certificates & secrets** > **Federated credentials** > **Add credential** > **GitHub Actions deploying Azure resources**. Organization `vishit18`, repository `Novessa-Pitchside`, entity **Branch**, branch `main`. Save. No secret is created.
+3. Resource group `pitchside` > **Access control (IAM)** > add **Cognitive Services OpenAI User** and **Azure AI User** on `NovessaPitchside1` for `pitchside-github` (and **Cognitive Services User** for Content Safety).
+4. GitHub repo **Settings** > **Secrets and variables** > **Actions** > **Variables** (not secrets): `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`, `FOUNDRY_PROJECT_ENDPOINT`, `FOUNDRY_OPENAI_ENDPOINT`, `CONTENT_SAFETY_ENDPOINT`.
+5. **Actions** > **evals** > **Run workflow** on `main`, tick **live**. The table appears in the run summary and as an artifact. A live run is 14 questions through the real models, well under a cent.
+
+Without step 4 the live job is skipped, and the offline job still runs.

@@ -15,6 +15,7 @@ from typing import Any
 from backend.agents.cache import AgentCache, default_cache
 from backend.agents.context import MatchContext
 from backend.agents.factory import default_transport
+from backend.agents.guardrails import with_guardrails
 from backend.agents.intel import MatchIntel
 from backend.agents.llm import ResilientLLM, Transport
 from backend.agents.localiser import localise
@@ -85,7 +86,7 @@ class AgentRuntime:
         self.translator = translator or default_translator()
         self.speech = speech or default_speech()
         self._ctx: dict[str, MatchContext] = {}
-        self.safety = default_safety()
+        self.safety = with_guardrails(default_safety())
         self._tasks: dict[str, asyncio.Task[None]] = {}
         self._results: dict[str, dict[str, Aired]] = {}
         self._changed: dict[str, asyncio.Condition] = {}
