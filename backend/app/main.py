@@ -38,6 +38,7 @@ from backend.app.live import LiveIngest
 from backend.app.overlay import Overlay, Persona, ViewerProfile
 from backend.app.overlay_text import OverlayText, apply
 from backend.app.personas import for_viewer
+from backend.app.ratelimit import RateLimits
 from backend.app.real import mount_real
 from backend.app.store import LoadedMatch, MatchStore, StaleDataError, UnknownMatchError
 from backend.app.telemetry import setup_telemetry
@@ -300,14 +301,22 @@ def create_app(data_dir: Path | None = None) -> FastAPI:
         except StaleDataError as exc:
             raise HTTPException(500, str(exc)) from exc
 
+    limits = RateLimits()
+    app.state.limits = limits
+
     mount_a2a(app, lambda: app.state.agents)
     mount_real(app)
 
     @app.get("/matches/{match_id}/recap")
     async def recap(
-        match_id: str, kind: str = "full_time", persona: str = "casual", lang: str = "en"
+        request: Request,
+        match_id: str,
+        kind: str = "full_time",
+        persona: str = "casual",
+        lang: str = "en",
     ) -> dict[str, Any]:
         """Half-time or full-time recap, per persona and language."""
+        limits.recap(request)
         runtime: AgentRuntime = app.state.agents
         if not runtime.enabled:
             raise HTTPException(503, "agents are switched off")
@@ -329,8 +338,11 @@ def create_app(data_dir: Path | None = None) -> FastAPI:
         return runtime.health()
 
     @app.post("/agents/{agent}/kill")
-    async def agents_kill(agent: str, seconds: float = Query(30.0, gt=0, le=300)) -> dict[str, Any]:
+    async def agents_kill(
+        request: Request, agent: str, seconds: float = Query(30.0, gt=0, le=300)
+    ) -> dict[str, Any]:
         """Chaos switch: make one agent fail for a while so the recovery paths can be shown."""
+        limits.kill(request)
         runtime: AgentRuntime = app.state.agents
         runtime.kill(agent, seconds)
         return {"agent": agent, "killed_for_s": seconds}
@@ -360,6 +372,8 @@ def create_app(data_dir: Path | None = None) -> FastAPI:
         """Start the agents on a match without a viewer (the Control Room's start button)."""
         await load(match_id)
         runtime: AgentRuntime = app.state.agents
+        if runtime.enabled and not runtime.has_started(match_id):
+            limits.fresh_start()
         runtime.start(match_id)
         return {"enabled": runtime.enabled, "progress": runtime.progress.get(match_id)}
 
@@ -370,6 +384,8 @@ def create_app(data_dir: Path | None = None) -> FastAPI:
         """Stream a match onto the event bus and consume it live (Event Hubs in Azure)."""
         await load(match_id)
         live: LiveIngest = app.state.live
+        if not live.is_running(match_id):
+            limits.fresh_start()
         return {"bus": app.state.bus.name, **live.start(match_id, speed, until).summary()}
 
     @app.get("/live/health")
@@ -468,8 +484,9 @@ def create_app(data_dir: Path | None = None) -> FastAPI:
         return out.model_dump(mode="json")
 
     @app.post("/matches/{match_id}/ask")
-    async def ask(match_id: str, body: AskRequest) -> dict[str, Any]:
+    async def ask(request: Request, match_id: str, body: AskRequest) -> dict[str, Any]:
         """Ask the Analyst: one viewer question, answered from the data up to `t` only."""
+        limits.ask(request)
         runtime: AgentRuntime = app.state.agents
         if not runtime.enabled:
             raise HTTPException(503, "agents are switched off")
@@ -488,6 +505,7 @@ def create_app(data_dir: Path | None = None) -> FastAPI:
     @app.post("/matches/{match_id}/ask/audio")
     async def ask_audio(match_id: str, request: Request, lang: str = "en") -> dict[str, str]:
         """A spoken question to text, in the viewer's language. The client then calls /ask."""
+        limits.ask(request)
         transcriber: Transcriber | None = app.state.transcriber
         if transcriber is None:
             raise HTTPException(503, "speech is not configured")

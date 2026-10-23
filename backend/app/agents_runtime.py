@@ -90,6 +90,10 @@ class AgentRuntime:
         self._changed: dict[str, asyncio.Condition] = {}
         self.progress: dict[str, dict[str, Any]] = {}
 
+    def has_started(self, match_id: str) -> bool:
+        """True once a run for this match has begun (so a repeat start costs nothing)."""
+        return match_id in self._tasks
+
     def start(self, match_id: str) -> None:
         """Begin processing a match once. Safe to call on every connection."""
         if not self.enabled or match_id in self._tasks:

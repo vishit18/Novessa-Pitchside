@@ -83,6 +83,11 @@ class LiveIngest:
         self.overlay_sinks: dict[str, list[Callable[[Overlay], None]]] = {}
         self._tasks: dict[str, list[asyncio.Task[None]]] = {}
 
+    def is_running(self, match_id: str) -> bool:
+        """True while this match's stream is still going."""
+        running = self._tasks.get(match_id)
+        return bool(running) and not all(t.done() for t in running or [])
+
     def start(self, match_id: str, speed: float = 4.0, until: float | None = None) -> LiveStats:
         """Begin streaming a match onto the bus and consuming it. One run per match.
 

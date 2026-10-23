@@ -59,6 +59,7 @@ var sharedEnv = {
   REAL_VIDEO_BASE_URL: storage.outputs.footageBaseUrl
   EVENT_BUS: 'memory'
   STORE: 'cosmos'
+  RATE_LIMIT: 'on'
   AGENT_CACHE: 'on'
 }
 
