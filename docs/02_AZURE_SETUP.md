@@ -158,3 +158,26 @@ Everything here is behind a flag that is off by default. With the flags off the 
 5. On the api app, add `SEARCH_ENABLED=true` and `SEARCH_ENDPOINT=<value>` to the `env` block that `main.bicep` passes to `app.bicep`, then `azd provision` and `azd deploy api`.
 
 `infra/main.parameters.json` maps `SEARCH_ENABLED` and `SEARCH_DEVELOPER_PRINCIPAL_ID` from the azd environment; both default to off and empty.
+
+### Foundry tracing (item 5)
+
+Every model call is already a span in Application Insights. The spans now also carry the GenAI attributes (`gen_ai.agent.name`, `gen_ai.request.model`, ...) that the Foundry portal reads. To see them in Foundry:
+
+1. Open [ai.azure.com](https://ai.azure.com) with the **New Foundry** toggle on, and open the project `NovessaPitchside1`.
+2. Left menu **Agents**, then **Traces** at the top, then **Connect** on the right.
+3. Pick the existing Application Insights resource `appi-<token>` in `pitchside` (the one in `APPLICATIONINSIGHTS_CONNECTION_STRING`) and **Connect**.
+4. Run a match with agents on, wait 2 to 5 minutes, refresh Traces. Spans are named `agent.producer`, `agent.analyst` and so on, with the workflow spans from Agent Framework around them.
+
+No code change and no new resource. Prompts and answers are not recorded.
+
+### Foundry Agent Service (item 5)
+
+1. Your identity needs **Azure AI User** on the Foundry resource (VJ has it as owner; the app's managed identity already has it from `roles.bicep`).
+2. Publish the agents. Safe to re-run; only changed prompts get a new version:
+   ```bash
+   uv run python -m scripts.register_agents --dry-run
+   uv run python -m scripts.register_agents
+   ```
+   Expect seven agents, `pitchside-producer` to `pitchside-ask`, each `published version 1`. They then show under **Agents** in the portal with their instructions and model.
+3. Try it locally with `FOUNDRY_AGENT_SERVICE=true` in `.env` and `make dev`. The log says `calling pitchside-producer version 1 through Foundry Agent Service` once per agent. A line saying an agent `is not registered for this prompt and model` means step 2 was not run after a prompt edit; that agent is called directly, nothing breaks.
+4. For the deployed app, add `FOUNDRY_AGENT_SERVICE=true` to the api app's `env` in `main.bicep`, then `azd provision` and `azd deploy api`. Re-run step 2 after every prompt change before deploying.

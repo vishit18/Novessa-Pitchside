@@ -44,7 +44,8 @@ Translator, Speech and Content Safety all live on the same Foundry resource, so 
 |---|---|---|---|
 | **Application Insights + Log Analytics** | Traces, logs and metrics. | Every model call has an OpenTelemetry span, so latency and failures show up here. | Verified 20 Oct: a span from a real model call arrived in Application Insights with the agent name, model, latency and outcome (`backend/app/telemetry.py`). Not yet connected to the Foundry project's Tracing tab. |
 | **Foundry evaluations** | Foundry's built-in evaluators (groundedness, relevance, fluency), run through the `azure-ai-evaluation` package, keyless. | Scores the newsroom's text against a single prompt (`scripts/eval_single_vs_multi.py`, result in `docs/EVALUATION.md`). | Done. The single prompt scored higher on quality. |
-| **Foundry tracing tab** | Foundry's view of agent runs, fed by the same Application Insights resource. | Connect the resource to the Foundry project. | Not done yet |
+| **Foundry tracing tab** | Foundry's view of agent runs, fed by the same Application Insights resource. | Every model span carries the GenAI semantic-convention attributes Foundry reads (`backend/app/telemetry.py`). The portal connection is one click (docs/02). | Code done and tested offline. Portal connection not made yet. |
+| **Foundry Agent Service** | Hosts versioned prompt agents: instructions, model and settings live in Foundry. | Our seven prompts published as `pitchside-*` agents (`scripts/register_agents.py`). With `FOUNDRY_AGENT_SERVICE=true` the app calls them by reference through the Responses API, after checking each one matches the prompt in the checkout (`backend/agents/foundry_agents.py`). | Written and tested against a mocked endpoint. Not registered or run live yet. Off by default. |
 
 ## Tools, not services
 

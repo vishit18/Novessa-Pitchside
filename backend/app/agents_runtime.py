@@ -14,8 +14,9 @@ from typing import Any
 
 from backend.agents.cache import AgentCache, default_cache
 from backend.agents.context import MatchContext
+from backend.agents.factory import default_transport
 from backend.agents.intel import MatchIntel
-from backend.agents.llm import FoundryTransport, ResilientLLM, Transport
+from backend.agents.llm import ResilientLLM, Transport
 from backend.agents.localiser import localise
 from backend.agents.models import Aired
 from backend.agents.safety import default_safety
@@ -79,7 +80,7 @@ class AgentRuntime:
     ) -> None:
         self.store = store
         self.enabled = agents_enabled() if enabled is None else enabled
-        self.llm = ResilientLLM(transport or FoundryTransport()) if self.enabled else None
+        self.llm = ResilientLLM(transport or default_transport()) if self.enabled else None
         self.cache = cache or default_cache()
         self.translator = translator or default_translator()
         self.speech = speech or default_speech()

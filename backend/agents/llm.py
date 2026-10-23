@@ -20,6 +20,8 @@ from azure.identity import DefaultAzureCredential
 from opentelemetry import trace
 from pydantic import BaseModel, ValidationError
 
+from backend.app.telemetry import genai_attributes
+
 T = TypeVar("T", bound=BaseModel)
 
 tracer = trace.get_tracer("pitchside.agents")
@@ -168,6 +170,7 @@ class ResilientLLM:
         with tracer.start_as_current_span(f"agent.{agent}") as span:
             span.set_attribute("agent.name", agent)
             span.set_attribute("llm.deployment", deployment)
+            span.set_attributes(genai_attributes(agent, deployment))
             if h.killed:
                 h.failures += 1
                 span.set_attribute("agent.outcome", "killed")

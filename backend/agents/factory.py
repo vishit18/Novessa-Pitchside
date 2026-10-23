@@ -6,10 +6,17 @@ import os
 
 from backend.agents.cache import default_cache
 from backend.agents.context import MatchContext
+from backend.agents.foundry_agents import AgentServiceTransport, agent_service_enabled
 from backend.agents.intel import MatchIntel
 from backend.agents.llm import FoundryTransport, ResilientLLM, Transport
 from backend.agents.safety import default_safety
 from backend.app.store import MatchStore
+
+
+def default_transport() -> Transport:
+    """Direct model calls, or the registered Foundry agents when FOUNDRY_AGENT_SERVICE=true."""
+    direct = FoundryTransport()
+    return AgentServiceTransport(direct) if agent_service_enabled() else direct
 
 
 async def build_context(
@@ -20,7 +27,7 @@ async def build_context(
     return MatchContext(
         intel=MatchIntel(loaded),
         names=store.names,
-        llm=ResilientLLM(transport or FoundryTransport()),
+        llm=ResilientLLM(transport or default_transport()),
         cache=default_cache(),
         safety=default_safety(),
         fast_model=os.environ.get("FOUNDRY_DEPLOYMENT_FAST", "chat-fast"),

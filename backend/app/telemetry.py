@@ -4,6 +4,11 @@ Every model call already opens a span (`backend/agents/llm.py`). This turns them
 you can look at: set `APPLICATIONINSIGHTS_CONNECTION_STRING` and the spans, with their agent
 name, model deployment, latency and outcome, show up in the Azure portal under the resource's
 Transaction search and Application map. With the variable unset, nothing is exported.
+
+Each model call also carries the OpenTelemetry GenAI attributes (`genai_attributes`), which is
+what the Foundry portal's Traces view reads. Connect the same Application Insights resource
+to the Foundry project (docs/02) and the agent calls appear there too. Prompts and answers are
+never recorded, only names, models, timings and outcomes.
 """
 
 from __future__ import annotations
@@ -28,3 +33,14 @@ def setup_telemetry() -> bool:
         return False
     log.info("exporting traces to Application Insights")
     return True
+
+
+def genai_attributes(agent: str, deployment: str) -> dict[str, str]:
+    """GenAI semantic-convention attributes for one model call (opentelemetry.io, gen-ai)."""
+    return {
+        "gen_ai.operation.name": "chat",
+        "gen_ai.provider.name": "azure.ai.openai",
+        "gen_ai.system": "azure.ai.openai",  # older name, still read by some viewers
+        "gen_ai.request.model": deployment,
+        "gen_ai.agent.name": agent,
+    }
