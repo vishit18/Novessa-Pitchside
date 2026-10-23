@@ -88,6 +88,10 @@ class LiveIngest:
         running = self._tasks.get(match_id)
         return bool(running) and not all(t.done() for t in running or [])
 
+    async def wait(self, match_id: str) -> None:
+        """Return when this match's producer and consumer have both finished."""
+        await asyncio.gather(*self._tasks.get(match_id, []), return_exceptions=True)
+
     def start(self, match_id: str, speed: float = 4.0, until: float | None = None) -> LiveStats:
         """Begin streaming a match onto the bus and consuming it. One run per match.
 

@@ -29,17 +29,31 @@ Numbers were computed from the raw per-request results the service saves (`engin
 
 The first minute was fine (p95 12 ms). In the second minute, with all 150 viewers on one replica, p95 rose to 2.1 s while the app scaled out. From the third minute, with three replicas, p95 was 10 ms and stayed there. That spike is the whole of the p99 and the 18 s maximum: requests that landed on a replica that was still starting and building the match timelines.
 
-So the limit is not capacity. Three replicas serve 150 viewers at about 107 requests a second with the CPU at 71% on the busiest replica. The limit is the first minute of a sudden crowd. For judging, `API_MIN_REPLICAS` is 1 from 26 Oct; setting it to 2 would remove most of that window for a few dollars more. We have not changed it.
+So the limit is not capacity. Three replicas serve 150 viewers at about 107 requests a second with the CPU at 71% on the busiest replica. The limit is the first minute of a sudden crowd. For judging we set `API_MIN_REPLICAS` to 2 on 23 Oct, after this run, so two replicas are always up. The run above was made with 1 and has not been repeated with 2, so we have not shown that the spike is gone.
+
+## Publish-to-overlay latency (the 150 ms budget)
+
+Locust cannot drive the WebSocket feed, so the live path was measured separately with `scripts/measure_live.py`, run as a one-off Container Apps Job in the same region and environment as the API, through the real Event Hub with the managed identity. It streams a match onto the bus at replay speed and times every message from the moment it was wrapped for publishing to the moment its instant overlay was ready. Publisher and consumer are in one process, so there is no clock skew.
+
+| Run | Messages | Overlays | Overlay p50 | p95 | Slowest | Result |
+|---|---|---|---|---|---|---|
+| Event Hubs, 4x replay, first 900 match seconds | 4,966, none lost | 56 | 75 ms | 140 ms | 147 ms | inside the 150 ms budget |
+| Event Hubs, 30x, first 2,700 match seconds | 14,864, none lost | 202 | 70 ms | 115 ms | 294 ms | p95 inside budget, one slow tail |
+| In memory, same host, 4x and 30x (for comparison) | 3,320 and 14,864 | 36 and 202 | 15 to 50 ms | 51 to 54 ms | 55 ms | |
+
+Read it plainly. Event Hubs adds about 25 ms at the median and about 90 ms at the tail over the in-memory bus. The 4x pass is the speed the app replays at, and its p95 of 140 ms is close to the line, so there is little room. From a laptop the same hop was 177 ms at p95 on 20 Oct, so the earlier miss was most likely the distance between the laptop and Sweden Central; a short laptop run the same day was slower still (p95 about 600 ms on 2 overlays, too few to rely on).
+
+Numbers come from the job's own log output. A first attempt reported the in-memory bus under an Event Hubs label because the job's settings had been overridden and the code fell back silently; the script now refuses to run if it does not get the bus it was asked for. A second attempt hung for 15 minutes with no output and was stopped; the script now prints progress and gives up a pass after its expected time plus two minutes. The later runs finished in 6 minutes and the cause of that one hang is not known.
 
 ## What this does not measure
 
-- The WebSocket feed. Locust does not drive it. The publish-to-overlay latency (budget 150 ms) is measured by the gateway itself and reported at `/live/health`; the last measurement from a laptop was p95 177 ms, and it has not been repeated from inside Azure.
+- The last hop: the WebSocket from the gateway to a browser, and drawing the overlay. The budget here covers the bus and the overlay builder, which is the part the server controls.
 - Anything that calls a model. Agent answers are slower than 4 s at the 95th percentile; that is in the Control Room, not here.
-- A crowd larger than 150. The engines and the replica limit (3) are sized for the demo, not for a stadium.
+- A crowd larger than 150, or many live matches at once. The engines and the replica limit (3) are sized for the demo, not for a stadium.
 
 ## Cost
 
-The service bills by virtual-user hour: about 6 for this run (150 users for 5 minutes, plus ramp), well under a dollar. A mistake on the first run (a run time in minutes where seconds were meant) lasted 5 seconds and cost nothing.
+The service bills by virtual-user hour: about 13 for this run (150 users for 5 minutes, plus ramp). At the usual rate of around 15 cents an hour that is about $2; we have not checked it against the bill. The latency jobs ran about 25 minutes in all on one core and 2 GiB, plus a few image builds in the registry, pennies. A first load-test run with the run time in minutes instead of seconds lasted 5 seconds.
 
 ## Run it again
 
