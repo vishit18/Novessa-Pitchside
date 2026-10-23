@@ -43,7 +43,7 @@ Priority: **P0** = we fail or score badly without it. **P1** = needed to win. **
 | [x] | **Speed metrics**: ball speed | P0 | Per pass and shot |
 | [x] | **Speed metrics**: shot speed | P0 | Per shot, with overlay |
 | [x] | **Auto-eventing**: a model over an incoming video feed generates the pass and speed metrics automatically | P1 | `vision/` pipeline on SoccerTrack v2 footage (CC BY 4.0, `docs/06`) emits the same event schema, scored against ground truth Works on one 100 s window; the ball is the weak spot (found in 50% of frames). Scores in `data/real/117093_w1890/results.json`. |
-| [ ] | Responsive enough for live play | P0 | Deterministic overlays < 150ms, LLM explanations < 4s, measured and shown in Control Room Control Room (`/control`) shows LLM p50/p95 per agent against 4 s. Not met yet: agent p95 is 4 to 6 s on Foundry, and instant-overlay latency is not measured. **Still open:** publish-to-overlay p95 was 177 ms through a real Event Hub from a laptop (budget 150 ms; 65 ms in memory), not yet measured inside Azure. |
+| [ ] | Responsive enough for live play | P0 | Deterministic overlays < 150ms, LLM explanations < 4s, measured and shown in Control Room Control Room (`/control`) shows LLM p50/p95 per agent against 4 s. Not met yet: agent p95 is 4 to 6 s on Foundry, and instant-overlay latency is not measured. **Still open:** publish-to-overlay p95 was 177 ms through a real Event Hub from a laptop (budget 150 ms; 65 ms in memory), not yet measured inside Azure. **Measured 23 Oct from inside Azure, request/response paths:** 107 requests a second, p95 11 ms, 0 errors at 150 viewers (`docs/LOAD_TEST.md`). That does not cover the WebSocket feed or model calls. |
 
 ## D. Narrative, explainability, data, language (brief §(iii)–(vi))
 
@@ -89,8 +89,9 @@ Priority: **P0** = we fail or score badly without it. **P1** = needed to win. **
     - Person B, 23 Oct, written and tested offline, not run live yet: Agent Service (`scripts/register_agents.py`, `backend/agents/foundry_agents.py`, flag `FOUNDRY_AGENT_SERVICE`), GenAI span attributes for the Foundry Traces view (`backend/app/telemetry.py`), red team in CI (`scripts/eval_redteam.py`, `.github/workflows/evals.yml`, `docs/REDTEAM.md`), guardrails (`backend/agents/guardrails.py`, flag `GUARDRAILS`), AI Search grounding for Ask (`backend/agents/knowledge.py`, flag `SEARCH_ENABLED`). Switch-on steps in docs/02.
   - [x] Microsoft Agent Framework (workflow orchestration): `backend/agents/workflow.py`
   - [ ] Azure MCP (dev tooling) **and** our own MCP server
+    - 23 Oct: our MCP server runs as its own Container App and answers `initialize` from the live URL (`backend/mcp_server/server.py`, `infra/modules/services.bicep`). The Azure MCP half stays open until the README says honestly where it was used.
   - [ ] GitHub CLI (`gh`) + GitHub Actions for CI/CD
-  - [ ] Azure Container Apps, Static Web Apps (Azure Apps)
+  - [x] Azure Container Apps, Static Web Apps (Azure Apps) 23 Oct: `api`, `mcp` and `a2a` apps and a manual cache-warming job on Container Apps, the frontend on Static Web Apps, all from Bicep (`infra/`). A load test on the live API: 150 viewers, 32,120 requests, 0 errors, scaled 1 to 3 replicas and back to 0 (`docs/LOAD_TEST.md`). Availability tests, alerts and a workbook (`infra/modules/alerts.bicep`). The real-footage clip is in Blob Storage.
   - [x] Azure AI Translator, Azure AI Speech, Azure AI Content Safety (AI Services)
   - [x] Azure Cosmos DB (Azure databases) Verified against the real account; `scripts/push_cache.py`
   - [x] Azure Event Hubs (event-driven backbone) Verified against the deployed hub.
@@ -136,6 +137,8 @@ Secondary fit (judges can reassign us): **Best Use of Microsoft Foundry** and **
 - [ ] Video over 2:00
 - [ ] Repo private, or missing README/run instructions
 - [ ] Demo link dead during judging (27 Oct – 10 Nov) → uptime check + budget alert
+  - Mitigated 23 Oct: three availability tests every 15 minutes from three regions with an email alert, two API replicas always running, and the `pitchside-150` budget alert. Not yet seen to fire.
 - [ ] Azure free credit running out before 10 Nov → see `docs/02` cost plan
+  - Spend guards 23 Oct: rate limits on everything that calls a model or Speech (`backend/app/ratelimit.py`), the warmed cache in Cosmos so replays cost nothing, Load Testing billed per use. Always-on cost added: two API replicas and the Event Hubs and registry fees already planned. Check Cost Management before 27 Oct.
 - [ ] AI co-author showing on GitHub commits
 - [ ] LLM hallucinating a stat on screen in the video → Verifier agent + recorded replay with cached, verified outputs

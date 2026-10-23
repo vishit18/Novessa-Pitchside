@@ -11,3 +11,4 @@ Short records of the choices that shaped the project. Each one says what we deci
 - [0007. RT-DETR for detection, not Ultralytics YOLO](0007-rtdetr-not-yolo.md)
 - [0008. Offside flags are instant triggers, not moments](0008-offside-is-a-trigger.md)
 - [0009. Agent output cache: files locally, Cosmos DB in Azure, layered](0009-cosmos-cache-over-files.md)
+- [0010. No AI gateway in front of Foundry for now, and what production adds](0010-production-path-not-an-ai-gateway-now.md)
