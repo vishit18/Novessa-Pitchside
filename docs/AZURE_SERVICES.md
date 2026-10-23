@@ -54,6 +54,20 @@ Translator, Speech and Content Safety all live on the same Foundry resource, so 
 | **Foundry tracing tab** | Foundry's view of agent runs, fed by the same Application Insights resource. | Every model span carries the GenAI semantic-convention attributes Foundry reads (`backend/app/telemetry.py`). The portal connection is one click (docs/02). | Code done and tested offline. Portal connection not made yet. |
 | **Foundry Agent Service** | Hosts versioned prompt agents: instructions, model and settings live in Foundry. | Our seven prompts published as `pitchside-*` agents (`scripts/register_agents.py`). With `FOUNDRY_AGENT_SERVICE=true` the app calls them by reference through the Responses API, after checking each one matches the prompt in the checkout (`backend/agents/foundry_agents.py`). | Written and tested against a mocked endpoint. Not registered or run live yet. Off by default. |
 
+### Availability, alerts and the operations workbook (23 Oct)
+
+`infra/modules/alerts.bicep`. All of it is Azure Monitor, no extra service to run.
+
+| What | Detail | Status |
+|---|---|---|
+| **Availability tests** | Three standard tests every 15 minutes from three regions: the web app, the API `/health`, and a real read (`/matches`). | Verified 23 Oct: results arriving in `AppAvailabilityResults`. |
+| **Alerts** | A test failing from two or more locations; more than 5 API 5xx in 5 minutes; more than 10 failed model calls in 15 minutes (the chaos switch is not counted). All go to one action group by email. | Created 23 Oct. Not fired yet. |
+| **Workbook "Pitchside operations"** | Availability, API p50 and p95, status codes, agent calls by outcome, calls per model deployment, requests turned away by the rate limit. | Every query run against the live workspace 23 Oct. |
+
+### Rate limits (23 Oct)
+
+`backend/app/ratelimit.py`, on in Azure (`RATE_LIMIT=on`), off locally and in tests. Fresh match runs: 5 an hour for the whole service. Ask the Analyst (typed or spoken): 12 a minute per client. Recaps: 20 a minute per client. Chaos switch: 10 a minute per client. Replays answer from the cache and are never limited. A limited call gets a 429 with `Retry-After`. Verified on the live API: 12 requests allowed, the 13th and 14th refused. Counters are per replica, so this is a guard against runaway spend, not a billing meter.
+
 ## Tools, not services
 
 - **Azure MCP server:** lets Claude Code inspect and manage Azure resources from the editor. It's one of the judges' named hero technologies.

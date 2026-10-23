@@ -28,6 +28,9 @@
     },
     "searchDeveloperPrincipalId": {
       "value": "${SEARCH_DEVELOPER_PRINCIPAL_ID=}"
+    },
+    "alertEmail": {
+      "value": "${ALERT_EMAIL=}"
     }
   }
 }

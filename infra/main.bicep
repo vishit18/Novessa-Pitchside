@@ -32,6 +32,9 @@ param apiMinReplicas string = '0'
 @description('Placeholder until azd deploys the real image.')
 param apiImage string = 'mcr.microsoft.com/azuredocs/containerapps-helloworld:latest'
 
+@description('Where operational alerts are emailed. Leave empty to skip alerts and availability tests.')
+param alertEmail string = ''
+
 @description('Images for the mcp and a2a apps; azd fills these in after the first deploy.')
 param mcpImage string = 'mcr.microsoft.com/azuredocs/containerapps-helloworld:latest'
 param a2aImage string = 'mcr.microsoft.com/azuredocs/containerapps-helloworld:latest'
@@ -140,6 +143,21 @@ module services 'modules/services.bicep' = {
     a2aImage: a2aImage
     jobImage: apiImage
     env: sharedEnv
+  }
+}
+
+module alerts 'modules/alerts.bicep' = if (!empty(alertEmail)) {
+  name: 'alerts'
+  params: {
+    location: location
+    token: token
+    tags: tags
+    appInsightsName: monitoring.outputs.appInsightsName
+    workspaceName: monitoring.outputs.workspaceName
+    apiAppName: app.outputs.apiName
+    webUrl: app.outputs.webUri
+    apiUrl: app.outputs.apiUri
+    alertEmail: alertEmail
   }
 }
 

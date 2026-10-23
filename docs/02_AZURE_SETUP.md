@@ -114,6 +114,8 @@ Cosmos DB free tier is one per subscription. If Sweden Central will not take a n
   - A2A: `https://ca-a2a-uirzml34ufpge.salmonocean-c33a3a80.swedencentral.azurecontainerapps.io`
   - Warm the cache from Azure: `az containerapp job start -g pitchside -n job-warm-uirzml34ufpge`
 
+- 23 Oct: monitoring added with `infra/modules/alerts.bicep` (three availability tests, five alert rules, one action group, one workbook; emails go to the budget-alert address). Azure Load Testing resource `lt-uirzml34ufpge` added with `infra/modules/loadtest.bicep` (billed by virtual-user hour, nothing while idle). `RATE_LIMIT=on` is set on the api. `azd env set ALERT_EMAIL <address>` makes `azd provision` keep the alert module.
+
 ## Environment variables (`.env.example`)
 
 ```

@@ -1,0 +1,26 @@
+# Azure Load Testing config. Create and run with scripts/run_loadtest.py, or:
+#   az load test create --load-test-resource lt-<token> -g pitchside --test-id pitchside-gateway \
+#     --load-test-config-file loadtest/config.yaml
+version: v0.1
+testId: pitchside-gateway
+displayName: Pitchside gateway, viewers watching a match
+description: Viewers reading match state, pulse, catch-up and moments. No model calls.
+testType: Locust
+testPlan: locustfile.py
+engineInstances: 2
+env:
+  - name: TARGET_HOST
+    value: https://ca-api-uirzml34ufpge.salmonocean-c33a3a80.swedencentral.azurecontainerapps.io
+  # Across both engines: 150 viewers, 5 more a second, for 5 minutes (about 14 virtual-user hours).
+  - name: LOCUST_USERS
+    value: 150
+  - name: LOCUST_SPAWN_RATE
+    value: 5
+  - name: LOCUST_RUN_TIME
+    value: 5
+failureCriteria:
+  - percentage(error) > 2
+  - percentiles(response_time_ms, 95) > 1500
+autoStop:
+  errorPercentage: 15
+  timeWindow: 60

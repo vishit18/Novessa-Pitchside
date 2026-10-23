@@ -80,7 +80,7 @@ select = ["E", "F", "I", "B", "UP", "SIM", "RUF"]
 python_version = "3.12"
 strict = true
 plugins = ["pydantic.mypy"]
-exclude = ["footage/", "frontend/", "fabric/notebooks/"]
+exclude = ["footage/", "frontend/", "fabric/notebooks/", "loadtest/"]
 
 [[tool.mypy.overrides]]
 # Heavy vision-only packages without complete type information.
