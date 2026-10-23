@@ -3,7 +3,9 @@
 Everything here comes from `vision/` and is tagged `source: "vision"`. It is never mixed into the
 synthetic matches (CLAUDE.md). The overlay data and validation numbers are small and live in
 `data/real/<clip>/`; the video itself is large, stays out of git, and is read from
-`footage/clip/<clip>/clip.mp4` (or REAL_FOOTAGE_DIR) when it exists.
+`footage/clip/<clip>/clip.mp4` (or REAL_FOOTAGE_DIR) when it exists. When REAL_VIDEO_BASE_URL is
+set (Azure Blob, `infra/modules/storage.bicep`) and there is no local file, the video route
+redirects to `<base>/<clip>/clip.mp4`.
 """
 
 from __future__ import annotations
@@ -15,7 +17,7 @@ from pathlib import Path
 from typing import Any
 
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, RedirectResponse, Response
 
 CLIP_ID = re.compile(r"^\d{4,8}_w\d{1,5}$")
 REPO = Path(__file__).resolve().parents[2]
@@ -27,6 +29,12 @@ def _data_dir() -> Path:
 
 def _footage_dir() -> Path:
     return Path(os.environ.get("REAL_FOOTAGE_DIR", REPO / "footage" / "clip"))
+
+
+def _remote_video(clip: str) -> str | None:
+    """Blob URL for a clip's video, or None when no base URL is configured."""
+    base = os.environ.get("REAL_VIDEO_BASE_URL", "").rstrip("/")
+    return f"{base}/{clip}/clip.mp4" if base else None
 
 
 def _clip_dir(clip: str) -> Path:
@@ -55,7 +63,8 @@ def mount_real(app: FastAPI) -> None:
                     "clip": d.name,
                     "meta": json.loads((d / "meta.json").read_text("utf-8")),
                     "results": json.loads((d / "results.json").read_text("utf-8")),
-                    "video": (_footage_dir() / d.name / "clip.mp4").exists(),
+                    "video": (_footage_dir() / d.name / "clip.mp4").exists()
+                    or _remote_video(d.name) is not None,
                 }
             )
         return out
@@ -71,10 +80,13 @@ def mount_real(app: FastAPI) -> None:
         )
 
     @app.get("/real/{clip}/video")
-    async def video(clip: str) -> FileResponse:
-        """The clip, with range requests so a browser can seek."""
+    async def video(clip: str) -> Response:
+        """The clip, with range requests so a browser can seek (or a redirect to Blob)."""
         _clip_dir(clip)
         path = _footage_dir() / clip / "clip.mp4"
-        if not path.exists():
-            raise HTTPException(404, "the video for this clip is not on this server")
-        return FileResponse(path, media_type="video/mp4")
+        if path.exists():
+            return FileResponse(path, media_type="video/mp4")
+        remote = _remote_video(clip)
+        if remote:
+            return RedirectResponse(remote, status_code=307)
+        raise HTTPException(404, "the video for this clip is not on this server")

@@ -40,11 +40,23 @@ def test_the_video_is_404_when_this_server_does_not_have_it(
     client: TestClient, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
     monkeypatch.setenv("REAL_FOOTAGE_DIR", str(tmp_path))
+    monkeypatch.delenv("REAL_VIDEO_BASE_URL", raising=False)
     assert client.get(f"/real/{CLIP}/video").status_code == 404
     (tmp_path / CLIP).mkdir()
     (tmp_path / CLIP / "clip.mp4").write_bytes(b"not really a video")
     ok = client.get(f"/real/{CLIP}/video")
     assert ok.status_code == 200 and ok.headers["content-type"] == "video/mp4"
+
+
+def test_the_video_redirects_to_blob_when_a_base_url_is_set(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    monkeypatch.setenv("REAL_FOOTAGE_DIR", str(tmp_path))
+    monkeypatch.setenv("REAL_VIDEO_BASE_URL", "https://example.blob.core.windows.net/footage/")
+    r = client.get(f"/real/{CLIP}/video", follow_redirects=False)
+    assert r.status_code == 307
+    assert r.headers["location"] == f"https://example.blob.core.windows.net/footage/{CLIP}/clip.mp4"
+    assert client.get("/real").json()[0]["video"] is True
 
 
 @pytest.mark.parametrize("bad", ["..", "..%2F..%2Fetc", "117093_w1890/../x", "nope", "1_w1"])

@@ -74,6 +74,11 @@ module roles 'modules/roles.bicep' = {
   }
 }
 
+module storage 'modules/storage.bicep' = {
+  name: 'storage'
+  params: { location: location, token: token, tags: tags }
+}
+
 module app 'modules/app.bicep' = {
   name: 'app'
   dependsOn: [roles]
@@ -102,6 +107,7 @@ module app 'modules/app.bicep' = {
       EVENTHUB_NAME: data.outputs.eventHubName
       COSMOS_ENDPOINT: data.outputs.cosmosEndpoint
       COSMOS_DATABASE: data.outputs.cosmosDatabase
+      REAL_VIDEO_BASE_URL: storage.outputs.footageBaseUrl
       EVENT_BUS: 'memory'
       STORE: 'local'
       AGENT_CACHE: 'on'
@@ -115,3 +121,5 @@ output AZURE_CONTAINER_REGISTRY_NAME string = platform.outputs.registryName
 output API_URI string = app.outputs.apiUri
 output WEB_URI string = app.outputs.webUri
 output APPLICATIONINSIGHTS_NAME string = monitoring.outputs.appInsightsName
+output STORAGE_ACCOUNT_NAME string = storage.outputs.storageAccountName
+output REAL_VIDEO_BASE_URL string = storage.outputs.footageBaseUrl
