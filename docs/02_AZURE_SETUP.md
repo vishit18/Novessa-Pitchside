@@ -71,6 +71,7 @@ Create `infra/main.bicep` and modules, referencing the existing Foundry resource
 | Container Apps `mcp`, `a2a` and Job `job-warm` | Consumption, scale to zero, same image as `api` | MCP server, A2A Recap Editor, manual cache-warming job (decided 23 Oct) | free monthly grant covers it |
 | Storage account (Standard LRS, `footage` container) | Standard, anonymous blob read on one container | the real-footage clip, 31 MB (decided 23 Oct) | pence a month |
 | Foundry model usage | pay per token | agents | the main cost; budget ~$40–80 total with caching |
+| Azure AI Search (Person B, item 7, not provisioned yet) | **Free** (50 MB, keyless, API keys off) | league and glossary facts that ground Ask the Analyst | free; one free search service per subscription |
 
 Rough total for the whole hackathon plus judging: **$60–120**, inside the $200 credit. Check actual spend daily in Cost Management.
 
@@ -133,3 +134,27 @@ EVENT_BUS=memory                  # memory | eventhubs
 STORE=local                       # local | cosmos
 AGENT_CACHE=on
 ```
+
+## Person B items: how to switch them on (added 23 Oct)
+
+Everything here is behind a flag that is off by default. With the flags off the app is exactly as it was. Nothing below has been provisioned yet. Person B wrote it, Person A applies it.
+
+### AI Search (item 7)
+
+1. Get your own object id: `az ad signed-in-user show --query id -o tsv`.
+2. Turn the module on and provision:
+   ```bash
+   azd env set SEARCH_ENABLED true          # read by main.parameters.json, see below
+   azd env set SEARCH_DEVELOPER_PRINCIPAL_ID <object id from step 1>
+   azd provision
+   ```
+   This adds `srch-<token>` (free tier, API keys disabled), gives the app's managed identity **Search Index Data Reader**, and gives you **Search Service Contributor** and **Search Index Data Contributor** so you can build the index. If provisioning says a free service already exists in the subscription, delete the old free one or ask before choosing Basic (about $75 a month, not worth it here).
+3. Wait a few minutes for the roles, then build the index from your machine:
+   ```bash
+   SEARCH_ENDPOINT=$(azd env get-value SEARCH_ENDPOINT) uv run python -m scripts.index_knowledge
+   ```
+   Expect `177 documents`, `uploaded 177 documents` and `check query 'pressure index' -> term-pressure-index`.
+4. Try it locally: put `SEARCH_ENABLED=true` and `SEARCH_ENDPOINT=...` in `.env`, run `make dev`, ask "who manages Kestrel Bay?" or "what does the pressure index mean?". The answer's trail says `Knowledge: 2 league facts from Azure AI Search`. If it says `local index`, the call to Search failed (usually the role has not landed yet); the logs say why.
+5. On the api app, add `SEARCH_ENABLED=true` and `SEARCH_ENDPOINT=<value>` to the `env` block that `main.bicep` passes to `app.bicep`, then `azd provision` and `azd deploy api`.
+
+`infra/main.parameters.json` maps `SEARCH_ENABLED` and `SEARCH_DEVELOPER_PRINCIPAL_ID` from the azd environment; both default to off and empty.

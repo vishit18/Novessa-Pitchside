@@ -1,8 +1,8 @@
 """Ask the Analyst: a viewer types a question mid-match and gets an answer they can trust.
 
     question -> safety gate -> Scout picks lookups -> code runs them on MatchIntel, clipped to
-    the viewer's own clock -> Analyst answers from those rows -> Verifier checks every number
-    -> Localiser -> viewer
+    the viewer's own clock -> (league facts from AI Search, when SEARCH_ENABLED) -> Analyst
+    answers from those rows -> Verifier checks every number -> Localiser -> viewer
 
 Nothing after the viewer's clock is ever looked up, so an answer cannot spoil the match. The
 Scout and the Analyst only choose and word; every number comes from `MatchIntel`. If a model is
@@ -19,6 +19,7 @@ from typing import Any
 
 from backend.agents.cache import cache_key
 from backend.agents.context import MatchContext
+from backend.agents.knowledge import KnowledgeDoc, get_retriever
 from backend.agents.llm import AgentUnavailable
 from backend.agents.localiser import localise_lines
 from backend.agents.models import AskAnswer, AskDraft, AskPlan, Evidence, ToolCall
@@ -290,11 +291,27 @@ async def _plan(ctx: MatchContext, question: str, clock: str, trail: list[str]) 
     return plan
 
 
-def allowed_numbers(found: Lookups, clock: str, question: str) -> list[float]:
-    """Every number the answer may contain: evidence values, numbers in notes, the clock and
-    any number the viewer used themselves."""
+async def _background(ctx: MatchContext, question: str, trail: list[str]) -> list[str]:
+    """League facts that help explain the answer: who a player is, how a club plays, what a
+    metric means. Static knowledge with no results in it, so it cannot spoil the match.
+    Empty when retrieval is switched off or finds nothing."""
+    retriever = get_retriever()
+    if retriever is None:
+        return []
+    docs: list[KnowledgeDoc] = await retriever.search(question, list(ctx.intel.teams))
+    if docs:
+        trail.append(f"Knowledge: {len(docs)} league facts from {retriever.name}")
+    return [d.as_note() for d in docs]
+
+
+def allowed_numbers(
+    found: Lookups, clock: str, question: str, background: list[str] | None = None
+) -> list[float]:
+    """Every number the answer may contain: evidence values, numbers in notes and league
+    facts, the clock and any number the viewer used themselves."""
     allowed = [r.value for r in found.rows]
-    for text in [*found.notes, clock, question, *(r.label for r in found.rows)]:
+    texts = [*found.notes, *(background or []), clock, question, *(r.label for r in found.rows)]
+    for text in texts:
         allowed.extend(numbers_in(text))
     return allowed
 
@@ -318,9 +335,10 @@ async def _draft(
     persona: Persona,
     found: Lookups,
     trail: list[str],
+    background: list[str] | None = None,
 ) -> tuple[str, str]:
     """The Analyst's answer and its status, after the Verifier has had its say."""
-    allowed = allowed_numbers(found, clock, question)
+    allowed = allowed_numbers(found, clock, question, background)
     payload: dict[str, Any] = {
         "question": question,
         "clock": clock,
@@ -328,6 +346,9 @@ async def _draft(
         "evidence": [{"key": r.key, "label": r.label, "value": f"{r.value:g}"} for r in found.rows],
         "notes": found.notes,
     }
+    if background:
+        # Background only: who and what, never a match number.
+        payload["league_facts"] = background
     for attempt in (1, 2):
         try:
             draft = await ctx.llm.ask(
@@ -355,8 +376,10 @@ async def _draft(
 
 def _cache_key(ctx: MatchContext, question: str, t: float, persona: str, lang: str) -> str:
     digest = hashlib.sha1(_norm(question).encode()).hexdigest()[:12]
+    # Grounded answers are cached apart, so switching retrieval on never serves an old answer.
+    grounded = "-k" if get_retriever() is not None else ""
     # Answers are shared within a 30-second slice of match time: the numbers barely move.
-    return cache_key(ctx.seed, f"ask-{digest}-{int(t // 30)}", "ask", persona, lang)
+    return cache_key(ctx.seed, f"ask-{digest}-{int(t // 30)}{grounded}", "ask", persona, lang)
 
 
 async def ask(ctx: MatchContext, question: str, t: float, persona: Persona, lang: str) -> AskAnswer:
@@ -388,7 +411,8 @@ async def ask(ctx: MatchContext, question: str, t: float, persona: Persona, lang
             trail=trail,
         )
     found = run_calls(ctx, plan.calls or [ToolCall(tool="state_now")], t)
-    answer, status = await _draft(ctx, question, clock, persona, found, trail)
+    background = await _background(ctx, question, trail)
+    answer, status = await _draft(ctx, question, clock, persona, found, trail, background)
     if not await ctx.safety.is_safe(answer):
         answer, status = numbers_only(found), "numbers_only"
         trail.append("Safety gate replaced the wording with the numbers")
@@ -404,7 +428,7 @@ async def ask(ctx: MatchContext, question: str, t: float, persona: Persona, lang
         status=status,
         translation=translation,
         evidence=found.rows,
-        notes=found.notes,
+        notes=[*found.notes, *background],
         tools=found.tools,
         trail=trail,
     )

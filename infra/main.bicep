@@ -154,3 +154,27 @@ output REAL_VIDEO_BASE_URL string = storage.outputs.footageBaseUrl
 output MCP_URI string = services.outputs.mcpUri
 output A2A_URI string = services.outputs.a2aUri
 output WARM_JOB_NAME string = services.outputs.warmJobName
+
+// ---- Item 7: Azure AI Search (Person B). Off unless searchEnabled is set. -------------------
+// Free tier, keyless. After provisioning, run scripts/index_knowledge.py, then give the api
+// app SEARCH_ENABLED=true and SEARCH_ENDPOINT=<the SEARCH_ENDPOINT output> (docs/02).
+@description('Set to true to create the free AI Search service that grounds Ask the Analyst.')
+@allowed(['true', 'false'])
+param searchEnabled string = 'false'
+var searchOn = searchEnabled == 'true'
+
+@description('Object id of the person who runs scripts/index_knowledge.py (az ad signed-in-user show --query id).')
+param searchDeveloperPrincipalId string = ''
+
+module search 'modules/search.bicep' = if (searchOn) {
+  name: 'search'
+  params: {
+    location: location
+    token: token
+    tags: tags
+    appPrincipalId: platform.outputs.identityPrincipalId
+    developerPrincipalId: searchDeveloperPrincipalId
+  }
+}
+
+output SEARCH_ENDPOINT string = searchOn ? search!.outputs.endpoint : ''

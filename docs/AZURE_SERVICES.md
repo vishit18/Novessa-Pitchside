@@ -13,6 +13,7 @@ Everything signs in with **Entra ID (keyless)**. No service key sits in the repo
 | **Azure AI Translator** | Machine translation. | First pass of each non-English language, before the model polishes it. | `backend/agents/services.py` | Verified live |
 | **Azure AI Speech** | Neural text to speech. | The spoken commentary, per language. Audio is cached on disk, so a replay costs nothing. | `backend/agents/voice.py` | Verified 20 Oct |
 | **Azure AI Content Safety** | Screens text for harmful content. | The Gate agent checks every line before it airs. | `backend/agents/safety.py` | In use when `CONTENT_SAFETY_ENDPOINT` is set |
+| **Azure AI Search** | Managed search index, free tier, keyless (API keys off). | Grounds Ask the Analyst with league facts: clubs, managers, grounds, squads and what each metric means. No match results in it, so it cannot spoil. | `backend/agents/knowledge.py`, `scripts/index_knowledge.py`, `infra/modules/search.bicep` | Written and tested offline (mocked Search, plus a local keyword index that is also the fallback). Not provisioned yet. Behind `SEARCH_ENABLED`, off. |
 
 Translator, Speech and Content Safety all live on the same Foundry resource, so there is one endpoint and one role assignment for all of them.
 
