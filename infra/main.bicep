@@ -58,7 +58,7 @@ var sharedEnv = {
   COSMOS_DATABASE: data.outputs.cosmosDatabase
   REAL_VIDEO_BASE_URL: storage.outputs.footageBaseUrl
   EVENT_BUS: 'memory'
-  STORE: 'local'
+  STORE: 'cosmos'
   AGENT_CACHE: 'on'
 }
 
