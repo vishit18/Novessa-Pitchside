@@ -138,6 +138,10 @@ make lint
 make seed         # generate the league + 3 demo matches
 make replay MATCH=derby_01 SPEED=4
 uv run python -m scripts.warm_overlay_text   # instant-overlay translations for the demo matches
+uv run python -m scripts.eval_redteam        # red team Ask with a hijacked model (CI runs it)
+uv run python -m scripts.index_knowledge     # AI Search index of league facts (needs SEARCH_ENDPOINT)
+uv run python -m scripts.register_agents     # publish the prompts to Foundry Agent Service
+uv run python -m fabric.build_reference      # regenerate fabric/kql/00_reference.kql
 azd up            # provision + deploy everything to Azure
 ```
 

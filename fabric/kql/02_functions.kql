@@ -1,0 +1,104 @@
+// Stored functions behind the real-time dashboard (fabric/kql/03_dashboard.kql).
+// Run after 00_reference.kql and 01_tables.kql, one block at a time. Every function takes the match id, so one
+// dashboard parameter drives every tile.
+
+// Matches seen in the last day, newest first: the dashboard's match picker.
+.create-or-alter function with (folder = "pitchside", docstring = "Matches with recent events")
+LiveMatches() {
+    MatchEvents
+    | where landed_at > ago(1d)
+    | summarize last_event = max(landed_at), events = count(), minute = max(minute) by match_id
+    | order by last_event desc
+}
+
+// The score as it stands.
+.create-or-alter function with (folder = "pitchside", docstring = "Goals per side")
+Score(match: string) {
+    let sides = MatchEvents | where match_id == match and isnotempty(team) | distinct team;
+    let goals = MatchEvents | where match_id == match and type == "goal" | summarize goals = count() by team;
+    sides
+    | join kind = leftouter goals on team
+    | project team, goals = coalesce(goals, 0)
+    | lookup Clubs() on team
+    | project club, goals, colour
+}
+
+// Cumulative expected goals over the match, one line per side.
+.create-or-alter function with (folder = "pitchside", docstring = "Running xG per side")
+XgRace(match: string) {
+    MatchEvents
+    | where match_id == match and type == "shot"
+    | sort by team asc, t_match asc
+    | extend xg_total = row_cumsum(xg, team != prev(team))
+    | lookup Clubs() on team
+    | project minute = t_match / 60.0, club, xg_total
+}
+
+// Events per minute: the match's tempo.
+.create-or-alter function with (folder = "pitchside", docstring = "Events per minute")
+Tempo(match: string) {
+    MatchEvents
+    | where match_id == match and isnotempty(team)
+    | summarize events = count() by minute, team
+    | lookup Clubs() on team
+    | project minute, club, events
+}
+
+// Pass completion and difficulty per side in five-minute spells.
+.create-or-alter function with (folder = "pitchside", docstring = "Passing per side, 5-minute spells")
+Passing(match: string) {
+    MatchEvents
+    | where match_id == match and type == "pass"
+    | summarize
+        passes = count(),
+        completion_pct = round(100.0 * countif(outcome == "complete") / count(), 1),
+        avg_difficulty = round(avg(pass_difficulty), 1),
+        hard_completed = countif(outcome == "complete" and pass_difficulty >= 70)
+        by spell = bin(minute, 5), team
+    | lookup Clubs() on team
+    | project spell, club, passes, completion_pct, avg_difficulty, hard_completed
+}
+
+// Every shot with where it was taken from, for the shot map.
+.create-or-alter function with (folder = "pitchside", docstring = "Shots with location and xG")
+Shots(match: string) {
+    MatchEvents
+    | where match_id == match and type == "shot"
+    | lookup Clubs() on team
+    | lookup Players() on player_id
+    | project clock, club, player, x, y, xg, outcome, ball_speed_kmh
+}
+
+// Where the ball has been: a 21 by 14 grid over the 105 by 68 m pitch.
+.create-or-alter function with (folder = "pitchside", docstring = "Ball heat map, 5 m cells")
+BallHeat(match: string) {
+    BallFrames
+    | where match_id == match
+    | summarize frames = count() by cell_x = bin(ball_x, 5.0), cell_y = bin(ball_y, 5.0)
+}
+
+// Event Hubs to Eventhouse: how long an event takes from the engine to a queryable row.
+.create-or-alter function with (folder = "pitchside", docstring = "Publish to landed latency")
+Freshness(match: string) {
+    MatchEvents
+    | where match_id == match
+    | extend latency_s = (landed_at - published_at) / 1s
+    | summarize
+        p50_s = round(percentile(latency_s, 50), 2),
+        p95_s = round(percentile(latency_s, 95), 2),
+        events = count()
+        by bin(landed_at, 1m)
+}
+
+// Players with the most hard passes completed, so far.
+.create-or-alter function with (folder = "pitchside", docstring = "Hardest passers")
+HardPassers(match: string) {
+    MatchEvents
+    | where match_id == match and type == "pass" and outcome == "complete"
+    | summarize hard = countif(pass_difficulty >= 70), passes = count(), hardest = max(pass_difficulty)
+        by player_id, team
+    | top 10 by hard desc
+    | lookup Clubs() on team
+    | lookup Players() on player_id
+    | project player, club, hard, passes, hardest
+}

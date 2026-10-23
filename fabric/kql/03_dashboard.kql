@@ -1,0 +1,33 @@
+// Tiles for the Fabric Real-Time Dashboard "Pitchside live" (docs/FABRIC.md, step 6).
+// Add a dashboard parameter first: name `_match`, type string, single selection, values from
+// the query `LiveMatches() | project match_id`, default the first value. Then add one tile per
+// block below, pasting the query and picking the visual named above it.
+// Set Auto refresh to 10 seconds (Manage > Auto refresh) so the tiles follow the match.
+
+// Tile "Score" (visual: Table, or Multi Stat)
+Score(_match)
+
+// Tile "Minute" (visual: Stat)
+MatchEvents | where match_id == _match | summarize minute = max(minute)
+
+// Tile "xG race" (visual: Line chart, X minute, Y xg_total, series club)
+XgRace(_match)
+
+// Tile "Tempo" (visual: Column chart, X minute, Y events, series club)
+Tempo(_match)
+
+// Tile "Passing by spell" (visual: Table; conditional colour on completion_pct)
+Passing(_match)
+
+// Tile "Shot map" (visual: Scatter chart, X x, Y y, size xg, series club). The pitch is
+// 105 by 68 m, home attacking left to right in the first half.
+Shots(_match)
+
+// Tile "Where the ball has been" (visual: Heatmap, X cell_x, Y cell_y, value frames)
+BallHeat(_match)
+
+// Tile "Hardest passers" (visual: Table)
+HardPassers(_match)
+
+// Tile "Event Hubs to Eventhouse latency" (visual: Line chart, X landed_at, Y p50_s and p95_s)
+Freshness(_match)

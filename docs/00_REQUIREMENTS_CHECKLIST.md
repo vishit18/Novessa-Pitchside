@@ -86,6 +86,7 @@ Priority: **P0** = we fail or score badly without it. **P1** = needed to win. **
 - [x] Quality software practices → tests, CI, typed code, linting, IaC, ADRs in `docs/adr/`
 - [ ] Effective use of **hero technologies**. Their list: Microsoft Foundry, Agent Framework, Azure MCP, GitHub Copilot Agent Mode, Fabric, GitHub SDK, GitHub CLI, Azure Apps and AI Services, Azure databases. We use:
   - [ ] Microsoft Foundry (models, agents, tracing, evaluations, content safety)
+    - Person B, 23 Oct, written and tested offline, not run live yet: Agent Service (`scripts/register_agents.py`, `backend/agents/foundry_agents.py`, flag `FOUNDRY_AGENT_SERVICE`), GenAI span attributes for the Foundry Traces view (`backend/app/telemetry.py`), red team in CI (`scripts/eval_redteam.py`, `.github/workflows/evals.yml`, `docs/REDTEAM.md`), guardrails (`backend/agents/guardrails.py`, flag `GUARDRAILS`), AI Search grounding for Ask (`backend/agents/knowledge.py`, flag `SEARCH_ENABLED`). Switch-on steps in docs/02.
   - [x] Microsoft Agent Framework (workflow orchestration): `backend/agents/workflow.py`
   - [ ] Azure MCP (dev tooling) **and** our own MCP server
   - [ ] GitHub CLI (`gh`) + GitHub Actions for CI/CD
@@ -95,6 +96,7 @@ Priority: **P0** = we fail or score badly without it. **P1** = needed to win. **
   - [x] Azure Event Hubs (event-driven backbone) Verified against the deployed hub.
   - [ ] GitHub Copilot Agent Mode → P2: if VJ uses it for any part (e.g. writing tests), note it honestly in the README
   - [ ] Fabric → P2/skip. Costly and not needed. Don't fake it
+    - Back in scope with the work split (docs/11), on a free trial capacity. Person B, 23 Oct: KQL, update policies, dashboard functions, Lakehouse notebook, OneLake upload and Power BI measures written and tested offline (`fabric/`, `backend/tests/test_fabric.py`). Portal setup not done yet (docs/FABRIC.md).
 - [x] Well-structured, documented, maintainable code
 
 ### F2. Agentic Design & Innovation (20%)
