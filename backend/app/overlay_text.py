@@ -75,10 +75,20 @@ class OverlayText:
 
     def table(self, match: LoadedMatch, lang: str) -> dict[str, str] | None:
         """The table if it is ready; otherwise start building it and return None."""
-        if lang == "en" or lang not in LANGUAGES or self.translator is None:
+        if lang == "en" or lang not in LANGUAGES:
             return None
         key = (match.meta.match_id, lang)
         if key in self._tables:
+            return self._tables[key]
+        if self.translator is None:
+            # No Translator here (CI, or a run without Azure access): serve a warmed table from the
+            # cache as it is. Nothing is built, so a missing table just means English.
+            hit = self.cache.get(
+                cache_key(match.meta.seed, "timeline", "overlay_text", "*", lang), TimelineText
+            )
+            if hit is None:
+                return None
+            self._tables[key] = dict(hit.lines)
             return self._tables[key]
         if key not in self._tasks:
             self._tasks[key] = asyncio.create_task(self._build(match, lang))

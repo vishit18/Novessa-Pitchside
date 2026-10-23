@@ -1,5 +1,6 @@
 import type { StoreApi } from 'zustand/vanilla'
 import { ClockSync } from '@/core/clock'
+import { leftOverFromBeforeSeek } from '@/core/seek'
 import { isStoryOverlay, momentFeed } from '@/core/feed'
 import { activeOverlays } from '@/core/overlays'
 import { GATEWAY_WS } from '@/net/api'
@@ -40,6 +41,8 @@ export class Session {
   private lastFeedSig = ''
   private lastTimeMs = 0
   private lastSeenMs = 0
+  /** Where the last seek went, until the first frame of the new stream arrives. */
+  private seekTarget: number | null = null
 
   constructor(readonly opts: SourceOptions) {
     this.store = createUIStore(opts.profile)
@@ -49,6 +52,7 @@ export class Session {
     this.stop()
     this.buffers.clear()
     this.clock.reset()
+    this.seekTarget = null
     this.lastActiveSig = ''
     this.lastSnapshotT = -1
     this.lastStatsT = -1
@@ -109,6 +113,7 @@ export class Session {
   seek(tMatch: number): void {
     const t = Math.max(0, tMatch)
     this.source?.controls?.seek(t)
+    this.seekTarget = t
     this.buffers.clear()
     this.clock.reset()
     this.lastSnapshotT = -1
@@ -118,6 +123,10 @@ export class Session {
   }
 
   private onMessage(msg: WireMessage): void {
+    if (this.seekTarget !== null) {
+      if (leftOverFromBeforeSeek(msg, this.seekTarget)) return
+      if (msg.type === 'frame') this.seekTarget = null
+    }
     if (msg.type === 'frame') {
       // A seek backwards: start the buffers over.
       if (msg.data.t_match < this.buffers.latestT - 2) {

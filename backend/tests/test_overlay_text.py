@@ -44,6 +44,22 @@ async def test_table_translates_and_drops_lines_that_change_a_number(tmp_path: P
     assert tr.calls == first
 
 
+async def test_a_warmed_table_is_served_without_a_translator(tmp_path: Path) -> None:
+    store = MatchStore()
+    match = await store.get(MATCH)
+    # Warm the cache the way scripts.warm_overlay_text does, with a Translator.
+    warm = OverlayText(TagTranslator(), FileCache(tmp_path), store.names)
+    table = await warm.ready(match, "es", timeout_s=30)
+    assert table
+
+    # A process with no Translator (CI, no Azure access) still serves it from the cache.
+    offline = OverlayText(None, FileCache(tmp_path), store.names)
+    assert offline.table(match, "es") == table
+    # Nothing cached for this language: English, and nothing is built.
+    assert offline.table(match, "fr") is None
+    assert offline.table(match, "en") is None
+
+
 def test_apply_swaps_known_lines_and_marks_the_language() -> None:
     ov = {"lang": "en", "payload": {"headline": "Goal", "body": "Unknown line"}}
     out = apply(ov, {"Goal": "गोल"}, "hi")

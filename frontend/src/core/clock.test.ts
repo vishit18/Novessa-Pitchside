@@ -28,6 +28,15 @@ describe('ClockSync', () => {
     expect(samples.at(-1)!).toBeLessThan(match)
   })
 
+  it('never sits before kick-off, even paused on the first frame', () => {
+    const c = new ClockSync(0.3)
+    c.observe(0, 1000)
+    expect(c.now(1000)).toBe(0)
+    // Paused: nothing more arrives. The clock must stay at 0, not drift to -0.3.
+    expect(c.now(2000)).toBe(0)
+    expect(c.now(5000)).toBe(0)
+  })
+
   it('learns the playback rate at 4x', () => {
     const c = new ClockSync(0.3)
     run(c, 4, 6)

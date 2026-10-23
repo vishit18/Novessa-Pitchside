@@ -33,7 +33,7 @@ export class ClockSync {
       this.latest = tMatch
       this.lastObsMs = nowMs
       this.lastNowMs = nowMs
-      this.t = tMatch - this.lead
+      this.t = Math.max(0, tMatch - this.lead)
       return
     }
     const dtWall = (nowMs - this.lastObsMs) / 1000
@@ -58,7 +58,8 @@ export class ClockSync {
     this.lastNowMs = nowMs
     const stale = nowMs - this.lastObsMs > 400
     const rate = stale ? 0 : this.rate
-    const target = this.latest - this.lead
+    // Never behind kick-off: the first state sits at 0, and a paused clock at -0.3 would see none.
+    const target = Math.max(0, this.latest - this.lead)
     const err = target - this.t
     if (Math.abs(err) > Math.max(3, this.rate * 1.5)) {
       this.t = target
