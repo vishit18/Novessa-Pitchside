@@ -68,6 +68,7 @@ Create `infra/main.bicep` and modules, referencing the existing Foundry resource
 | Cosmos DB for NoSQL | **Free tier** (1000 RU/s, 25 GB) | matches, moments, profiles, cache | free (enable free tier at create — only one per subscription) |
 | Static Web Apps | **Free** | frontend | free |
 | Azure AI Translator, Speech, Content Safety | **reuse the Foundry resource** `NovessaPitchside1` | same Azure AI Services, one endpoint, one role assignment, no free-tier cap to run out of during judging | pay per use, cents with caching (decided 20 Oct) |
+| Container Apps `mcp`, `a2a` and Job `job-warm` | Consumption, scale to zero, same image as `api` | MCP server, A2A Recap Editor, manual cache-warming job (decided 23 Oct) | free monthly grant covers it |
 | Storage account (Standard LRS, `footage` container) | Standard, anonymous blob read on one container | the real-footage clip, 31 MB (decided 23 Oct) | pence a month |
 | Foundry model usage | pay per token | agents | the main cost; budget ~$40–80 total with caching |
 
@@ -106,6 +107,11 @@ Cosmos DB free tier is one per subscription. If Sweden Central will not take a n
 - Foundry resource and project `NovessaPitchside1`. Deployments: `chat-fast` (gpt-4.1-mini, 100K tokens/min) and `chat-strong` (gpt-5-mini, 500K tokens/min). Both work with Entra tokens through `https://novessapitchside1.cognitiveservices.azure.com/openai/deployments/<name>/chat/completions` (checked 20 Oct: `chat-fast` 1.3 s, `chat-strong` 1.7 s with `reasoning_effort: minimal`). The `openai.azure.com` host returned PermissionDenied for the same token, so use the cognitiveservices host. Subscription is PayAsYouGo with the spending limit off.
 
 - 23 Oct: both apps redeployed. Storage account `stuirzml34ufpge` created with only `infra/modules/storage.bicep` (a full `azd provision` would put the API image back to the placeholder). The clip is at `https://stuirzml34ufpge.blob.core.windows.net/footage/117093_w1890/clip.mp4` and the API has `REAL_VIDEO_BASE_URL` set. Upload with `az storage blob upload --auth-mode login` (needs Storage Blob Data Contributor; shared keys are off).
+
+- 23 Oct: `mcp`, `a2a` and `job-warm` created with only `infra/modules/services.bicep` (parameters taken from the live `api` app so nothing there changed). `main.parameters.json` now passes `SERVICE_*_IMAGE_NAME`, so a later `azd provision` keeps the deployed images instead of resetting them to the placeholder. `azure.yaml` lists `mcp` and `a2a` as services, so `azd deploy` builds them too.
+  - MCP: `https://ca-mcp-uirzml34ufpge.salmonocean-c33a3a80.swedencentral.azurecontainerapps.io/mcp`
+  - A2A: `https://ca-a2a-uirzml34ufpge.salmonocean-c33a3a80.swedencentral.azurecontainerapps.io`
+  - Warm the cache from Azure: `az containerapp job start -g pitchside -n job-warm-uirzml34ufpge`
 
 ## Environment variables (`.env.example`)
 

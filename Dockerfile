@@ -15,6 +15,7 @@ COPY engine ./engine
 COPY backend ./backend
 COPY config ./config
 COPY data ./data
+COPY scripts ./scripts
 ENV PATH="/app/.venv/bin:$PATH" PYTHONUNBUFFERED=1 PRELOAD=1 PORT=8000
 USER app
 EXPOSE 8000

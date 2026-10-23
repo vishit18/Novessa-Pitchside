@@ -32,10 +32,34 @@ param apiMinReplicas string = '0'
 @description('Placeholder until azd deploys the real image.')
 param apiImage string = 'mcr.microsoft.com/azuredocs/containerapps-helloworld:latest'
 
+@description('Images for the mcp and a2a apps; azd fills these in after the first deploy.')
+param mcpImage string = 'mcr.microsoft.com/azuredocs/containerapps-helloworld:latest'
+param a2aImage string = 'mcr.microsoft.com/azuredocs/containerapps-helloworld:latest'
+
 var token = toLower(uniqueString(subscription().id, resourceGroup().id, environmentName))
 var tags = {
   'azd-env-name': environmentName
   project: 'novessa-pitchside'
+}
+
+// Plain environment variables shared by the api, a2a and warm job.
+var sharedEnv = {
+  FOUNDRY_PROJECT_ENDPOINT: foundryProjectEndpoint
+  // Token (Entra) auth works on the cognitiveservices.azure.com host, not openai.azure.com.
+  FOUNDRY_OPENAI_ENDPOINT: foundry.properties.endpoint
+  FOUNDRY_DEPLOYMENT_FAST: foundryDeploymentFast
+  FOUNDRY_DEPLOYMENT_STRONG: foundryDeploymentStrong
+  CONTENT_SAFETY_ENDPOINT: foundry.properties.endpoint
+  TRANSLATOR_ENDPOINT: foundry.properties.endpoint
+  SPEECH_REGION: foundry.location
+  EVENTHUB_FQDN: '${data.outputs.eventHubNamespaceName}.servicebus.windows.net'
+  EVENTHUB_NAME: data.outputs.eventHubName
+  COSMOS_ENDPOINT: data.outputs.cosmosEndpoint
+  COSMOS_DATABASE: data.outputs.cosmosDatabase
+  REAL_VIDEO_BASE_URL: storage.outputs.footageBaseUrl
+  EVENT_BUS: 'memory'
+  STORE: 'local'
+  AGENT_CACHE: 'on'
 }
 
 module monitoring 'modules/monitoring.bicep' = {
@@ -94,24 +118,27 @@ module app 'modules/app.bicep' = {
     appInsightsSecretUri: platform.outputs.appInsightsSecretUri
     apiImage: apiImage
     apiMinReplicas: int(apiMinReplicas)
-    env: {
-      FOUNDRY_PROJECT_ENDPOINT: foundryProjectEndpoint
-      // Token (Entra) auth works on the cognitiveservices.azure.com host, not openai.azure.com.
-      FOUNDRY_OPENAI_ENDPOINT: foundry.properties.endpoint
-      FOUNDRY_DEPLOYMENT_FAST: foundryDeploymentFast
-      FOUNDRY_DEPLOYMENT_STRONG: foundryDeploymentStrong
-      CONTENT_SAFETY_ENDPOINT: foundry.properties.endpoint
-      TRANSLATOR_ENDPOINT: foundry.properties.endpoint
-      SPEECH_REGION: foundry.location
-      EVENTHUB_FQDN: '${data.outputs.eventHubNamespaceName}.servicebus.windows.net'
-      EVENTHUB_NAME: data.outputs.eventHubName
-      COSMOS_ENDPOINT: data.outputs.cosmosEndpoint
-      COSMOS_DATABASE: data.outputs.cosmosDatabase
-      REAL_VIDEO_BASE_URL: storage.outputs.footageBaseUrl
-      EVENT_BUS: 'memory'
-      STORE: 'local'
-      AGENT_CACHE: 'on'
-    }
+    env: sharedEnv
+  }
+}
+
+module services 'modules/services.bicep' = {
+  name: 'services'
+  dependsOn: [roles]
+  params: {
+    location: location
+    token: token
+    tags: tags
+    environmentId: app.outputs.environmentId
+    environmentDomain: app.outputs.environmentDomain
+    identityId: platform.outputs.identityId
+    identityClientId: platform.outputs.identityClientId
+    registryLoginServer: platform.outputs.registryLoginServer
+    appInsightsSecretUri: platform.outputs.appInsightsSecretUri
+    mcpImage: mcpImage
+    a2aImage: a2aImage
+    jobImage: apiImage
+    env: sharedEnv
   }
 }
 
@@ -123,3 +150,6 @@ output WEB_URI string = app.outputs.webUri
 output APPLICATIONINSIGHTS_NAME string = monitoring.outputs.appInsightsName
 output STORAGE_ACCOUNT_NAME string = storage.outputs.storageAccountName
 output REAL_VIDEO_BASE_URL string = storage.outputs.footageBaseUrl
+output MCP_URI string = services.outputs.mcpUri
+output A2A_URI string = services.outputs.a2aUri
+output WARM_JOB_NAME string = services.outputs.warmJobName

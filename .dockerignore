@@ -12,7 +12,6 @@ footage
 frontend
 infra
 docs
-scripts
 **/__pycache__
 **/*.pyc
 node_modules

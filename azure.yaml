@@ -21,6 +21,23 @@ services:
       path: ./Dockerfile
       context: .
       remoteBuild: true
+  # Same image and Dockerfile as api; the start command is set in infra/modules/services.bicep.
+  mcp:
+    project: .
+    language: python
+    host: containerapp
+    docker:
+      path: ./Dockerfile
+      context: .
+      remoteBuild: true
+  a2a:
+    project: .
+    language: python
+    host: containerapp
+    docker:
+      path: ./Dockerfile
+      context: .
+      remoteBuild: true
   web:
     project: ./frontend
     language: ts

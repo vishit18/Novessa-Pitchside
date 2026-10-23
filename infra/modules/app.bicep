@@ -104,5 +104,7 @@ resource api 'Microsoft.App/containerApps@2024-03-01' = {
   }
 }
 
+output environmentId string = environment.id
+output environmentDomain string = environment.properties.defaultDomain
 output apiUri string = 'https://${api.properties.configuration.ingress.fqdn}'
 output webUri string = 'https://${web.properties.defaultHostname}'
