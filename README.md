@@ -158,7 +158,7 @@ These are measured, not hoped for.
 
 ![The real-footage screen: tracked players on a real match, with a scrubbable match clock and the scorecard against the dataset's labels](docs/img/real-footage.png)
 
-Footage: **SoccerTrack v2 (CC BY 4.0)**, an openly licensed dataset of amateur matches on Hugging Face (`atomscott/soccertrack-v2`). It stays inside `vision/` and is used for exactly two things: showing that auto-eventing works on video, and scoring our output against its labels. It is never used to build or tune the synthetic engine.
+Footage: **SoccerTrack v2 (CC BY 4.0)**, an openly licensed dataset of amateur matches on Hugging Face (`atomscott/soccertrack-v2`), used under that licence with credit to its authors. It stays inside `vision/` and is used for exactly two things: showing that auto-eventing works on video, and scoring our output against its labels. It is never used to build or tune the synthetic engine.
 
 Citation: Atom Scott, Ikuma Uchida, Kento Kuroda, Yufi Kim and Keisuke Fujii, *SoccerTrack v2: A Full-Pitch Panoramic Video Dataset for Game State Reconstruction and Ball Action Spotting*, arXiv:2508.01802, 2025. Code: github.com/AtomScott/SoccerTrack-v2.
  A university name and crest painted on the pitch are removed from the clip we show. The video file is not in this repo.

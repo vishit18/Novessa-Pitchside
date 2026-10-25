@@ -108,7 +108,7 @@ The output is a timed overlay format, so a broadcaster's existing graphics engin
 
 It runs on Azure Container Apps, Cosmos DB and Static Web Apps, with Azure AI Translator, Speech and Content Safety. Match events travel through Event Hubs on the live-feed path: we sent 19,830 messages through it and lost none. The recap agent is open to other agents over A2A, and our stats layer is also an MCP server, so outside tools can ask the same questions our agents do. We built and managed the Azure side with Azure MCP. Everything is defined in Bicep and deploys with azd. We load-tested the API with 150 concurrent viewers and saw no errors, and the broadcast keeps running if any agent goes down.
 
-We also tried it on a real amateur match from the open SoccerTrack v2 dataset (CC BY 4.0), tracking players and their speeds from video.
+We also tried it on a real amateur match from the open SoccerTrack v2 dataset, used under its CC BY 4.0 licence with credit to its authors, tracking players and their speeds from video.
 
 Live demo: https://ashy-pebble-0f5b51c1e.5.azurestaticapps.net · Code: [GitHub link]
 
