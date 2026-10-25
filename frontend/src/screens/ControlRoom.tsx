@@ -64,6 +64,10 @@ export function ControlRoom({ query }: { query: URLSearchParams }) {
               See the overlay feed a graphics engine receives
             </a>
           </p>
+          <p className="mt-3 text-[12px] uppercase tracking-wide text-muted">
+            Running on Microsoft Agent Framework · Microsoft Foundry · Azure AI Content Safety ·
+            Azure Cosmos DB cache · Azure Container Apps
+          </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <label className="flex items-center gap-2 text-[13px] text-muted">

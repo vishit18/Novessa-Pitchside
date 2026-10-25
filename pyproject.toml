@@ -71,7 +71,7 @@ torchvision = { index = "pytorch-cu128" }
 [tool.ruff]
 line-length = 100
 target-version = "py312"
-extend-exclude = ["footage", "fabric/notebooks"]
+extend-exclude = ["footage"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP", "SIM", "RUF"]
@@ -80,7 +80,7 @@ select = ["E", "F", "I", "B", "UP", "SIM", "RUF"]
 python_version = "3.12"
 strict = true
 plugins = ["pydantic.mypy"]
-exclude = ["footage/", "frontend/", "fabric/notebooks/", "loadtest/"]
+exclude = ["footage/", "frontend/", "loadtest/"]
 
 [[tool.mypy.overrides]]
 # Heavy vision-only packages without complete type information.

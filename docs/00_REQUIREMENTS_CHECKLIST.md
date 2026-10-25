@@ -97,8 +97,7 @@ Priority: **P0** = we fail or score badly without it. **P1** = needed to win. **
   - [x] Azure Cosmos DB (Azure databases) Verified against the real account; `scripts/push_cache.py`
   - [x] Azure Event Hubs (event-driven backbone) Verified against the deployed hub.
   - [ ] GitHub Copilot Agent Mode → P2: if VJ uses it for any part (e.g. writing tests), note it honestly in the README
-  - [ ] Fabric → P2/skip. Costly and not needed. Don't fake it
-    - Back in scope with the work split (docs/11), on a free trial capacity. Person B, 23 Oct: KQL, update policies, dashboard functions, Lakehouse notebook, OneLake upload and Power BI measures written and tested offline (`fabric/`, `backend/tests/test_fabric.py`). Portal setup not done yet (docs/FABRIC.md).
+  - [ ] Fabric → dropped 25 Oct. Not built into the live app, so the code was removed rather than shown as a service we use
 - [x] Well-structured, documented, maintainable code
 
 ### F2. Agentic Design & Innovation (20%)

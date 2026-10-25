@@ -25,12 +25,6 @@ Translator, Speech and Content Safety all live on the same Foundry resource, so 
 | **Blob Storage** | Cheap object storage. Standard LRS, one `footage` container with anonymous read (the clip is redacted and openly licensed). Shared keys are off. | Holds the real-footage clip. `/real/{clip}/video` on the gateway redirects to it, so the Container App image stays small. | `infra/modules/storage.bicep`, `backend/app/real.py` | Verified 23 Oct: the clip plays on the live `/real` page. 25 Oct: the account was answering anonymous requests as the 2009 API version, which sends no `Accept-Ranges` header, so browsers would not seek. Default service version set to 2022-11-02 (also in `storage.bicep`); scrubbing and clicking a pass now work. |
 | **Cosmos DB (NoSQL)** | A managed document database, free tier. | Shared cache of agent output keyed by match seed, moment, persona and language. | `backend/agents/cache.py` | Verified 20 Oct against the real account: a value written through `CosmosCache` was read back by a fresh instance. The warmed demo cache (54 entries) is loaded with `scripts/push_cache.py`. |
 
-## Analytics
-
-| Service | What it is | What we use it for | Where | Status |
-|---|---|---|---|---|
-| **Microsoft Fabric** (Eventstream, Eventhouse, Real-Time Dashboard, Lakehouse, Power BI) | Microsoft's analytics platform on OneLake. Trial capacity, free for 60 days. | The same Event Hubs feed lands in an Eventhouse for a live dashboard (score, xG race, tempo, shot map, publish-to-row latency); the 200 synthetic matches go to a Lakehouse for a Power BI league report. Eventstream signs in as the workspace identity, keyless. | `fabric/`, docs/FABRIC.md | KQL, notebook, upload and measures written and tested offline. Fabric items not created yet. |
-
 ## Running the app
 
 | Service | What it is | What we use it for | Status |

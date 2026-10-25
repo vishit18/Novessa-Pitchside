@@ -135,7 +135,7 @@ real footage ──▶ vision pipeline ──▶ same event schema ──▶ sam
 | Our own MCP server and A2A endpoint | `backend/mcp_server/`, `backend/a2a/`. The match intelligence is a tool any agent can call, and the recap agent can be called by any other agent |
 | GitHub Actions and the GitHub CLI | CI (lint, types, tests, e2e and the red team) and the repo |
 
-Built, tested offline and switched off for now: Foundry Agent Service (the prompts as versioned agents), Azure AI Search (league facts for Ask) and Microsoft Fabric (a live Eventhouse dashboard and a Power BI league report). We list them because they are in the repo. We do not count them as live. Each is behind a flag, and the [`/why` page](https://ashy-pebble-0f5b51c1e.5.azurestaticapps.net/why) in the app says the same.
+Built, tested offline and switched off for now: Foundry Agent Service (the prompts as versioned agents), and Azure AI Search (league facts for Ask). We list them because they are in the repo. We do not count them as live. Each is behind a flag, and the [`/why` page](https://ashy-pebble-0f5b51c1e.5.azurestaticapps.net/why) in the app says the same.
 
 Decisions and their costs are in [`docs/adr/`](docs/adr/README.md). A plain-language guide to each service, with an honest status for each, is in [`docs/AZURE_SERVICES.md`](docs/AZURE_SERVICES.md).
 
@@ -143,7 +143,7 @@ Decisions and their costs are in [`docs/adr/`](docs/adr/README.md). A plain-lang
 
 These are measured, not hoped for.
 
-- **Tests:** 258 Python, 88 frontend unit, 16 browser end-to-end. Lint and types run in CI.
+- **Tests:** 252 Python, 88 frontend unit, 16 browser end-to-end. Lint and types run in CI.
 - **Load:** 150 viewers for five minutes against the live API: 32,120 requests, 0 errors, p95 11 ms, scaled from 1 to 3 replicas and back. This covers the request and response paths, not the WebSocket feed or model calls ([`docs/LOAD_TEST.md`](docs/LOAD_TEST.md)).
 - **Safety:** 14 of 14 red-team attacks held with guardrails on ([`docs/REDTEAM.md`](docs/REDTEAM.md)).
 - **Cost:** running the agents over all three demo matches (94 moments) cost about $0.09 in model tokens. The results are cached per match, moment, persona and language, so a replay costs nothing.

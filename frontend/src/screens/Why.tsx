@@ -183,13 +183,6 @@ const STACK: Part[] = [
     status: 'off',
     note: 'Built and tested offline, behind flags. Not switched on in the live app.',
   },
-  {
-    name: 'Microsoft Fabric',
-    kind: 'Azure',
-    does: 'The event feed into an Eventhouse and a live dashboard, 200 matches into a Lakehouse',
-    status: 'off',
-    note: 'Tables, queries and notebook are written. The workspace is not set up.',
-  },
 ]
 
 const STATUS_LABEL: Record<Status, string> = {

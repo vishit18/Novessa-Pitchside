@@ -1,6 +1,6 @@
 # Azure work split: two people, two Claudes
 
-> **Status, 25 Oct:** this is the plan as written on 23 Oct, kept for the record. Done: Blob footage, the `api`, `mcp` and `a2a` Container Apps and the warm job, load test, Fabric and AI Search and Agent Service code (all flags off), red team and guardrails. Not done on purpose: the KEDA `agents` worker and API Management (see ADR 0010). What is deployed is listed in `docs/AZURE_SERVICES.md`.
+> **Status, 25 Oct:** this is the plan as written on 23 Oct, kept for the record. Done: Blob footage, the `api`, `mcp` and `a2a` Container Apps and the warm job, load test, AI Search and Agent Service code (flags off). Fabric was dropped and its code removed on 25 Oct, red team and guardrails. Not done on purpose: the KEDA `agents` worker and API Management (see ADR 0010). What is deployed is listed in `docs/AZURE_SERVICES.md`.
 
 Goal: add the extra Azure services in parallel without anyone breaking `main` or the live site. Written 23 Oct. Deadline is 28 Oct 06:59 London, so feature-complete by 25 Oct.
 
