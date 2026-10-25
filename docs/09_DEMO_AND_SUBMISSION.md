@@ -94,19 +94,25 @@ Cut every pause. Burn in the captions from the table (many judges watch muted). 
 
 ## Project pitch (hackathon page)
 
-**Novessa Pitchside. Same match. Your story.**
+**Tagline.** A broadcast layer that turns live football events into fact-checked, explained insights, personalised for each viewer. Built with AI agents on Microsoft Foundry and Azure.
 
-Millions of people watch the same match and get the same broadcast, whether they live for pressing stats or just want to know why their team looks rattled. Novessa Pitchside gives each viewer their own version of the game, live, in their own language.
+**Description.**
 
-A synthetic engine plays a full 90 minutes in a fictional league. A deterministic stats layer turns it into momentum, control and chaos, pressure and pass difficulty, and puts instant overlays on screen in under 150 ms. A newsroom of agents built with Microsoft Agent Framework on Microsoft Foundry does the rest. A producer picks the moments, an analyst explains why they matter, and a verifier recomputes every number before it airs. A model never calculates anything. If a claim fails, the viewer gets the plain numbers. Other agents write for each viewer, translate and voice it in six languages, recap the match, and answer questions without spoiling the minute you are on. Kill any agent mid-match and the broadcast carries on.
+Everyone watching a match gets the same broadcast. A fan who follows pressing stats and someone watching their first game see the same graphics and hear the same analysis, because broadcasters can only produce one feed. Novessa Pitchside gives each viewer their own version of the match, live and in their language.
 
-The output is a timed overlay protocol any graphics engine could render. Analysts, casual fans, first-timers and audio-description users each get a different picture and different words, built around their club, their player or the one number they care about. We also pointed the same idea at a real amateur match from an open dataset (SoccerTrack v2, CC BY 4.0). It tracks players and measures speeds from video, scored against the dataset's own labels.
+A synthetic engine plays 90 minutes in a fictional league. A stats layer turns the events into numbers like momentum, pressure and pass difficulty, and sends overlays to screen in under 150 ms.
 
-It runs on Azure with a live link, scaled and load-tested with 150 viewers and no errors, and every resource is Bicep.
+Agents built with Microsoft Agent Framework on Microsoft Foundry then work like a small newsroom. One picks the key moments, one explains them, and a verifier recomputes every number before it goes out. The language model never does the maths. If a claim doesn't check out after one retry, the viewer sees the raw numbers instead, so every number in the English text can be traced back to the data. Other agents tailor what each viewer sees and reads, translate and voice it in six languages, write the recap, and answer questions without spoiling what's ahead.
 
-**Built with:** Microsoft Foundry, Microsoft Agent Framework, A2A, our own MCP server, Azure MCP, Azure Container Apps, Azure Static Web Apps, Azure Event Hubs, Azure Cosmos DB, Azure Blob Storage, Azure AI Translator, Azure AI Speech, Azure AI Content Safety, Azure Monitor and Application Insights, Azure Load Testing, Key Vault, Bicep and the Azure Developer CLI, GitHub Actions and GitHub CLI.
+The output is a timed overlay format, so a broadcaster's existing graphics engine could render it.
 
-_(Keep this under about 300 words. VJ rewrites anything that doesn't sound like him.)_
+It runs on Azure Container Apps, Cosmos DB and Static Web Apps, with Azure AI Translator, Speech and Content Safety. The live feed path runs through Event Hubs: we sent 19,830 messages through it and lost none. The recap agent is open to other agents over A2A, and our stats layer is also an MCP server, so outside tools can ask the same questions our agents do. We built and managed the Azure side with Azure MCP. Everything is defined in Bicep and deploys with azd. We load-tested the API with 150 viewers and saw no errors, and the broadcast keeps running if any agent goes down.
+
+We also tried it on a real amateur match from the open SoccerTrack v2 dataset (CC BY 4.0), tracking players and their speeds from video.
+
+Live demo: https://ashy-pebble-0f5b51c1e.5.azurestaticapps.net · Code: [GitHub link]
+
+_(VJ rewrites anything that doesn't sound like him. Check the form's length limit before pasting.)_
 
 ## Submission checklist (do it from a logged-out browser on Tue 27)
 

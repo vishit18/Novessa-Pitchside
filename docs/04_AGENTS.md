@@ -25,7 +25,7 @@ Think of it as a live TV gallery. The state engine is the data team. The agents 
    ┌─────────────────┐  claims + evidence   ┌─────────────────┐ │
    │  ANALYST        │ ───────────────────▶ │  VERIFIER       │ │
    │  (the "why")    │ ◀─── rejection +     │  (proves every  │ │
-   └─────────────────┘      reason, 1 retry │  claim via MCP) │ │
+   └─────────────────┘      reason, 1 retry │  claim via intel) │ │
                                             └────────┬────────┘ │
                                     verified insight │          │
             ┌────────────────────────────────────────┤          │
@@ -60,11 +60,11 @@ Think of it as a live TV gallery. The state engine is the data team. The agents 
 ### 2. Tactical Analyst
 - **Role:** explains *why* the moment matters in football terms: control vs chaos, pressure shifts, rhythm, individual quality, game state.
 - **Must** output structured claims with evidence references, e.g. `{"claim": "Kestrel have won the ball back 4 times in Ashford's half in 5 minutes", "evidence": {"metric":"pressure_index","window":"20:00-25:00","value":...}}`.
-- **Tools (via our MCP server):** `get_state`, `get_player_stats`, `get_window_stats`, `compare_periods`, `get_pass_network`.
+- **Tools (the same functions our MCP server exposes, called directly in Python through `intel.py`):** `get_state`, `get_player_stats`, `get_window_stats`, `compare_periods`, `get_pass_network`.
 - Model: `chat-strong`.
 
 ### 3. Verifier
-- **Role:** proves every claim before it airs. Re-queries the numbers through the MCP tools independently and checks each claim. Returns `approved | rejected(reason) | corrected(new_claim)`.
+- **Role:** proves every claim before it airs. Recomputes the numbers independently through `intel.py` (the code behind the MCP tools) and checks each claim. Returns `approved | rejected(reason) | corrected(new_claim)`.
 - On rejection, the Analyst gets one retry with the reason. Second failure → the Producer airs the deterministic fallback card (numbers only, no prose) or drops it.
 - Logs the verification trail; the Control Room shows a green tick / red cross per claim. Judges love seeing this happen live.
 - **Story check** (`backend/agents/story.py`, 21 Oct): numbers can all be right while the sentence is wrong ("Kestrel Bay has a clear chance" on Ashford's penalty; a 27th-minute goal "just before half-time"). For goals, penalties, big chances and cards the headline may not credit only the other club, and time phrases ("before half-time", "stoppage time", "early", "late") must fit the clock. Runs in the Verifier (Analyst gets one retry with the reason), on every Narrator variant (falls back to the verified analysis text) and on recaps (one retry). `scripts/check_story.py` screens the warmed cache.
@@ -136,7 +136,7 @@ Add a **chaos switch** in the Control Room: "kill the Analyst for 30 seconds". I
 
 ## Our MCP server (`backend/mcp_server/`)
 
-"Match Intelligence MCP": exposes the state engine as tools: `get_state`, `get_player_stats`, `get_window_stats`, `compare_periods`, `get_pass_network`, `list_moments`, `get_recap`. The Analyst and Verifier call it, and anything else MCP-compatible can too (VS Code Copilot, Claude, a broadcaster's tools). Show it working from VS Code in the README. This hits the rubric's "MCP integration" line directly.
+"Match Intelligence MCP": exposes the state engine as tools: `get_state`, `get_player_stats`, `get_window_stats`, `compare_periods`, `get_pass_network`, `list_moments`, `get_recap`. Our own Analyst and Verifier call the same functions directly in Python, not over MCP, which is faster and has fewer ways to fail. The MCP server is for everyone else: anything MCP-compatible can ask the same questions (VS Code Copilot, a broadcaster's tools). It runs as its own Container App.
 
 ## How it is built (21 Oct)
 

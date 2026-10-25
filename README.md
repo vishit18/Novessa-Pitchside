@@ -122,7 +122,7 @@ real footage ──▶ vision pipeline ──▶ same event schema ──▶ sam
 | Microsoft Foundry | Two chat models: a small one for the high-volume agents, a larger one for recaps only. Foundry's evaluators (`azure-ai-evaluation`) score the output in `scripts/eval_single_vs_multi.py` |
 | Microsoft Agent Framework | The Producer, Analyst, Verifier, Narrator and Gate workflow (`backend/agents/workflow.py`) |
 | Azure AI Translator, Speech, Content Safety | Localiser, Voice and the QA gate, all on the Foundry resource |
-| Azure Event Hubs | The live feed from engine to gateway (`backend/bus/`) |
+| Azure Event Hubs | The live feed from engine to gateway (`backend/bus/`). We measured this path, but the public demo site replays its matches from memory |
 | Azure Cosmos DB | Shared cache of agent output per match, moment, persona and language |
 | Azure Container Apps and Container Registry | Three apps from one image: the gateway and agents (`api`), our Match Intelligence MCP server (`mcp`) and the Recap Editor as its own A2A agent (`a2a`), plus a manual cache-warming job. Two API replicas stay up for judging and the others scale to zero |
 | Azure Static Web Apps | The frontend, built against the live gateway |
@@ -132,7 +132,7 @@ real footage ──▶ vision pipeline ──▶ same event schema ──▶ sam
 | Managed identity and Key Vault | Keyless access between services |
 | Bicep and the Azure Developer CLI | Every resource is code (`infra/`, `azure.yaml`) |
 | Azure MCP server | Used while building, to inspect and manage the resources |
-| Our own MCP server and A2A endpoint | `backend/mcp_server/`, `backend/a2a/`. The match intelligence is a tool any agent can call, and the recap agent can be called by any other agent |
+| Our own MCP server and A2A endpoint | `backend/mcp_server/`, `backend/a2a/`. The match intelligence is a tool any outside agent can call, and the recap agent can be called by any other agent. Our own agents call the same stats code directly in Python, not over MCP |
 | GitHub Actions and the GitHub CLI | CI (lint, types, tests, e2e and the red team) and the repo |
 
 Built, tested offline and switched off for now: Foundry Agent Service (the prompts as versioned agents), and Azure AI Search (league facts for Ask). We list them because they are in the repo. We do not count them as live. Each is behind a flag, and the [`/why` page](https://ashy-pebble-0f5b51c1e.5.azurestaticapps.net/why) in the app says the same.
