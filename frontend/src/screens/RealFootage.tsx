@@ -59,6 +59,17 @@ export function RealFootage() {
         The same idea, on real video
       </h1>
 
+      <aside
+        aria-label="About this footage"
+        className="max-w-[78ch] border-s-4 border-amber bg-text/[0.04] px-4 py-3 text-[15px] leading-relaxed"
+      >
+        <strong className="font-semibold">Real footage, used with permission.</strong> This is a
+        real amateur university match from SoccerTrack v2, an open dataset released under CC BY 4.0,
+        which allows reuse with credit. Everything else in Pitchside is synthetic. This page only
+        shows that the same overlay idea works when the events are measured from video instead of
+        generated.
+      </aside>
+
       {failed && (
         <p role="alert" className="max-w-[60ch] text-[15px]">
           The real footage did not load. The gateway may still be starting, so try again in a few
