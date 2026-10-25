@@ -63,6 +63,7 @@ var sharedEnv = {
   EVENT_BUS: 'memory'
   STORE: 'cosmos'
   RATE_LIMIT: 'on'
+  GUARDRAILS: 'true'
   AGENT_CACHE: 'on'
 }
 

@@ -304,20 +304,62 @@ async def _background(ctx: MatchContext, question: str, trail: list[str]) -> lis
     return [d.as_note() for d in docs]
 
 
+# "last 5 minutes", "10-minute": a time window says nothing about the match, so a window the
+# evidence or the viewer named may be repeated, but only as a window.
+WINDOW = re.compile(r"(\d+(?:\.\d+)?)[\s-]*min(?:ute)?s?\b", re.IGNORECASE)
+# 2-1, 3-0: a scoreline is checked as a pair, not as two numbers that each appear somewhere.
+SCORELINE = re.compile(r"(?<![\d.:])(\d{1,2})\s*[-\N{EN DASH}]\s*(\d{1,2})(?![\d.:])")
+
+
 def allowed_numbers(
     found: Lookups, clock: str, question: str, background: list[str] | None = None
 ) -> list[float]:
-    """Every number the answer may contain: evidence values, numbers in notes and league
-    facts, the clock and any number the viewer used themselves."""
+    """Every number the answer may state as a fact: evidence values, numbers in notes and league
+    facts, and the clock. Numbers in row labels ("0-100", "last 5 minutes") and numbers the
+    viewer typed do not count, so a hijacked model cannot build a claim from them; `windows`
+    covers the one harmless use of those."""
     allowed = [r.value for r in found.rows]
-    texts = [*found.notes, *(background or []), clock, question, *(r.label for r in found.rows)]
-    for text in texts:
+    for text in [*found.notes, *(background or []), clock]:
         allowed.extend(numbers_in(text))
     return allowed
 
 
-def stray(answer: str, allowed: list[float]) -> list[float]:
-    return [n for n in numbers_in(answer) if not any(close(n, a) for a in allowed)]
+def windows(found: Lookups, question: str) -> set[float]:
+    """Time windows the evidence labels or the viewer's question name, in minutes."""
+    texts = [question, *(r.label for r in found.rows)]
+    return {float(n) for text in texts for n in WINDOW.findall(text)}
+
+
+def stray(
+    answer: str, allowed: list[float], window_minutes: set[float] | None = None
+) -> list[float]:
+    """Numbers in the answer that are not in the evidence. A named window passes when the answer
+    uses it as a window ("in the last 10 minutes")."""
+    used = {float(n) for n in WINDOW.findall(answer)} & (window_minutes or set())
+    return [
+        n for n in numbers_in(answer) if n not in used and not any(close(n, a) for a in allowed)
+    ]
+
+
+def stray_scorelines(answer: str, found: Lookups, background: list[str] | None = None) -> list[str]:
+    """Scorelines in the answer ("5-0") that are not the score, a scoreline the notes already
+    carry, or two figures from the same non-score evidence ("7-3 on shots")."""
+    goals = [r.value for r in found.rows if r.key.startswith("score.")]
+    others = {r.value for r in found.rows if not r.key.startswith("score.")}
+    known = {
+        tuple(sorted(map(float, m)))
+        for t in [*found.notes, *(background or [])]
+        for m in SCORELINE.findall(t)
+    }
+    if len(goals) == 2:
+        known.add(tuple(sorted(goals)))
+    bad = []
+    for m in SCORELINE.finditer(answer):
+        pair = (float(m.group(1)), float(m.group(2)))
+        if tuple(sorted(pair)) in known or all(v in others for v in pair):
+            continue
+        bad.append(m.group(0))
+    return bad
 
 
 def numbers_only(found: Lookups) -> str:
@@ -363,11 +405,12 @@ async def _draft(
             ctx.llm.note_fallback("ask")
             trail.append("Analyst unavailable: answered with the numbers only")
             return numbers_only(found), "numbers_only"
-        bad = stray(draft.answer, allowed)
+        bad = [f"{n:g}" for n in stray(draft.answer, allowed, windows(found, question))]
+        bad += stray_scorelines(draft.answer, found, background)
         if not bad:
             trail.append(f"Verifier: every number checked against the data (attempt {attempt})")
             return draft.answer, "verified"
-        listed = ", ".join(f"{n:g}" for n in bad)
+        listed = ", ".join(bad)
         trail.append(f"Verifier rejected attempt {attempt}: {listed} not in the data")
         payload["verifier_feedback"] = f"These numbers are not in the evidence: {listed}."
         payload["your_previous_answer"] = draft.answer

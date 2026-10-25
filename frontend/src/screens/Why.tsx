@@ -139,28 +139,56 @@ const STACK: Part[] = [
     kind: 'Azure',
     does: 'Screens every line before it airs',
     status: 'partial',
-    note: 'Wired in the Azure config; a word list stands in when it is not reachable',
+    note: 'Endpoint set on the live gateway; a word list stands in when it is not reachable',
   },
   {
     name: 'Azure Event Hubs',
     kind: 'Azure',
     does: 'The live event stream from engine to gateway',
     status: 'partial',
-    note: '2,190 events through, none lost. Viewers still stream a precomputed timeline.',
+    note: 'Publish to overlay measured inside Azure at 140 ms p95. The public site replays from memory.',
   },
   {
     name: 'Application Insights',
     kind: 'Azure',
-    does: 'A trace for every model call',
+    does: 'A trace for every model call, plus availability tests, alerts and an operations workbook',
     status: 'proven',
     note: 'Spans arrive; not yet linked to the Foundry tracing tab',
   },
   {
     name: 'Container Apps and Static Web Apps',
     kind: 'Azure',
-    does: 'Hosting for the gateway and this site',
+    does: 'Hosting for the gateway, the MCP server, the A2A agent and this site',
+    status: 'live',
+    note: 'Three apps from one image, scaled 1 to 3. 150 viewers, 32,120 requests, no errors, p95 11 ms.',
+  },
+  {
+    name: 'Our MCP server and A2A endpoint',
+    kind: 'Code',
+    does: 'Any agent can read the match numbers over MCP, or ask the Recap Editor for a recap over A2A',
+    status: 'live',
+    note: 'Each runs as its own Container App, with an agent card for discovery',
+  },
+  {
+    name: 'Azure Blob Storage',
+    kind: 'Azure',
+    does: 'Holds the real-footage clip so the gateway image stays small',
+    status: 'live',
+    note: 'Openly licensed footage only (SoccerTrack v2, CC BY 4.0)',
+  },
+  {
+    name: 'Azure AI Search and Foundry Agent Service',
+    kind: 'Azure',
+    does: 'League facts that ground Ask, and the prompts published as versioned Foundry agents',
     status: 'off',
-    note: 'The live gateway is an old build. The site is not deployed yet.',
+    note: 'Built and tested offline, behind flags. Not switched on in the live app.',
+  },
+  {
+    name: 'Microsoft Fabric',
+    kind: 'Azure',
+    does: 'The event feed into an Eventhouse and a live dashboard, 200 matches into a Lakehouse',
+    status: 'off',
+    note: 'Tables, queries and notebook are written. The workspace is not set up.',
   },
 ]
 
@@ -168,7 +196,7 @@ const STATUS_LABEL: Record<Status, string> = {
   live: 'Runs every match',
   proven: 'Proven, not in every match',
   partial: 'Partly wired',
-  off: 'Not deployed yet',
+  off: 'Built, not switched on',
 }
 
 /**

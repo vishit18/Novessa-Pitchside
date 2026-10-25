@@ -82,7 +82,7 @@ def storylines_at(intel: MatchIntel, names: dict[str, str], t_match: float) -> l
             )
     if s["control_chaos"]["label"] == "chaotic":
         out.append(
-            Storyline(key="chaos", team=None, text="It has turned scrappy and nobody has control")
+            Storyline(key="chaos", team=None, text="It has turned messy and nobody has control")
         )
     return out
 

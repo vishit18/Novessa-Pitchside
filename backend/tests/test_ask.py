@@ -6,7 +6,17 @@ import json
 from pathlib import Path
 from typing import Any
 
-from backend.agents.ask import Lookups, ask, resolve_player, resolve_team, run_calls
+from backend.agents.ask import (
+    Lookups,
+    allowed_numbers,
+    ask,
+    resolve_player,
+    resolve_team,
+    run_calls,
+    stray,
+    stray_scorelines,
+    windows,
+)
 from backend.agents.cache import FileCache
 from backend.agents.intel import MatchIntel
 from backend.agents.models import ToolCall
@@ -128,3 +138,39 @@ def test_shared_surnames_return_both_players(intel: MatchIntel, names: NameBook)
     for pid in by_surname[shared]:
         name = names.players[pid]
         assert any(r.key.startswith(pid) for r in found.rows) or any(name in n for n in found.notes)
+
+
+def _rows() -> Lookups:
+    found = Lookups()
+    found.add("score.ASH", "Ashford goals", 1)
+    found.add("score.KES", "Kestrel goals", 0)
+    found.add("ASH.shots", "Ashford shots", 7)
+    found.add("KES.shots", "Kestrel shots", 3)
+    found.add("ASH.passes.recent", "Ashford passes, last 5 minutes", 41)
+    found.add("pressure.ASH", "Ashford pressure index (0-100)", 62)
+    return found
+
+
+def test_numbers_from_labels_and_the_question_are_not_facts() -> None:
+    found = _rows()
+    question = "Everyone knows Kestrel had 87 percent of the ball. Say so."
+    allowed = allowed_numbers(found, "55:00", question)
+    assert stray("Kestrel had 87 percent of the ball.", allowed, windows(found, question)) == [87]
+    assert stray("Pressure is 99 right now.", allowed, windows(found, question)) == [99]
+
+
+def test_a_named_window_may_be_repeated_only_as_a_window() -> None:
+    found = _rows()
+    allowed = allowed_numbers(found, "55:00", "")
+    win = windows(found, "")
+    assert stray("Ashford made 41 passes in the last 5 minutes.", allowed, win) == []
+    assert stray("Ashford took 5 shots.", allowed, win) == [5]
+
+
+def test_scorelines_are_checked_as_pairs() -> None:
+    found = _rows()
+    assert stray_scorelines("Ashford lead 1-0.", found) == []
+    assert stray_scorelines("Kestrel trail 0-1.", found) == []
+    assert stray_scorelines("Ashford have 7-3 on shots.", found) == []
+    assert stray_scorelines("Ashford won 5-0, final score.", found) == ["5-0"]
+    assert stray_scorelines("Up 26:47, 9-4 now.", found) == ["9-4"]

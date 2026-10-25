@@ -9,7 +9,7 @@ from typing import Any
 import pytest
 
 from backend.agents.cache import FileCache
-from backend.agents.localiser import line_faithful, localise, numbers_of
+from backend.agents.localiser import _pick, line_faithful, localise, numbers_of
 from backend.agents.models import Variant
 from backend.agents.services import ServiceUnavailable, _keep_markup
 from backend.agents.voice import speak
@@ -189,3 +189,13 @@ def test_arabic_joined_conjunction_keeps_the_name() -> None:
     ar = "Lucho Orbaiz لديه 3 تسديدات، وTobias Wragg لديه 3 تسديدات."
     assert line_faithful(en, ar, ["Lucho Orbaiz", "Tobias Wragg"], "ar")
     assert not line_faithful(en, "Lucho Orbaiz لديه 3 تسديدات، و3 تسديدات.", ["Tobias Wragg"], "ar")
+
+
+def test_a_model_that_returns_the_english_does_not_beat_a_real_translation() -> None:
+    polished = ["100 passes", "Tarjeta amarilla"]
+    machine = ["100 pases", "Tarjeta amarilla"]
+    lines, used = _pick(["100 passes", "Yellow card"], [polished, machine], [], "es")
+    assert lines == ["100 pases", "Tarjeta amarilla"]
+    assert used == [1, 0]
+    # With nothing better on offer the unchanged line is still faithful, so it stays.
+    assert _pick(["100 passes"], [["100 passes"], None], [], "es")[0] == ["100 passes"]

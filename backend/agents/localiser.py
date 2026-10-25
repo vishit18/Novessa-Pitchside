@@ -203,14 +203,20 @@ def _pick(
     """
     lines, used = [], []
     for i, en in enumerate(english):
-        for k, opt in enumerate(options):
-            if opt is not None and line_faithful(en, opt[i], names, lang):
-                lines.append(opt[i])
-                used.append(k)
-                break
-        else:
+        ok = [
+            (k, opt[i])
+            for k, opt in enumerate(options)
+            if opt is not None and line_faithful(en, opt[i], names, lang)
+        ]
+        # A model that hands the English back unchanged ("100 passes") has not translated it, so
+        # a faithful machine translation of the same line wins over it.
+        pick = next((p for p in ok if p[1] != en), ok[0] if ok else None)
+        if pick is None:
             lines.append(en)
             used.append(-1)
+        else:
+            used.append(pick[0])
+            lines.append(pick[1])
     return lines, used
 
 

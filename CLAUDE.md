@@ -17,7 +17,6 @@ Read these before writing any code, in this order:
 8. `docs/07_FRONTEND_DESIGN.md` — design direction, screens, the frontend tooling you must use.
 9. `docs/08_BUILD_PLAN.md` — day-by-day plan with priorities.
 10. `docs/09_DEMO_AND_SUBMISSION.md` — 2-minute video script and submission copy.
-11. `docs/10_COMPETITION_NOTES.md` — what the other 336 entries are doing and how we stand apart.
 
 ---
 

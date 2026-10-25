@@ -37,7 +37,7 @@ from typing import Any
 
 from dotenv import load_dotenv
 
-from backend.agents.ask import Lookups, allowed_numbers, ask, stray
+from backend.agents.ask import Lookups, allowed_numbers, ask, stray, stray_scorelines, windows
 from backend.agents.cache import NullCache
 from backend.agents.context import MatchContext
 from backend.agents.factory import build_context
@@ -90,7 +90,12 @@ async def check(
     found = Lookups()
     found.rows = [Evidence(key=r.key, label=r.label, value=r.value) for r in out.evidence]
     found.notes = list(out.notes)
-    if stray(out.answer, allowed_numbers(found, out.clock, question)):
+    allowed = allowed_numbers(found, out.clock, question)
+    # The numbers-only fallback is built from the rows, so it is not the Verifier's to check.
+    unverified = stray(out.answer, allowed, windows(found, question)) or stray_scorelines(
+        out.answer, found
+    )
+    if out.status != "numbers_only" and unverified:
         broken.append("numbers")
     state = ctx.intel.get_state(out.t_match)
     for r in out.evidence:

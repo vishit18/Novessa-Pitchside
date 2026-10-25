@@ -12,3 +12,7 @@ Every third-party asset used in the app, repo or demo video goes here before it'
 | Noto Sans Devanagari | Fontsource / Google Fonts | SIL OFL | Hindi text in the frontend | not required |
 | Big Shoulders Display, Figtree | Fontsource (`@fontsource/*`) / Google Fonts | SIL OFL 1.1 | App-wide since look 6 (`frontend/src/index.css`), and `/design-lab` | not required |
 | Bricolage Grotesque, Fraunces, Libre Franklin, Archivo, Caveat Brush, Atkinson Hyperlegible | Fontsource (`@fontsource/*`) / Google Fonts | SIL OFL 1.1 | `/design-lab` only (`frontend/src/screens/lab/lab.css`) | not required |
+
+## Citation
+
+SoccerTrack v2 footage and labels: Atom Scott, Ikuma Uchida, Kento Kuroda, Yufi Kim and Keisuke Fujii, *SoccerTrack v2: A Full-Pitch Panoramic Video Dataset for Game State Reconstruction and Ball Action Spotting*, arXiv:2508.01802, 2025. Dataset: huggingface.co/datasets/atomscott/soccertrack-v2 (CC BY 4.0). Code: github.com/AtomScott/SoccerTrack-v2.

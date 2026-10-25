@@ -126,10 +126,10 @@ Decisions and their costs are in [`docs/adr/`](docs/adr/README.md). A plain-lang
 
 These are measured, not hoped for.
 
-- **Tests:** 154 Python, 61 frontend unit, 10 browser end-to-end. Lint and types run in CI.
+- **Tests:** 247 Python, 88 frontend unit, 16 browser end-to-end. Lint and types run in CI.
 - **Cost:** running the agents over all three demo matches (94 moments) cost about $0.09 in model tokens. The results are cached per match, moment, persona and language, so a replay costs nothing.
 - **Synthetic data:** 200 simulated matches (545,639 events) measured against typical top-flight ranges. Of 16 measures with a reference range, 14 are inside it and 2 (goals and red cards per match) are just outside by less than the sampling error. The engine was tuned until it got there. Chart and table: [`docs/CALIBRATION.md`](docs/CALIBRATION.md).
-- **Live feed:** 2,190 messages sent through a real Event Hub and read back with none lost. Publish to overlay was 110 ms at the median and 177 ms at the 95th percentile from a laptop, against a 150 ms budget. In memory it is 65 ms at the 95th percentile. We have not yet measured it from inside Azure.
+- **Live feed:** 2,190 messages sent through a real Event Hub and read back with none lost. Publish to overlay was 110 ms at the median and 177 ms at the 95th percentile from a laptop, against a 150 ms budget. In memory it is 65 ms at the 95th percentile. Measured from inside Azure it is 140 ms at the 95th percentile.
 - **Single agent against the newsroom,** 47 moments, scored by Foundry's groundedness, relevance and fluency evaluators and by a deterministic number check: the single prompt invented a number in 1 moment and the newsroom in none, and the single prompt scored higher on all three quality measures. Full table, with the caveats: [`docs/EVALUATION.md`](docs/EVALUATION.md).
 - **Agent text:** typically 3 to 5 seconds per step. It attaches after the instant overlay, so the picture never waits.
 - **Real footage,** one 100 second window, scored against the dataset's labels (`data/real/117093_w1890/results.json`):
@@ -149,7 +149,10 @@ The ball is the weak spot, and we say so. A dedicated small-object ball detector
 
 ![The real-footage screen: tagged players, passes found, and the scorecard against the dataset's labels](docs/img/real-footage.png)
 
-Footage: **SoccerTrack v2 (CC BY 4.0)**, an openly licensed dataset of amateur matches on Hugging Face (`atomscott/soccertrack-v2`). It stays inside `vision/` and is used for exactly two things: showing that auto-eventing works on video, and scoring our output against its labels. It is never used to build or tune the synthetic engine. A university name and crest painted on the pitch are removed from the clip we show. The video file is not in this repo.
+Footage: **SoccerTrack v2 (CC BY 4.0)**, an openly licensed dataset of amateur matches on Hugging Face (`atomscott/soccertrack-v2`). It stays inside `vision/` and is used for exactly two things: showing that auto-eventing works on video, and scoring our output against its labels. It is never used to build or tune the synthetic engine.
+
+Citation: Atom Scott, Ikuma Uchida, Kento Kuroda, Yufi Kim and Keisuke Fujii, *SoccerTrack v2: A Full-Pitch Panoramic Video Dataset for Game State Reconstruction and Ball Action Spotting*, arXiv:2508.01802, 2025. Code: github.com/AtomScott/SoccerTrack-v2.
+ A university name and crest painted on the pitch are removed from the clip we show. The video file is not in this repo.
 
 The detector is RT-DETR (Apache 2.0). We do not use Ultralytics YOLO because of its licence. Every asset is listed in [`docs/ASSET_LICENSES.md`](docs/ASSET_LICENSES.md).
 

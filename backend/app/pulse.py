@@ -162,12 +162,12 @@ class PulseWriter:
                     "chaos",
                     None,
                     (
-                        "End to end" if fast else "Scrappy spell",
+                        "End to end" if fast else "Neither side in control",
                         f"The ball keeps changing hands: {tempo:.0f} events a minute and nobody "
                         "keeps it for long.",
                     ),
                     (
-                        "End to end" if fast else "Scrappy spell",
+                        "End to end" if fast else "Neither side in control",
                         "The ball keeps changing hands. Neither side can keep it for long.",
                     ),
                 )
@@ -212,10 +212,10 @@ class PulseWriter:
                     None,
                     (
                         "Slow build-up",
-                        f"A patient spell: {tempo:.0f} events a minute, both sides taking "
+                        f"A patient phase: {tempo:.0f} events a minute, both sides taking "
                         "their time on the ball.",
                     ),
-                    ("Slow build-up", "A patient spell. Both sides are taking their time."),
+                    ("Slow build-up", "A patient phase. Both sides are taking their time."),
                 )
             )
         candidates.append(
