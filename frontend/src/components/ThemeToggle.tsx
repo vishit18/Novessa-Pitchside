@@ -3,12 +3,15 @@ import { useEffect, useState } from 'react'
 type Theme = 'light' | 'dark'
 const KEY = 'novessa-theme'
 
+/** The saved choice, else the viewer's system setting. index.html applies the same rule before first paint. */
 function initialTheme(): Theme {
   try {
-    return localStorage.getItem(KEY) === 'dark' ? 'dark' : 'light'
+    const saved = localStorage.getItem(KEY)
+    if (saved === 'dark' || saved === 'light') return saved
   } catch {
-    return 'light'
+    /* storage unavailable: fall through to the system setting */
   }
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
 }
 
 export function ThemeToggle() {
