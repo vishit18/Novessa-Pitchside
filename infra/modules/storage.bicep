@@ -28,6 +28,9 @@ resource blobs 'Microsoft.Storage/storageAccounts/blobServices@2023-05-01' = {
   parent: account
   name: 'default'
   properties: {
+    // Without this the account answers anonymous requests as the 2009 API: no Accept-Ranges
+    // header, so browsers refuse to seek in the clip.
+    defaultServiceVersion: '2022-11-02'
     cors: {
       corsRules: [
         {

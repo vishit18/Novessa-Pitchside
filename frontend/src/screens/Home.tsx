@@ -122,7 +122,7 @@ export function Home() {
               </h1>
               <p className="mt-6 max-w-[58ch] text-[18px] leading-relaxed text-text/85 sm:text-[20px]">
                 The analyst wants the pressing numbers. The kid at their first match wants to know
-                why everyone is shouting. The fan in Mumbai wants it in Hindi. Today they all get
+                why everyone is shouting. The fan in Madrid wants it in Spanish. Today they all get
                 one set of graphics, one commentary, one language.
               </p>
               <p className="mt-4 max-w-[58ch] text-[18px] leading-relaxed sm:text-[20px]">
