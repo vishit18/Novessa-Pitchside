@@ -42,7 +42,7 @@ Priority: **P0** = we fail or score badly without it. **P1** = needed to win. **
 | [x] | **Pass quality**: pass difficulty rating | P0 | Our own explainable model (`docs/03` §5), 0–100 with factors shown |
 | [x] | **Speed metrics**: ball speed | P0 | Per pass and shot |
 | [x] | **Speed metrics**: shot speed | P0 | Per shot, with overlay |
-| [x] | **Auto-eventing**: a model over an incoming video feed generates the pass and speed metrics automatically | P1 | `vision/` pipeline on SoccerTrack v2 footage (CC BY 4.0, `docs/06`) emits the same event schema, scored against ground truth Works on one 100 s window; the ball is the weak spot (found in 50% of frames). Scores in `data/real/117093_w1890/results.json`. |
+| [x] | **Auto-eventing**: a model over an incoming video feed generates the pass and speed metrics automatically | P1 | `vision/` pipeline on SoccerTrack v2 footage (CC BY 4.0, `docs/06`) emits the same event schema, scored against ground truth Works on one 100 s window; the ball is the weak spot (found in 50% of frames). Scores in `data/real/117093_w1890/results.json`. 25 Oct: the on-screen scorecard and the README show the player, position and speed results and the ball-follow rate; the pass and shot scores stay in `results.json` and `docs/08`. |
 | [ ] | Responsive enough for live play | P0 | Deterministic overlays < 150ms, LLM explanations < 4s, measured and shown in Control Room Control Room (`/control`) shows LLM p50/p95 per agent against 4 s. Not met yet: agent p95 is 4 to 6 s on Foundry, and instant-overlay latency is not measured. **Instant overlays now met inside Azure (23 Oct):** publish-to-overlay p95 140 ms at 4x replay and 115 ms at 30x through the real Event Hub, 0 of 19,830 messages lost (`scripts/measure_live.py`, `docs/LOAD_TEST.md`; the 177 ms laptop figure was network distance). **Still open:** agent answers, p95 4 to 6 s against the 4 s target. **Measured 23 Oct from inside Azure, request/response paths:** 107 requests a second, p95 11 ms, 0 errors at 150 viewers (`docs/LOAD_TEST.md`). That does not cover the WebSocket feed or model calls. |
 
 ## D. Narrative, explainability, data, language (brief §(iii)–(vi))
@@ -71,7 +71,7 @@ Priority: **P0** = we fail or score badly without it. **P1** = needed to win. **
 | [ ] | Video on YouTube / Vimeo, public URL on the project page | YouTube, unlisted is risky, use **public** |
 | [ ] | No third-party trademarks, copyrighted music or material in the video | Fictional league only, royalty-free or no music |
 | [ ] | Public GitHub repo URL | MIT licence, clean history, VJ as sole author |
-| [ ] | Working project link for judges, free and unrestricted until judging ends (10 Nov 2026) | Deployed URL, no login wall, or test credentials in the testing instructions |
+| [x] | Working project link for judges, free and unrestricted until judging ends (10 Nov 2026) | https://ashy-pebble-0f5b51c1e.5.azurestaticapps.net, no login. 25 Oct: the first deployed build still called 127.0.0.1:8000 and every data screen failed; production builds now default to the live gateway (`frontend/src/net/api.ts`) and the whole app was clicked through on the live URL. Real-footage seeking fixed the same day (Blob default service version). Keep API replicas at 2 until 10 Nov. |
 | [x] | Testing instructions | README section "Try it in 60 seconds" |
 | [x] | All materials in English | Multi-language output is fine, submission text is English |
 | [x] | Project linked to the challenge on the hackathon site | Already created: "Novessa Pitchside" |
@@ -87,6 +87,7 @@ Priority: **P0** = we fail or score badly without it. **P1** = needed to win. **
 - [ ] Effective use of **hero technologies**. Their list: Microsoft Foundry, Agent Framework, Azure MCP, GitHub Copilot Agent Mode, Fabric, GitHub SDK, GitHub CLI, Azure Apps and AI Services, Azure databases. We use:
   - [ ] Microsoft Foundry (models, agents, tracing, evaluations, content safety)
     - Person B, 23 Oct, written and tested offline, not run live yet: Agent Service (`scripts/register_agents.py`, `backend/agents/foundry_agents.py`, flag `FOUNDRY_AGENT_SERVICE`), GenAI span attributes for the Foundry Traces view (`backend/app/telemetry.py`), red team in CI (`scripts/eval_redteam.py`, `.github/workflows/evals.yml`, `docs/REDTEAM.md`), guardrails (`backend/agents/guardrails.py`, flag `GUARDRAILS`), AI Search grounding for Ask (`backend/agents/knowledge.py`, flag `SEARCH_ENABLED`). Switch-on steps in docs/02.
+  - 25 Oct: guardrails (`GUARDRAILS=true`) and Content Safety are on in the live API; red team 14 of 14 held with guardrails on after Ask's Verifier was tightened (scorelines checked as pairs, viewer-typed and label numbers no longer count).
   - [x] Microsoft Agent Framework (workflow orchestration): `backend/agents/workflow.py`
   - [ ] Azure MCP (dev tooling) **and** our own MCP server
     - 23 Oct: our MCP server runs as its own Container App and answers `initialize` from the live URL (`backend/mcp_server/server.py`, `infra/modules/services.bicep`). The Azure MCP half stays open until the README says honestly where it was used.
