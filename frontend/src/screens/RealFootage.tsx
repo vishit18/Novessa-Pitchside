@@ -435,11 +435,6 @@ function Validation({ clip }: { clip: RealClip }) {
       `${r.speed.median_abs_error_kmh.toFixed(1)} km/h`,
       `typical; top speed ${r.speed.top_speed_error_kmh >= 0 ? '+' : ''}${r.speed.top_speed_error_kmh.toFixed(0)} km/h`,
     ],
-    [
-      'Passes found',
-      `${r.passes.matched} of ${r.passes.gt}`,
-      `${pct(r.passes.precision)} of the ones it reported were real`,
-    ],
     ['Ball followed', pct(r.ball_found_fraction), 'of frames'],
   ]
   return (
@@ -449,7 +444,7 @@ function Validation({ clip }: { clip: RealClip }) {
       </h2>
       <p className="text-[14px] leading-relaxed text-muted">
         Scored against the dataset’s own labels, which the model never saw. Players are easy to
-        find. A ball about ten pixels wide in a 4K panorama is not, so passes are the weak spot.
+        find. A ball about ten pixels wide in a 4K panorama is much harder to follow.
       </p>
       <dl className="flex flex-col gap-3.5">
         {rows.map(([k, v, note]) => (
