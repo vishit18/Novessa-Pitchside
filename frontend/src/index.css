@@ -371,3 +371,16 @@ button:not(:disabled):active {
 .real-frame:fullscreen .real-bar {
   width: 100%;
 }
+/* Dark mode: overrides the palette tokens when the ThemeToggle sets data-theme="dark". */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --color-ink: #0b0f12;
+  --color-raised: #151b20;
+  --color-hairline: #2a343b;
+  --color-text: #eef2ef;
+  --color-muted: #9aa7a0;
+  --color-amber: #ff4d5a;
+  --color-control: #6b93ff;
+  --color-chaos: #f5a524;
+  --color-pressure: #c77be0;
+}
