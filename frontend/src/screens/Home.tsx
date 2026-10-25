@@ -24,22 +24,22 @@ interface Telling {
 
 /**
  * What the agents actually wrote for that goal, verified and localised (captured from the
- * gateway on 21 Oct). Shown until the live text arrives, and instead of it when the agents are off.
+ * gateway on 25 Oct). Shown until the live text arrives, and instead of it when the agents are off.
  */
 const CAPTURED: Telling[] = [
   {
     persona: 'analyst',
     lang: 'en',
     who: 'Analyst, English',
-    headline: 'Wragg’s high xG leads goal',
-    body: 'Ashford held 42.1% possession and applied 22 pressure events before 26:47. Wragg’s 0.762 xG and two shots highlight his key role in converting pressure into a goal.',
+    headline: 'Penalty goal advances Ashford',
+    body: 'Ashford Rovers scored a penalty by Tobias Wragg, making it 1-0. They forced 4 shots with 0.78 xG in the last 5 minutes, showing strong attacking pressure.',
   },
   {
     persona: 'casual',
     lang: 'es',
     who: 'Casual fan, Español',
-    headline: 'Wragg marca contra todo pronóstico',
-    body: 'Aunque Ashford tuvo menos balón, presionaron fuerte y Wragg aprovechó sus oportunidades para abrir el marcador.',
+    headline: 'Ashford se adelanta',
+    body: 'Tras insistir con varios disparos, Ashford Rovers logró un penalti y Tobias Wragg lo transformó para el 1-0.',
   },
   {
     persona: 'kids',
@@ -55,7 +55,7 @@ const STEPS: { name: string; does: string; on: string }[] = [
   {
     name: 'Stream',
     does: 'Every pass, shot, tackle and press arrives the moment it happens.',
-    on: 'Azure Event Hubs',
+    on: 'Azure Event Hubs, in live mode',
   },
   {
     name: 'Measure',

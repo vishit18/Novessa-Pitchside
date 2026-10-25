@@ -8,7 +8,7 @@ Everything signs in with **Entra ID (keyless)**. No service key sits in the repo
 
 | Service | What it is, in one line | What we use it for | Where | Status |
 |---|---|---|---|---|
-| **Microsoft Foundry** | Azure's home for models and agents. One resource, `NovessaPitchside1`, in Sweden Central. | Hosts two chat models: `chat-fast` (gpt-4.1-mini) for the high-volume agents, `chat-strong` (gpt-5-mini) for recaps only. | `backend/agents/llm.py`, `factory.py` | Verified live |
+| **Microsoft Foundry** | Azure's home for models and agents. One resource, `NovessaPitchside1`, in Sweden Central. | Hosts two chat models: `chat-fast` (gpt-4.1-mini) for the high-volume agents, `chat-strong` (gpt-5-mini) for the Analyst, Ask the Analyst and recaps. | `backend/agents/llm.py`, `factory.py` | Verified live |
 | **Microsoft Agent Framework** | A Python library (not a service) for building agents and wiring them into workflows. | Runs the Producer, Analyst, Verifier, Narrator, Gate workflow. | `backend/agents/workflow.py` | Verified live |
 | **Azure AI Translator** | Machine translation. | First pass of each non-English language, before the model polishes it. | `backend/agents/services.py` | Verified live |
 | **Azure AI Speech** | Neural text to speech. | The spoken commentary, per language. A replay costs nothing. | `backend/agents/voice.py` | Verified 20 Oct |

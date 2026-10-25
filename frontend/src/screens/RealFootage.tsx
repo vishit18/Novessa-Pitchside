@@ -63,11 +63,25 @@ export function RealFootage() {
         aria-label="About this footage"
         className="max-w-[78ch] border-s-4 border-amber bg-text/[0.04] px-4 py-3 text-[15px] leading-relaxed"
       >
-        <strong className="font-semibold">Real footage, used with permission.</strong> This is a
-        real amateur university match from SoccerTrack v2, an open dataset released under CC BY 4.0,
-        which allows reuse with credit. Everything else in Pitchside is synthetic. This page only
-        shows that the same overlay idea works when the events are measured from video instead of
-        generated.
+        <strong className="font-semibold">Real footage, used under its licence.</strong> This is a
+        real amateur university match from{' '}
+        <a
+          className="underline underline-offset-4"
+          href="https://huggingface.co/datasets/atomscott/soccertrack-v2"
+        >
+          SoccerTrack v2
+        </a>{' '}
+        by Atom Scott and colleagues, an open dataset released under{' '}
+        <a
+          className="underline underline-offset-4"
+          href="https://creativecommons.org/licenses/by/4.0/"
+        >
+          CC BY 4.0
+        </a>
+        , which allows reuse with credit. We cut a 100 second window, downscaled it and removed the
+        university marks painted on the pitch. Everything else in Pitchside is synthetic. This page
+        only shows that the same overlay idea works when the events are measured from video instead
+        of generated.
       </aside>
 
       {failed && (

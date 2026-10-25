@@ -1,42 +1,101 @@
 {
- "moments_aired": 47,
+ "moments_aired": 41,
  "newsroom": {
-  "verified": 47,
+  "verified": 41,
   "numbers_only_fallback": 0,
-  "had_a_claim_rejected": 8,
+  "had_a_claim_rejected": 12,
   "with_unsupported_number": 0,
   "unsupported_numbers": 0,
-  "seconds_per_batch_of_5": 28.8
+  "seconds_per_batch_of_5": 27.5,
+  "with_story_error": 0
  },
  "single_agent": {
-  "answered": 47,
-  "with_unsupported_number": 1,
-  "unsupported_numbers": 1,
-  "median_seconds_per_moment": 1.7
+  "answered": 41,
+  "with_unsupported_number": 3,
+  "unsupported_numbers": 3,
+  "median_seconds_per_moment": 1.6,
+  "with_story_error": 10
  },
  "foundry_scores": {
   "single": {
    "groundedness": 5.0,
-   "relevance": 4.72,
-   "fluency": 3.6
+   "relevance": 4.85,
+   "fluency": 3.76
   },
   "newsroom": {
-   "groundedness": 4.68,
-   "relevance": 3.68,
-   "fluency": 3.34
+   "groundedness": 4.56,
+   "relevance": 3.66,
+   "fluency": 3.22
   }
  },
  "judged": {
-  "single": 47,
-  "newsroom": 47
+  "single": 41,
+  "newsroom": 41
  },
  "examples": [
   {
-   "moment": "mom-derby_02-0051",
-   "text": "Saltmarsh Turn Up The Heat. At 69', Saltmarsh are pressing way harder than two minutes ago (pressure index 90), forcing more ball wins and disrupting Millwater\u2019s midfield \u2014 could flip momentum in the final 20. ",
+   "moment": "mom-derby_01-0011",
+   "text": "Penalty to Ashford Rovers. Viggo Falkman was brought down in the box and Tobias Wragg steps up from 12 yards \u2014 a huge chance to break the deadlock and swing momentum Ashford\u2019s way with the game still 0-0.",
    "unsupported": [
-    20.0
+    12.0
+   ]
+  },
+  {
+   "moment": "mom-derby_02-0051",
+   "text": "Saltmarsh Turn Up The Heat. Saltmarsh City have cranked their press \u2014 24 pressure events in five minutes and a pressure index of 77.8 \u2014 disrupting Millwater\u2019s previously dominant possession. That intensity could force turnovers and swing momentum in the final 22 minutes.",
+   "unsupported": [
+    22.0
+   ]
+  },
+  {
+   "moment": "mom-derby_02-0053",
+   "text": "Saltmarsh Seizes the Initiative. In the last two minutes Saltmarsh City has pushed momentum their way \u2014 more possession (51.1%), crisper passing (78% accuracy) and increased pressure \u2014 they\u2019re controlling the game as we head into the final 18 minutes.",
+   "unsupported": [
+    18.0
    ]
   }
+ ],
+ "story_examples": [
+  {
+   "moment": "mom-derby_01-0003",
+   "text": "Balogun Booked \u2014 Ashford Caution. Tunde Balogun shown a yellow at 05:31 for a late challenge; Ashford are desperate to disrupt Kestrel\u2019s heavy possession (81.7% last 5) but need better control after just 10 passes and 50% accuracy.",
+   "problems": [
+    "a booking is about the player; do not say it changed the team's tactics"
+   ]
+  },
+  {
+   "moment": "mom-derby_01-0016",
+   "text": "Orbaiz Cautioned \u2014 Ashford Hold Lead. Lucho Orbaiz booked at 31:51 for a foul, slowing Kestrel Bay\u2019s momentum. The yellow matters because Ashford\u2019s control (60% possession last 5) keeps them on top while Kestrel Bay struggles to create chances.",
+   "problems": [
+    "a booking is about the player; do not say it changed the team's tactics"
+   ]
+  },
+  {
+   "moment": "mom-derby_01-0037",
+   "text": "Penalty to Seal It?. 77:17 \u2014 Tobias Wragg steps up after Viggo Falkman was fouled in the box. Ashford, leading 1-0 and riding heavy pressure (pressure index 85.7), can put the game to bed with this spot kick.",
+   "problems": [
+    "Viggo Falkman committed the foul; he was not fouled"
+   ]
+  },
+  {
+   "moment": "mom-derby_02-0017",
+   "text": "Ekstrand\u2019s Needle Threaded. At 27:33 Lasse Ekstrand completed a 96-rated difficult pass to keep Millwater probing \u2014 his 80% match accuracy and composed distribution help sustain Millwater\u2019s 58% possession spell and build real pressure.",
+   "problems": [
+    "say what the numbers show, not how anyone feels"
+   ]
+  },
+  {
+   "moment": "mom-derby_02-0018",
+   "text": "Hedlund Booked \u2014 Saltmarsh Caution. Yellow to Ove Hedlund at 28:36 for a late challenge; Saltmarsh lose a key defender\u2019s composure while Millwater control 62% possession recently, tipping momentum away.",
+   "problems": [
+    "a booking is about the player; do not say it changed the team's tactics",
+    "say what the numbers show, not how anyone feels"
+   ]
+  }
+ ],
+ "matches": [
+  "derby_01",
+  "derby_02",
+  "derby_03"
  ]
 }

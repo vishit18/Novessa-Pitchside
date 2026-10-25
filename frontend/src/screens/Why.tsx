@@ -20,21 +20,21 @@ interface Telling {
   body: string
 }
 
-/** Verified agent text for that goal, captured 21 Oct. Replaced by the live text when it loads. */
+/** Verified agent text for that goal, captured 25 Oct. Replaced by the live text when it loads. */
 const CAPTURED: Telling[] = [
   {
     persona: 'analyst',
     lang: 'en',
     who: 'Analyst, English',
-    headline: 'Wragg’s high xG leads goal',
-    body: 'Ashford held 42.1% possession and applied 22 pressure events before 26:47. Wragg’s 0.762 xG and two shots highlight his key role in converting pressure into a goal.',
+    headline: 'Penalty goal advances Ashford',
+    body: 'Ashford Rovers scored a penalty by Tobias Wragg, making it 1-0. They forced 4 shots with 0.78 xG in the last 5 minutes, showing strong attacking pressure.',
   },
   {
     persona: 'casual',
     lang: 'es',
     who: 'Casual fan, Español',
-    headline: 'Wragg marca contra todo pronóstico',
-    body: 'Aunque Ashford tuvo menos balón, presionaron fuerte y Wragg aprovechó sus oportunidades para abrir el marcador.',
+    headline: 'Ashford se adelanta',
+    body: 'Tras insistir con varios disparos, Ashford Rovers logró un penalti y Tobias Wragg lo transformó para el 1-0.',
   },
 ]
 
@@ -146,7 +146,7 @@ const STACK: Part[] = [
     kind: 'Azure',
     does: 'The live event stream from engine to gateway',
     status: 'proven',
-    note: 'Publish to overlay measured inside Azure at 140 ms p95, 19,830 messages, none lost',
+    note: 'Feeds live viewers (?live=1). Publish to overlay 140 ms p95 inside Azure, 19,830 messages, none lost',
   },
   {
     name: 'Application Insights',
@@ -252,7 +252,8 @@ export function Why() {
               ))}
             </ol>
             <p className="mt-5 border-s-2 border-amber ps-3 text-[16px] leading-snug">
-              Every number is checked before it airs. 8 of 47 moments were caught and sent back.
+              Every number is checked before it airs. 12 of 41 moments were caught and sent back.
+              One prompt alone got the story wrong in 10 of the same 41.
             </p>
           </Beat>
         </section>

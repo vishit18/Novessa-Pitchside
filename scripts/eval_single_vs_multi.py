@@ -34,6 +34,7 @@ from backend.agents.context import MatchContext
 from backend.agents.factory import build_context
 from backend.agents.llm import AgentUnavailable
 from backend.agents.models import Aired
+from backend.agents.story import story_problems
 from backend.agents.verifier import close, numbers_in
 from backend.agents.workflow import run_batch
 from backend.app.agents_runtime import BATCH_SIZE, MIN_SIGNIFICANCE
@@ -87,8 +88,8 @@ def payload_for(ctx: MatchContext, m: Moment) -> dict[str, Any]:
 
 async def single_agent(
     ctx: MatchContext, m: Moment, gate: asyncio.Semaphore
-) -> tuple[str, float] | None:
-    """One prompt, one answer, no checking. Returns the text and the seconds it took."""
+) -> tuple[BaselineOut, float] | None:
+    """One prompt, one answer, no checking. Returns the answer and the seconds it took."""
     async with gate:
         t0 = time.perf_counter()
         try:
@@ -102,12 +103,23 @@ async def single_agent(
             )
         except AgentUnavailable:
             return None
-        return f"{out.headline}. {out.body}", time.perf_counter() - t0
+        return out, time.perf_counter() - t0
 
 
 def newsroom_text(a: Aired) -> str:
     v = a.variants.get("casual") or next(iter(a.variants.values()))
     return f"{v.headline}. {v.body}"
+
+
+def story_of(ctx: MatchContext, m: Moment, headline: str, body: str) -> list[str]:
+    """The Verifier's story check (wrong club, wrong time, a result called mid-match, metric code
+    names, a booking said to change tactics) on one headline and body. Plain rules, no model."""
+    return story_problems(ctx.names, m, ctx.intel.teams, headline, body)
+
+
+def newsroom_story(ctx: MatchContext, m: Moment, a: Aired) -> list[str]:
+    v = a.variants.get("casual") or next(iter(a.variants.values()))
+    return story_of(ctx, m, v.headline, v.body)
 
 
 def context_text(ctx: MatchContext, m: Moment) -> str:
@@ -203,6 +215,7 @@ async def evaluate_match(store: MatchStore, match_id: str, latency_batches: int)
     for a, s in zip(shown, singles, strict=True):
         m = by_id[a.moment_id]
         pool = fact_pool(ctx, m)
+        text = f"{s[0].headline}. {s[0].body}" if s else None
         rows.append(
             {
                 "match": match_id,
@@ -210,8 +223,10 @@ async def evaluate_match(store: MatchStore, match_id: str, latency_batches: int)
                 "status": a.status,
                 "rejected": sum("reject" in line.lower() for line in a.trail),
                 "newsroom_bad": unsupported(newsroom_text(a), pool),
-                "single_text": s[0] if s else None,
-                "single_bad": unsupported(s[0], pool) if s else None,
+                "newsroom_story": newsroom_story(ctx, m, a),
+                "single_text": text,
+                "single_bad": unsupported(text, pool) if text else None,
+                "single_story": story_of(ctx, m, s[0].headline, s[0].body) if s else None,
                 "single_seconds": s[1] if s else None,
             }
         )
@@ -258,12 +273,14 @@ def summarise(results: list[dict[str, Any]]) -> dict[str, Any]:
             "with_unsupported_number": sum(1 for r in rows if r["newsroom_bad"]),
             "unsupported_numbers": sum(len(r["newsroom_bad"]) for r in rows),
             "seconds_per_batch_of_5": round(statistics.fmean(batch), 1) if batch else None,
+            "with_story_error": sum(1 for r in rows if r.get("newsroom_story")),
         },
         "single_agent": {
             "answered": len(single),
             "with_unsupported_number": sum(1 for r in single if r["single_bad"]),
             "unsupported_numbers": sum(len(r["single_bad"]) for r in single),
             "median_seconds_per_moment": round(statistics.median(secs), 1) if secs else None,
+            "with_story_error": sum(1 for r in single if r.get("single_story")),
         },
         "foundry_scores": {
             arm: {k: mean_of([r.get(f"{arm}_scores") for r in rows], k) for k in QUALITY}
@@ -278,6 +295,11 @@ def summarise(results: list[dict[str, Any]]) -> dict[str, Any]:
             {"moment": r["moment"], "text": r["single_text"], "unsupported": r["single_bad"]}
             for r in single
             if r["single_bad"]
+        ][:5],
+        "story_examples": [
+            {"moment": r["moment"], "text": r["single_text"], "problems": r["single_story"]}
+            for r in single
+            if r.get("single_story")
         ][:5],
     }
 
@@ -305,6 +327,16 @@ def report(s: dict[str, Any]) -> str:
         f"**{nr['with_unsupported_number']} of {n} ({rate_news}%)** |",
         f"| Unsupported numbers in total | {sa['unsupported_numbers']} | "
         f"{nr['unsupported_numbers']} |",
+    ]
+    if "with_story_error" in sa:
+        lines.append(
+            f"| Moments with a story error (wrong club, wrong time, result called mid-match, "
+            f"code names, a booking said to change tactics) | "
+            f"**{sa['with_story_error']} of {sa['answered']} "
+            f"({pct(sa['with_story_error'], sa['answered'])}%)** | "
+            f"**{nr['with_story_error']} of {n} ({pct(nr['with_story_error'], n)}%)** |"
+        )
+    lines += [
         f"| Time | {sa['median_seconds_per_moment']} s per moment (median) | "
         f"{nr['seconds_per_batch_of_5']} s for a batch of 5 moments, in parallel |",
         f"| Claims the Verifier sent back | none (no Verifier) | "
@@ -335,6 +367,8 @@ def report(s: dict[str, Any]) -> str:
             )
     else:
         lines.append("None in this run.")
+    for e in s.get("story_examples", []):
+        lines.append(f'- `{e["moment"]}`: "{e["text"]}" ({"; ".join(e["problems"])})')
     lines += [
         "",
         "## What this does and does not show",
@@ -344,7 +378,9 @@ def report(s: dict[str, Any]) -> str:
         "which the Verifier does catch because it recomputes each claim as a (metric, team, "
         "window) triple.",
         "- The newsroom's text is checked by the same kind of code that judges it, so a zero "
-        "there is expected by construction.",
+        "there is expected by construction. That holds for the story check too: what it shows "
+        "is how often one prompt alone would have aired those mistakes, not that the newsroom "
+        "writers never make them (the Verifier sent 12 back).",
         "- The Foundry evaluators are language models. They are not a ground truth, and they "
         "reward longer, fuller text. The newsroom writes to a tight format on purpose.",
         "- The comparison uses one prompt for the single agent, written by us. A better prompt "
@@ -370,6 +406,16 @@ def reading(s: dict[str, Any]) -> list[str]:
         "Analyst step that an unchecked pipeline would have aired.",
         "",
     ]
+    if "with_story_error" in sa:
+        out += [
+            f"**Story.** Numbers can all be right while the sentence is wrong. The same story "
+            f"rules the Verifier applies found an error in {sa['with_story_error']} of "
+            f"{sa['answered']} single-agent texts and {nr['with_story_error']} of {n} newsroom "
+            "texts: crediting the wrong club, a time phrase that does not fit the clock, a "
+            "result called before full time, a metric's code name pasted into prose. No model "
+            "judges this; it is the same code that runs on every line before it airs.",
+            "",
+        ]
     fs = s.get("foundry_scores")
     if fs:
         worse = [k for k in QUALITY if (fs["single"][k] or 0) > (fs["newsroom"][k] or 0)]
