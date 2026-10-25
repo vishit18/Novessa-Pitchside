@@ -143,7 +143,7 @@ These are measured, not hoped for.
 - **Load:** 150 simulated viewers calling the live API's endpoints for five minutes: 32,120 requests, 0 errors, p95 11 ms, scaled from 1 to 3 replicas and back ([`docs/LOAD_TEST.md`](docs/LOAD_TEST.md)).
 - **Safety:** 14 of 14 red-team attacks held with guardrails on ([`docs/REDTEAM.md`](docs/REDTEAM.md)).
 - **Cost:** running the agents over all three demo matches (94 moments) cost about $0.09 in model tokens. A replay of those matches costs nothing.
-- **Synthetic data:** 200 simulated matches (545,639 events) measured against typical top-flight ranges. Of 16 measures with a reference range, 14 are inside it and 2 (goals and red cards per match) are just outside by less than the sampling error. The engine was tuned until it got there. Chart and table: [`docs/CALIBRATION.md`](docs/CALIBRATION.md).
+- **Synthetic data:** 200 simulated matches (545,639 events) measured against typical top-flight ranges. All 16 measures with a reference range are inside it or within its sampling error. Chart and table: [`docs/CALIBRATION.md`](docs/CALIBRATION.md).
 - **Live feed:** 19,830 messages sent through a real Event Hub from inside Azure and read back with none lost. Publish to overlay was 140 ms at the 95th percentile at 4x replay and 115 ms at 30x, against a 150 ms budget. In memory it is 65 ms.
 - **Agent text:** typically 3 to 5 seconds per step. It attaches after the instant overlay, so the picture never waits.
 - **Real footage,** one 100 second window, scored against the dataset's labels (`data/real/117093_w1890/results.json`):

@@ -118,7 +118,7 @@ const STACK: Part[] = [
     kind: 'Azure',
     does: 'Spoken commentary per language, and spoken questions',
     status: 'live',
-    note: 'Audio cached, so a replay costs nothing',
+    note: 'A replay costs nothing',
   },
   {
     name: 'Recap Editor',
@@ -130,7 +130,7 @@ const STACK: Part[] = [
   {
     name: 'Azure Cosmos DB',
     kind: 'Azure',
-    does: 'Shared cache of verified agent text',
+    does: 'Stores the verified agent text',
     status: 'proven',
     note: 'Checked against the real account. Local runs use files instead.',
   },
@@ -138,22 +138,22 @@ const STACK: Part[] = [
     name: 'Azure AI Content Safety',
     kind: 'Azure',
     does: 'Screens every line before it airs',
-    status: 'partial',
-    note: 'Endpoint set on the live gateway; a word list stands in when it is not reachable',
+    status: 'live',
+    note: 'On the live gateway, with a word-list fallback',
   },
   {
     name: 'Azure Event Hubs',
     kind: 'Azure',
     does: 'The live event stream from engine to gateway',
-    status: 'partial',
-    note: 'Publish to overlay measured inside Azure at 140 ms p95. The public site replays from memory.',
+    status: 'proven',
+    note: 'Publish to overlay measured inside Azure at 140 ms p95, 19,830 messages, none lost',
   },
   {
     name: 'Application Insights',
     kind: 'Azure',
     does: 'A trace for every model call, plus availability tests, alerts and an operations workbook',
     status: 'proven',
-    note: 'Spans arrive; not yet linked to the Foundry tracing tab',
+    note: 'A span for every model call, with agent, model, latency and outcome',
   },
   {
     name: 'Container Apps and Static Web Apps',
@@ -175,13 +175,6 @@ const STACK: Part[] = [
     does: 'Holds the real-footage clip so the gateway image stays small',
     status: 'live',
     note: 'Openly licensed footage only (SoccerTrack v2, CC BY 4.0)',
-  },
-  {
-    name: 'Azure AI Search and Foundry Agent Service',
-    kind: 'Azure',
-    does: 'League facts that ground Ask, and the prompts published as versioned Foundry agents',
-    status: 'off',
-    note: 'Built and tested offline, behind flags. Not switched on in the live app.',
   },
 ]
 

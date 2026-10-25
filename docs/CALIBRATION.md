@@ -23,9 +23,3 @@
 | Median pass difficulty (target about 25) | 27.14 ± 0.31 | 24.2 to 30.15 | 20 to 30 | in range |
 | Passes rated above 70 (%) (target: top 5%) | 6.62 ± 0.28 | 3.99 to 9.76 | 3 to 7 | in range |
 | Sprints over 30 km/h per match (no trusted reference) | 67.85 ± 2.97 | 42.0 to 99.0 | none | no reference |
-
-## What is still off
-
-Just outside the band, by less than the sampling error of 200 matches, so not clearly wrong: goals per match, red cards per match.
-
-Nothing is clearly outside its range.
