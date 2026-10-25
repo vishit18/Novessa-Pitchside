@@ -70,7 +70,7 @@ Priority: **P0** = we fail or score badly without it. **P1** = needed to win. **
 | [ ] | Video shows the project actually running on its platform | Screen recording of the deployed Azure URL, not localhost |
 | [ ] | Video on YouTube / Vimeo, public URL on the project page | YouTube, unlisted is risky, use **public** |
 | [ ] | No third-party trademarks, copyrighted music or material in the video | Fictional league only, royalty-free or no music |
-| [ ] | Public GitHub repo URL | MIT licence, clean history, VJ as sole author |
+| [ ] | Public GitHub repo URL | **Rules §4.4: the repository must be public for the entry to be considered. It is private today (checked 25 Oct), so this is the one hard blocker.** MIT licence is in place. History has two authors (VJ 124 commits, Aditya 12), both under their own identities and no AI trailers. Rules allow teams of up to four with one Representative; if Aditya is on the team, list him as a Team Member on the submission so the prizes and eligibility check cover him. Do not put team members' personal data in the submission text (§14) |
 | [x] | Working project link for judges, free and unrestricted until judging ends (10 Nov 2026) | https://ashy-pebble-0f5b51c1e.5.azurestaticapps.net, no login. 25 Oct: the first deployed build still called 127.0.0.1:8000 and every data screen failed; production builds now default to the live gateway (`frontend/src/net/api.ts`) and the whole app was clicked through on the live URL. Real-footage seeking fixed the same day (Blob default service version). Keep API replicas at 2 until 10 Nov. |
 | [x] | Testing instructions | README section "Try it in 60 seconds" |
 | [x] | All materials in English | Multi-language output is fine, submission text is English |
@@ -129,7 +129,9 @@ Primary target: **Best Multi-Agent System**. Judges check:
 - [ ] The end-to-end outcome is better than a single agent could achieve (we show the comparison)  **Still open, and the evidence is mixed:** `docs/EVALUATION.md` shows one prompt scoring higher on Foundry's quality evaluators; the newsroom's case is verified numbers, an audit trail and resilience.
 - [x] Uses Microsoft Agent Framework and/or A2A → we use both
 
-Secondary fit (judges can reassign us): **Best Use of Microsoft Foundry** and **Best Azure Cloud Native Integration** — the architecture already covers both, so call them out in the README.
+Secondary fit (judges can reassign us, rules §4.3): **Best Use of Microsoft Foundry**, **Best Azure Cloud Native Integration** and **Best Enterprise Solution** (readiness for production, "reliability, transparency and controls"). Enterprise is the one we had missed: our evidence is the Verifier audit trail and Control Room (transparency), Content Safety, guardrails and a red team in CI (controls), keyless Entra auth, Bicep for every resource, rate limits, availability alerts, a load test and ADR 0010 on what production adds (reliability). Call all three out in the README and the pitch.
+
+Rule reminders from the official text (pasted 25 Oct): a Grand Prize and a Category Prize can both be won by one Project, but not two of either. Ties break on Technological Implementation first, then Agentic Design. The repository **must be public** for the entry to be considered (§4.4). The demo link must stay free and unrestricted until 10 Nov (§4.8). The video must be on YouTube, Vimeo, Facebook Video or Youku (§4.4). The challenge says projects "must use synthetic, football-realistic data" (§4.7), so real footage stays a clearly labelled extra under the brief's own auto-eventing item, with its licence recorded. Representatives must not put team members' personal data into the submission (§14).
 
 ## H. Things that would quietly sink us
 
