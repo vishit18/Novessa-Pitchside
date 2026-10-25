@@ -73,9 +73,9 @@ export function Split({ query }: { query: URLSearchParams }) {
         </h1>
         <div className="flex max-w-[70ch] flex-col gap-2">
           <p className="text-[16px] font-semibold leading-snug text-text">
-            This is a demo of two different people watching the same match on their own devices. In
-            the real product each viewer sees only their own screen; here they sit side by side so
-            you can compare.
+            This is a demo of the same match being watched in two different roles, such as an
+            analyst and a first-time fan, each on their own device. In the real product each viewer
+            sees only their own screen; here they sit side by side so you can compare.
           </p>
           <p className="text-[16px] leading-relaxed text-text/80">
             Both screens show the same match at the same second. Each is a different viewer’s
