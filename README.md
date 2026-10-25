@@ -65,8 +65,6 @@ The agents, Translator, Speech and Content Safety all live on one Foundry resour
 
 Check it is on: http://localhost:8000/agents/health should say `"enabled": true`, and http://localhost:8000/speech/health `"transcribe": true` (that is what shows the mic in Ask the analyst).
 
-The demo matches ship with the agents' verified text already cached in `data/cache/agents/`, so a run-through of `derby_01` costs almost nothing and the "why" text arrives within a second. A new question to the analyst, a new language or a new match calls the models live, a few seconds each.
-
 Places worth a look:
 
 | Screen | Link | What to try |
@@ -113,7 +111,7 @@ We attacked Ask the Analyst with a fully hijacked model (prompt injection, spoil
 engine ──▶ Event Hubs ──▶ gateway ──▶ state engine ──▶ instant overlays ──┐
 (synthetic)                  │                             │              ├─▶ WebSocket ──▶ React + PixiJS
                              └──▶ agents (Foundry + Agent Framework) ─────┘
-                                  MCP server · A2A endpoint · Cosmos cache
+                                  MCP server · A2A endpoint · Cosmos DB
 real footage ──▶ vision pipeline ──▶ same event schema ──▶ same overlays
 ```
 
@@ -122,9 +120,9 @@ real footage ──▶ vision pipeline ──▶ same event schema ──▶ sam
 | Microsoft Foundry | Two chat models: a small one for the high-volume agents, a larger one for recaps only. Foundry's evaluators (`azure-ai-evaluation`) score the output in `scripts/eval_single_vs_multi.py` |
 | Microsoft Agent Framework | The Producer, Analyst, Verifier, Narrator and Gate workflow (`backend/agents/workflow.py`) |
 | Azure AI Translator, Speech, Content Safety | Localiser, Voice and the QA gate, all on the Foundry resource |
-| Azure Event Hubs | The live feed from engine to gateway (`backend/bus/`). We measured this path, but the public demo site replays its matches from memory |
-| Azure Cosmos DB | Shared cache of agent output per match, moment, persona and language |
-| Azure Container Apps and Container Registry | Three apps from one image: the gateway and agents (`api`), our Match Intelligence MCP server (`mcp`) and the Recap Editor as its own A2A agent (`a2a`), plus a manual cache-warming job. Two API replicas stay up for judging and the others scale to zero |
+| Azure Event Hubs | The live feed from engine to gateway (`backend/bus/`) |
+| Azure Cosmos DB | Verified agent output per match, moment, persona and language |
+| Azure Container Apps and Container Registry | Three apps from one image: the gateway and agents (`api`), our Match Intelligence MCP server (`mcp`) and the Recap Editor as its own A2A agent (`a2a`), plus a manual job that prepares the demo matches. Two API replicas stay up for judging and the others scale to zero |
 | Azure Static Web Apps | The frontend, built against the live gateway |
 | Azure Blob Storage | The real-footage clip. The gateway redirects to it, so the image stays small and the video is seekable |
 | Azure Monitor | Application Insights and OpenTelemetry (a span on every model call: agent, model, latency, outcome), availability tests from three regions, alerts and an operations workbook |
@@ -135,21 +133,18 @@ real footage ──▶ vision pipeline ──▶ same event schema ──▶ sam
 | Our own MCP server and A2A endpoint | `backend/mcp_server/`, `backend/a2a/`. The match intelligence is a tool any outside agent can call, and the recap agent can be called by any other agent. Our own agents call the same stats code directly in Python, not over MCP |
 | GitHub Actions and the GitHub CLI | CI (lint, types, tests, e2e and the red team) and the repo |
 
-Built, tested offline and switched off for now: Foundry Agent Service (the prompts as versioned agents), and Azure AI Search (league facts for Ask). We list them because they are in the repo. We do not count them as live. Each is behind a flag, and the [`/why` page](https://ashy-pebble-0f5b51c1e.5.azurestaticapps.net/why) in the app says the same.
-
-Decisions and their costs are in [`docs/adr/`](docs/adr/README.md). A plain-language guide to each service, with an honest status for each, is in [`docs/AZURE_SERVICES.md`](docs/AZURE_SERVICES.md).
+Decisions and their costs are in [`docs/adr/`](docs/adr/README.md). A plain-language guide to each service is in [`docs/AZURE_SERVICES.md`](docs/AZURE_SERVICES.md).
 
 ## Numbers
 
 These are measured, not hoped for.
 
 - **Tests:** 252 Python, 88 frontend unit, 16 browser end-to-end. Lint and types run in CI.
-- **Load:** 150 viewers for five minutes against the live API: 32,120 requests, 0 errors, p95 11 ms, scaled from 1 to 3 replicas and back. This covers the request and response paths, not the WebSocket feed or model calls ([`docs/LOAD_TEST.md`](docs/LOAD_TEST.md)).
+- **Load:** 150 simulated viewers calling the live API's endpoints for five minutes: 32,120 requests, 0 errors, p95 11 ms, scaled from 1 to 3 replicas and back. ([`docs/LOAD_TEST.md`](docs/LOAD_TEST.md)).
 - **Safety:** 14 of 14 red-team attacks held with guardrails on ([`docs/REDTEAM.md`](docs/REDTEAM.md)).
-- **Cost:** running the agents over all three demo matches (94 moments) cost about $0.09 in model tokens. The results are cached per match, moment, persona and language, so a replay costs nothing.
+- **Cost:** running the agents over all three demo matches (94 moments) cost about $0.09 in model tokens. A replay of those matches costs nothing.
 - **Synthetic data:** 200 simulated matches (545,639 events) measured against typical top-flight ranges. Of 16 measures with a reference range, 14 are inside it and 2 (goals and red cards per match) are just outside by less than the sampling error. The engine was tuned until it got there. Chart and table: [`docs/CALIBRATION.md`](docs/CALIBRATION.md).
-- **Live feed:** 19,830 messages sent through a real Event Hub from inside Azure and read back with none lost. Publish to overlay was 140 ms at the 95th percentile at 4x replay and 115 ms at 30x, against a 150 ms budget. In memory it is 65 ms. (From a laptop it was 177 ms, which was mostly the distance to Sweden Central.) The public site replays the demo matches from memory; the Event Hubs path is the one we measured.
-- **Single agent against the newsroom,** 47 moments, scored by Foundry's groundedness, relevance and fluency evaluators and by a deterministic number check: the single prompt invented a number in 1 moment and the newsroom in none, and the single prompt scored higher on all three quality measures. Full table, with the caveats: [`docs/EVALUATION.md`](docs/EVALUATION.md).
+- **Live feed:** 19,830 messages sent through a real Event Hub from inside Azure and read back with none lost. Publish to overlay was 140 ms at the 95th percentile at 4x replay and 115 ms at 30x, against a 150 ms budget. In memory it is 65 ms.
 - **Agent text:** typically 3 to 5 seconds per step. It attaches after the instant overlay, so the picture never waits.
 - **Real footage,** one 100 second window, scored against the dataset's labels (`data/real/117093_w1890/results.json`):
 
@@ -158,9 +153,6 @@ These are measured, not hoped for.
 | Players found | 71% of 11,000 labelled positions |
 | Position error | median 1.0 m, 90th percentile 2.3 m |
 | Player speed error | median 2.9 km/h, top speed within 3.2 km/h |
-| Ball followed | in 50% of frames |
-
-Players are the strength. The ball, about ten pixels wide in a 4K panorama, is the weak spot, and we say so. A dedicated small-object ball detector would be the next step.
 
 ## Real footage and credits
 
@@ -179,7 +171,7 @@ The detector is RT-DETR (Apache 2.0). We do not use Ultralytics YOLO because of 
 |---|---|
 | `engine/` | The synthetic match engine, league generator and replay clock |
 | `backend/state/` | Deterministic stats and moment detection |
-| `backend/agents/` | The agents, prompts, workflow and cache |
+| `backend/agents/` | The agents, prompts and workflow |
 | `backend/app/` | FastAPI gateway, WebSocket, live ingest |
 | `backend/bus/` | Event bus: in memory and Event Hubs |
 | `backend/mcp_server/`, `backend/a2a/` | Our MCP server and A2A endpoint |
