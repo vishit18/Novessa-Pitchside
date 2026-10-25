@@ -178,7 +178,7 @@ def run_calls(ctx: MatchContext, calls: list[ToolCall], t: float) -> Lookups:
             out.add("momentum", f"momentum (-100 to 100; above 0 favours {home})", s["momentum"])
             out.add(
                 "control_chaos",
-                "control-chaos index (-100 calm to 100 chaotic), now reads "
+                "control-chaos index (0 chaotic to 100 controlled), now reads "
                 + str(s["control_chaos"]["label"]),
                 s["control_chaos"]["value"],
             )

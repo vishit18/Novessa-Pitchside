@@ -27,13 +27,26 @@ ONE_ACTION = re.compile(
 # How far before a number to look for the words that say what it is, never past its own clause.
 SCOPE_LOOKBACK = 45
 CLAUSE_BREAK = re.compile(r"[;:.,!?]|\b(?:and|but|while|after|whereas)\b", re.I)
-ABS_TOL = 0.51
 REL_TOL = 0.02
+EPS = 1e-6
+
+
+def _decimals(a: float) -> int:
+    """Decimal places `a` is written with: 22 -> 0, 8.1 -> 1, 0.78 -> 2."""
+    text = f"{a:.10g}"
+    if "e" in text:
+        return 6
+    return len(text.split(".")[1]) if "." in text else 0
 
 
 def close(a: float, b: float) -> bool:
-    """Equal once rounding is allowed for: within half a unit or two percent."""
-    return abs(a - b) <= max(ABS_TOL, REL_TOL * abs(b))
+    """`a`, as written, is `b` rounded to `a`'s own precision (or within two percent).
+
+    "0.78" may stand for 0.781 and "22" for 22.4, but "0.45" can never stand for 0.02. A flat
+    half-unit tolerance would let any small number (xG, distance in km) through unchecked.
+    """
+    half_unit = 0.5 * 10.0 ** -_decimals(a)
+    return abs(a - b) <= max(half_unit, REL_TOL * abs(b)) + EPS
 
 
 def numbers_in(text: str) -> list[float]:

@@ -1,8 +1,8 @@
 """Match Intelligence MCP server (docs/04).
 
 Exposes the state engine's numbers as MCP tools so VS Code Copilot or any broadcaster tool can
-ask the same questions the Analyst and Verifier ask in Python (they call `MatchIntel` directly). Every tool is a thin wrapper over
-`MatchIntel`; there is no model in here.
+ask the same questions the Analyst and Verifier ask in Python (they call `MatchIntel` directly).
+Every tool is a thin wrapper over `MatchIntel`; there is no model in here.
 
 Run over stdio (for editors):   uv run python -m backend.mcp_server.server
 Run over HTTP (for Azure):      uv run python -m backend.mcp_server.server --http --port 8001

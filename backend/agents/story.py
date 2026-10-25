@@ -115,9 +115,19 @@ DESPITE = re.compile(r"\bdespite\b", re.I)
 MIND = re.compile(r"\b(composure|composed|confiden\w*|nerves|nervous|mentality)\b", re.I)
 
 
+# A result is only known at full time; a moment is always mid-match. "Won the ball" is fine.
+RESULT = re.compile(
+    r"\b(win|wins|won)\s+(\d+\s*-\s*\d+|the (match|game))\b|\bvictory\b|\b(match|game)[- ]winner\b",
+    re.I,
+)
+
+
 def cause_problems(moment: Moment, text: str) -> list[str]:
-    """Causes the data cannot show: a card reshaping a team, or a pile of contrasts."""
+    """Causes the data cannot show: a card reshaping a team, a result before the final whistle,
+    or a pile of contrasts."""
     out = []
+    if RESULT.search(text):
+        out.append("the match is not over: say lead or ahead, not win")
     if moment.kind == "card" and not moment.staff and CARD_CAUSE.search(text):
         out.append("a booking is about the player; do not say it changed the team's tactics")
     if MIND.search(text):
