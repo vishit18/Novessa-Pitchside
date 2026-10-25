@@ -71,11 +71,18 @@ export function Split({ query }: { query: URLSearchParams }) {
         <h1 className="font-display text-[40px] font-bold leading-none sm:text-[56px]">
           Same match. Your story.
         </h1>
-        <p className="max-w-[70ch] text-[16px] leading-relaxed text-text/80">
-          Both screens show the same match at the same second. Each is a different viewer’s
-          broadcast: what it puts on screen, how it explains it, and in what language. Change either
-          viewer and their broadcast changes; the football does not.
-        </p>
+        <div className="flex max-w-[70ch] flex-col gap-2">
+          <p className="text-[16px] font-semibold leading-snug text-text">
+            This is a demo of two different people watching the same match on their own devices. In
+            the real product each viewer sees only their own screen; here they sit side by side so
+            you can compare.
+          </p>
+          <p className="text-[16px] leading-relaxed text-text/80">
+            Both screens show the same match at the same second. Each is a different viewer’s
+            broadcast: what it puts on screen, how it explains it, and in what language. Change
+            either viewer and their broadcast changes; the football does not.
+          </p>
+        </div>
       </header>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:gap-8">
