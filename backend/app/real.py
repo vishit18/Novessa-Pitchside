@@ -1,7 +1,7 @@
 """Real footage mode: serve a prepared clip and what the vision pipeline found in it.
 
 Everything here comes from `vision/` and is tagged `source: "vision"`. It is never mixed into the
-synthetic matches (CLAUDE.md). The overlay data and validation numbers are small and live in
+synthetic matches (docs/06). The overlay data and validation numbers are small and live in
 `data/real/<clip>/`; the video itself is large, stays out of git, and is read from
 `footage/clip/<clip>/clip.mp4` (or REAL_FOOTAGE_DIR) when it exists. When REAL_VIDEO_BASE_URL is
 set (Azure Blob, `infra/modules/storage.bicep`) and there is no local file, the video route

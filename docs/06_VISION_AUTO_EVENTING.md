@@ -11,7 +11,7 @@ Rules §4.7: footage is allowed, but we must source it ourselves and hold the ri
 
 ## Footage source: SoccerTrack v2 (CC BY 4.0)
 
-**What this data is, precisely:** real video of real university matches, plus human-made labels (player positions, jersey numbers, ball events). The only reconstructed part is the `ball` track, which is interpolated between labelled events rather than measured. None of it is synthetic, and none of it touches the synthetic engine or the main match experience. See the "Keep real and synthetic strictly apart" rule in `CLAUDE.md`.
+**What this data is, precisely:** real video of real university matches, plus human-made labels (player positions, jersey numbers, ball events). The only reconstructed part is the `ball` track, which is interpolated between labelled events rather than measured. None of it is synthetic, and none of it touches the synthetic engine or the main match experience. See [ADR 0005](adr/0005-real-footage-kept-apart.md).
 
 - Hugging Face: `atomscott/soccertrack-v2` (gated: VJ logs in and accepts the conditions). Paper: arXiv 2508.01802. Code: github.com/AtomScott/SoccerTrack-v2.
 - 10 full-length **university-level amateur** matches, 4K **panoramic full-pitch** video (BePro cameras). A fixed full-pitch view is ideal: one homography covers the whole clip.
@@ -19,7 +19,7 @@ Rules §4.7: footage is allowed, but we must source it ourselves and hold the ri
 - Pseudonymised: players are jersey numbers and IDs only, no names. So our tags show **team + number** (e.g. "Blue #7"), never invented real-sounding names on real people.
 
 ### Before using it (VJ, 10 minutes, do it Tuesday)
-1. Accept the conditions on the Hugging Face page and **read them**. If anything there forbids public demos or commercial use, stop and tell Claude Code; we switch to the fallback below.
+1. Accept the conditions on the Hugging Face page and **read them**. If anything there forbids public demos or commercial use, stop and tell the team; we switch to the fallback below.
 2. Check frames for visible sponsor logos or club badges. If any are obvious, either pick a clip where they're not readable or blur them in preprocessing (`vision/redact.py`, simple fixed-region blur).
 3. Add the attribution to `docs/ASSET_LICENSES.md`, the README credits, and a small on-screen credit in real-footage mode: "Footage: SoccerTrack v2 (CC BY 4.0)".
 

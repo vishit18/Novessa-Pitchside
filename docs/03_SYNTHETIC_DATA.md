@@ -6,7 +6,7 @@ Judges explicitly score "creativity and optimised synthetic data creation", and 
 
 **Northbridge League**, 8 invented clubs. All names, colours and players are made up. Before committing, sanity-check that no name matches a real professional club or player.
 
-Example clubs (Claude Code can refine, but keep them invented and believable):
+Example clubs (these can be refined, but keep them invented and believable):
 - Ashford Rovers, Kestrel Bay FC, Millwater United, Harrowgate Athletic, Port Calder, Redmoor Town, Saltmarsh City, Thornbury Wanderers
 
 Each club has: name, short code (3 letters), two kit colours, a home ground, a **tactical identity** (e.g. high press 4-3-3, deep block 5-4-1, possession 4-2-3-1, direct 4-4-2), and 18 players.

@@ -2,9 +2,9 @@
 
 UX and presentation is 20% of the score, and the video is judged almost entirely on how the frontend looks. This has to look like a real broadcast product, not a hackathon dashboard.
 
-## Tooling Claude Code must use
+## Tooling
 
-1. **frontend-design skill/plugin** (`/plugin install frontend-design@claude-plugins-official`). Load it before building any screen.
+1. **Design guidance.** Apply frontend-design principles before building any screen.
 2. **Playwright MCP**: after every UI change, open the page, screenshot at **1920×1080** (broadcast) and **390×844** (companion), look at it critically, fix, repeat. Check the Arabic (RTL) layout too. Don't say a screen is done without a screenshot.
 3. This doc overrides generic defaults where they conflict.
 

@@ -1,6 +1,6 @@
 # Azure setup
 
-Written for VJ (first time on Azure) and for Claude Code (which does most of the provisioning once the basics exist).
+Written for VJ (first time on Azure) and for anyone provisioning from this repo (almost everything is code once the basics exist).
 
 ## How Azure is organised (read this once, it clears up 90% of the confusion)
 
@@ -49,11 +49,11 @@ Do this one by hand. It's quick, and it's how you'll check model quota.
    - A small fast chat model for the high-volume agents, e.g. **gpt-4.1-mini** or the current equivalent mini model. Deployment name: `chat-fast`.
    - A stronger model for recaps and the Analyst, e.g. **gpt-4.1** or current equivalent. Deployment name: `chat-strong`.
    - Use *Global Standard* deployment type. Start with the default tokens-per-minute; raise it if you hit 429s.
-   - If a model shows **0 quota** on the free account, pick a different model or region and tell Claude Code which you used. Names change often; what matters is one fast model and one strong one.
+   - If a model shows **0 quota** on the free account, pick a different model or region and note which you used. Names change often; what matters is one fast model and one strong one.
 4. From the project **Overview**, copy the **project endpoint** (looks like `https://<resource>.services.ai.azure.com/api/projects/pitchside`) into `.env` as `FOUNDRY_PROJECT_ENDPOINT`.
-5. Tell Claude Code: "Foundry is set up, endpoint is in .env, deployments are chat-fast and chat-strong." From here, Claude Code provisions everything else as code.
+5. Check that the endpoint is in `.env` and the deployments are named `chat-fast` and `chat-strong`. From here, everything else is provisioned as code.
 
-## Step 3 — Claude Code: everything else as code (Bicep + azd)
+## Step 3 — Everything else as code (Bicep + azd)
 
 Create `infra/main.bicep` and modules, referencing the existing Foundry resource rather than creating a new one. Then `azd up`.
 

@@ -30,7 +30,7 @@ Translator, Speech and Content Safety all live on the same Foundry resource, so 
 | Service | What it is | What we use it for | Status |
 |---|---|---|---|
 | **Container Apps** | Runs containers, scales to zero. | The FastAPI gateway and agents (`ca-api-...`). | Deployed. Live at `ca-api-uirzml34ufpge`. |
-| **Container Apps: `mcp`** | The Match Intelligence MCP server on its own address (`/mcp`, streamable HTTP). Same image, different start command. | Lets VS Code Copilot, Claude or a broadcaster tool read the state engine's numbers without going through the gateway. | `backend/mcp_server/server.py`, `infra/modules/services.bicep` | Verified 23 Oct: `initialize` answered from the live app. Scales to zero. |
+| **Container Apps: `mcp`** | The Match Intelligence MCP server on its own address (`/mcp`, streamable HTTP). Same image, different start command. | Lets VS Code Copilot or a broadcaster tool read the state engine's numbers without going through the gateway. | `backend/mcp_server/server.py`, `infra/modules/services.bicep` | Verified 23 Oct: `initialize` answered from the live app. Scales to zero. |
 | **Container Apps: `a2a`** | The Recap Editor as its own A2A agent (`backend/a2a/app.py`). The gateway still serves the same routes. | A second agent runs, scales and is discovered on its own URL: agent card at `/.well-known/agent-card.json`, JSON-RPC at `/a2a/jsonrpc`. | `backend/a2a/app.py`, `infra/modules/services.bicep` | Verified 23 Oct: a recap came back through `scripts/a2a_client` (the Verifier rejected two drafts and it fell back to the template, which is the recovery path working). |
 | **Container Apps Job: `job-warm`** | A job you start by hand. Same image, runs `scripts.warm_overlay_text` with `STORE=cosmos`. | Rebuilds the instant-overlay translation tables into Cosmos from inside Azure. Costs model and Translator calls, so it is manual only. | `infra/modules/services.bicep` | Created 23 Oct. Not run yet. |
 | **Container Registry** | Stores our Docker images. | `azd deploy api` pushes the image here. | In use |
@@ -70,7 +70,7 @@ Translator, Speech and Content Safety all live on the same Foundry resource, so 
 
 ## Tools, not services
 
-- **Azure MCP server:** lets Claude Code inspect and manage Azure resources from the editor. It's one of the judges' named hero technologies.
+- **Azure MCP server:** lets us inspect and manage Azure resources from the editor. It's one of the judges' named hero technologies.
 - **Microsoft Learn MCP:** current Microsoft docs, used before writing any Azure code.
 - **`az` and `azd`:** the Azure CLI, and the Developer CLI that provisions (`azd provision`) and deploys (`azd deploy api`, `azd deploy web`) from the Bicep in `infra/`.
 - **Bicep:** the language `infra/` is written in. Every resource above is code, not clicks.

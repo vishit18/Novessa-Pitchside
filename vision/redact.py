@@ -1,4 +1,4 @@
-"""Remove third-party marks from real footage before it is shown (docs/06, CLAUDE.md).
+"""Remove third-party marks from real footage before it is shown (docs/06).
 
 The SoccerTrack v2 pitch for match 117093 has a university name and crest painted on the turf in
 the foreground. The camera is fixed, so the marks sit in the same place in every frame. We find
