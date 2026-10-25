@@ -205,13 +205,6 @@ Run the checks with `uv run pytest`, `uv run ruff check .`, `uv run python -m my
 | Control and chaos, pressure, rhythm, milestones, recaps | "Who's on top" panel, state-of-play lines, `/recap` |
 | Synthetic data | A calibrated engine and a published 200-match dataset |
 
-For the prize categories:
-
-- **Multi-agent system.** Specialised agents with distinct roles, shared state, a verifier loop, recovery from failure, and an A2A endpoint. Built on Microsoft Agent Framework. The Control Room lets you kill an agent and watch the others carry on.
-- **Microsoft Foundry.** Two model deployments, Translator, Speech and Content Safety on one Foundry resource with keyless sign-in, Foundry evaluators for the single-agent comparison, and tracing attributes Foundry reads.
-- **Azure cloud native.** Container Apps (three apps that scale independently), Static Web Apps, Event Hubs, Cosmos DB, Blob, Monitor and Load Testing, all from Bicep.
-- **Enterprise.** Every claim has an audit trail. Content Safety, guardrails and a red team in CI control what airs. Access is keyless, rate limits guard spend, alerts watch availability, and [ADR 0010](docs/adr/0010-production-path-not-an-ai-gateway-now.md) says what a production rollout would add.
-
 ## Who it is for
 
 A broadcaster makes one feed for millions of different fans. A streaming platform wants a second screen that knows who is watching. A fan who is new to the game wants it explained, and a fan who lives for the numbers wants more of them. The overlay protocol is the same for all of them: only what each viewer sees changes.
