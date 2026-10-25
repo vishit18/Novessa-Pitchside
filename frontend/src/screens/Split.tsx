@@ -112,7 +112,7 @@ function Column({
         <div className="flex items-baseline gap-3">
           <h2
             className={`font-display text-[28px] font-extrabold uppercase leading-none px-3 pb-1 pt-1.5 ${
-              n === 1 ? 'bg-[#ffd100] text-[#101418]' : 'bg-amber text-white'
+              n === 1 ? 'bg-[#ffd100] text-[#101418]' : 'bg-amber text-ink'
             }`}
           >
             Viewer {n}

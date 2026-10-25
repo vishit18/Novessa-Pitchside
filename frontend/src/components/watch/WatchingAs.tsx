@@ -105,7 +105,7 @@ export function WatchingAsSheet({
               </div>
               <button
                 onClick={onClose}
-                className="h-10 shrink-0 bg-amber px-4 text-[14px] font-semibold text-white"
+                className="h-10 shrink-0 bg-amber px-4 text-[14px] font-semibold text-ink"
               >
                 {t('done')}
               </button>

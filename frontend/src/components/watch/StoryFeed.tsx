@@ -91,7 +91,7 @@ function Moment({ it }: { it: FeedItem }) {
         <span className="w-[4px] shrink-0" style={{ background: strip(it) }} aria-hidden />
         <div className="min-w-0">
           {tag && (
-            <span className="mb-1 inline-block bg-amber px-1.5 py-0.5 text-[12px] font-semibold leading-none text-white">
+            <span className="mb-1 inline-block bg-amber px-1.5 py-0.5 text-[12px] font-semibold leading-none text-ink">
               {tag}
             </span>
           )}

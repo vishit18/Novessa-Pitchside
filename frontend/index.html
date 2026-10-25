@@ -14,12 +14,10 @@
   <body>
     <div id="root"></div>
     <script>
-      // Set the theme before the first paint so dark mode does not flash white.
+      // Light unless the viewer picked dark. Set before first paint so dark does not flash white.
       try {
-        var t = localStorage.getItem('novessa-theme')
-        if (t !== 'dark' && t !== 'light')
-          t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
-        document.documentElement.dataset.theme = t
+        document.documentElement.dataset.theme =
+          localStorage.getItem('novessa-theme') === 'dark' ? 'dark' : 'light'
       } catch (e) {}
     </script>
     <script type="module" src="/src/main.tsx"></script>

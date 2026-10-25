@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Wordmark } from '@/components/Hud'
+import { ThemeToggle } from '@/components/ThemeToggle'
 import type { StringKey } from '@/i18n/strings'
 import { translate } from '@/i18n/strings'
 import { navigate, withParams } from '@/router'
@@ -36,7 +37,8 @@ function isCurrent(path: string, current: string): boolean {
  * The header on every page except the full-screen broadcast. The wordmark goes home; the current
  * page is marked with the amber rule the rest of the app uses for "selected".
  */
-export function AppNav({ match = null, lang = 'en' }: { match?: string | null; lang?: Lang }) {
+export function AppNav({ match = null, lang: langProp }: { match?: string | null; lang?: Lang }) {
+  const lang = langProp ?? 'en'
   const current = window.location.pathname
   return (
     <header className="relative z-20 flex flex-wrap items-center justify-between gap-x-8 gap-y-2">
@@ -47,34 +49,38 @@ export function AppNav({ match = null, lang = 'en' }: { match?: string | null; l
       >
         <Wordmark />
       </button>
-      <div className="sm:hidden">
+      <div className="flex items-center gap-2 sm:hidden">
+        <ThemeToggle lang={langProp} compact />
         <NavMenu match={match ?? 'derby_01'} lang={lang} />
       </div>
-      <nav aria-label="Pages" className="-mx-1 max-w-full max-sm:hidden">
-        <ul className="flex items-center gap-1 px-1">
-          {NAV_ITEMS.filter((i) => i.path !== '/').map((i) => {
-            const on = isCurrent(i.path, current)
-            return (
-              <li key={i.path}>
-                <a
-                  href={hrefFor(i.path, match)}
-                  onClick={(e) => {
-                    e.preventDefault()
-                    navigate(hrefFor(i.path, match))
-                  }}
-                  aria-current={on ? 'page' : undefined}
-                  className={`relative flex min-h-11 items-center whitespace-nowrap px-2.5 text-[15px] transition-colors ${
-                    on ? 'text-text' : 'text-muted hover:text-text'
-                  }`}
-                >
-                  {translate(lang, i.key)}
-                  {on && <span className="absolute inset-x-2.5 bottom-1.5 h-[2px] bg-amber" />}
-                </a>
-              </li>
-            )
-          })}
-        </ul>
-      </nav>
+      <div className="flex min-w-0 max-w-full items-center gap-4 max-sm:hidden">
+        <nav aria-label="Pages" className="-mx-1 max-w-full">
+          <ul className="flex items-center gap-1 px-1">
+            {NAV_ITEMS.filter((i) => i.path !== '/').map((i) => {
+              const on = isCurrent(i.path, current)
+              return (
+                <li key={i.path}>
+                  <a
+                    href={hrefFor(i.path, match)}
+                    onClick={(e) => {
+                      e.preventDefault()
+                      navigate(hrefFor(i.path, match))
+                    }}
+                    aria-current={on ? 'page' : undefined}
+                    className={`relative flex min-h-11 items-center whitespace-nowrap px-2.5 text-[15px] transition-colors ${
+                      on ? 'text-text' : 'text-muted hover:text-text'
+                    }`}
+                  >
+                    {translate(lang, i.key)}
+                    {on && <span className="absolute inset-x-2.5 bottom-1.5 h-[2px] bg-amber" />}
+                  </a>
+                </li>
+              )
+            })}
+          </ul>
+        </nav>
+        <ThemeToggle lang={langProp} />
+      </div>
     </header>
   )
 }

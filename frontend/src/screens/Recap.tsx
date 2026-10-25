@@ -141,7 +141,7 @@ function SpoilerGate({
         )}
         <button
           onClick={onReveal}
-          className="h-11 bg-amber px-4 text-[15px] font-semibold text-white hover:bg-[#a10f1a]"
+          className="h-11 bg-amber px-4 text-[15px] font-semibold text-ink hover:opacity-90"
         >
           Show it, I don’t mind
         </button>

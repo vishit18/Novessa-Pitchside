@@ -1,3 +1,4 @@
+import { ThemeToggle } from '@/components/ThemeToggle'
 import { storyFeed } from '@/core/feed'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { AskSheet } from '@/components/AskSheet'
@@ -82,6 +83,7 @@ function CompanionBody({ matchId }: { matchId: string }) {
             >
               Change
             </button>
+            <ThemeToggle lang={lang} compact />
           </div>
         </div>
         <Timeline narrow />

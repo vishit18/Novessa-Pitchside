@@ -1,6 +1,5 @@
 import { lazy, Suspense, useEffect } from 'react'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
-import { ThemeToggle } from '@/components/ThemeToggle'
 import { useLocation } from '@/router'
 import { loadProfile } from '@/state/profile'
 
@@ -78,11 +77,8 @@ export default function App() {
     return <Home />
   })()
   return (
-    <>
-      <ErrorBoundary key={path}>
-        <Suspense fallback={<Loading />}>{screen}</Suspense>
-      </ErrorBoundary>
-      <ThemeToggle />
-    </>
+    <ErrorBoundary key={path}>
+      <Suspense fallback={<Loading />}>{screen}</Suspense>
+    </ErrorBoundary>
   )
 }

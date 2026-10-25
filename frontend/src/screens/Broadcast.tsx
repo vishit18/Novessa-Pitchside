@@ -114,7 +114,7 @@ function MatchCentre({
             <div className="flex flex-wrap items-center gap-2">
               <WatchingAsChip onOpen={openSheet} open={sheetOpen} />
               <button
-                className="h-11 bg-amber px-4 text-[15px] font-semibold text-white hover:bg-[#a10f1a]"
+                className="h-11 bg-amber px-4 text-[15px] font-semibold text-ink hover:opacity-90"
                 onClick={() => session.store.getState().set({ askOpen: true })}
                 aria-keyshortcuts="/"
               >
