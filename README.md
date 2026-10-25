@@ -173,15 +173,6 @@ Citation: Atom Scott, Ikuma Uchida, Kento Kuroda, Yufi Kim and Keisuke Fujii, *S
 
 The detector is RT-DETR (Apache 2.0). We do not use Ultralytics YOLO because of its licence. Every asset is listed in [`docs/ASSET_LICENSES.md`](docs/ASSET_LICENSES.md).
 
-## What is not finished
-
-- Offside is a flag on through balls (one to four a match). The engine has no offside line, and no goal is ever disallowed.
-- The Hindi recap can garble a clock and transliterate a surname. The Verifier checks the English draft, not the translation.
-- The spans reach Application Insights, but the resource is not yet connected to the Foundry project's Tracing tab. On Foundry's own quality evaluators, one well-fed prompt scored higher than the newsroom on text quality, and was far faster ([`docs/EVALUATION.md`](docs/EVALUATION.md)). The newsroom is there for the guarantee that no number airs unchecked, the audit trail, the four viewer types in six languages, and staying up when an agent fails. It does not write better prose, and we do not claim it does.
-- The ball is found in only half the real-footage frames, and jersey numbers are not read. The numbers over the players are tracker IDs, so one can change when the tracker loses and re-finds a player.
-- The "interceptions" count in the stats counts every failed pass, so it reads high next to real match data.
-- The public site replays the demo matches from memory. The Event Hubs path is measured and works, but it is not what the live site uses.
-
 ## Repo map
 
 | Path | What is in it |
