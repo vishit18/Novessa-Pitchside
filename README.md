@@ -140,7 +140,7 @@ Decisions and their costs are in [`docs/adr/`](docs/adr/README.md). A plain-lang
 These are measured, not hoped for.
 
 - **Tests:** 252 Python, 88 frontend unit, 16 browser end-to-end. Lint and types run in CI.
-- **Load:** 150 simulated viewers calling the live API's endpoints for five minutes: 32,120 requests, 0 errors, p95 11 ms, scaled from 1 to 3 replicas and back. ([`docs/LOAD_TEST.md`](docs/LOAD_TEST.md)).
+- **Load:** 150 simulated viewers calling the live API's endpoints for five minutes: 32,120 requests, 0 errors, p95 11 ms, scaled from 1 to 3 replicas and back ([`docs/LOAD_TEST.md`](docs/LOAD_TEST.md)).
 - **Safety:** 14 of 14 red-team attacks held with guardrails on ([`docs/REDTEAM.md`](docs/REDTEAM.md)).
 - **Cost:** running the agents over all three demo matches (94 moments) cost about $0.09 in model tokens. A replay of those matches costs nothing.
 - **Synthetic data:** 200 simulated matches (545,639 events) measured against typical top-flight ranges. Of 16 measures with a reference range, 14 are inside it and 2 (goals and red cards per match) are just outside by less than the sampling error. The engine was tuned until it got there. Chart and table: [`docs/CALIBRATION.md`](docs/CALIBRATION.md).
