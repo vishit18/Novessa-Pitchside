@@ -247,7 +247,27 @@ class TimelineBuilder:
             self._period_break = ev.t_match
         self._recent.add(ev)
         self._last_event_t = ev.t_match
-        return self._collect(self.engine.ingest_event(ev), ev)
+        moments, overlays = self._collect(self.engine.ingest_event(ev), ev)
+        if ev.type == EventType.SHOT and ev.player_id:
+            overlays.append(self._name_tag(ev))
+        return moments, overlays
+
+    def _name_tag(self, ev: MatchEvent) -> Overlay:
+        """Player identification: the shooter's name over them as the shot goes in, for everyone."""
+        return self._overlay(
+            slot="player_tag",
+            kind="player_tag",
+            priority=35,
+            t_match=ev.t_match,
+            duration_s=3.5,
+            anchor=Anchor(type="player", id=ev.player_id),
+            provenance=Provenance(source="state_engine", verified=True),
+            payload={
+                "player_id": ev.player_id,
+                "team": ev.team,
+                "name": self.names.player(ev.player_id),
+            },
+        )
 
     def feed_frame(self, frame: TrackingFrame) -> tuple[list[Moment], list[Overlay]]:
         """Same for one tracking frame."""
@@ -263,6 +283,17 @@ class TimelineBuilder:
         if any(ov.slot == "lower_third" for ov in overlays):
             self._last_story_t = max(ov.t_match for ov in overlays)
         return moments, overlays
+
+    def state_message(self, t: float) -> dict[str, Any]:
+        """The `state` message at match time `t`, as `build` writes it. For the live path."""
+        snap = self.engine.snapshot().model_dump(mode="json")
+        snap["t_match"] = round(t, 2)
+        snap["period"], snap["clock"] = display_clock(t, self._period_break)
+        return snap
+
+    def stats_message(self, t: float) -> dict[str, Any]:
+        """The `player_stats` message at match time `t`. For the live path."""
+        return self._stats_item(round(t, 2)).json_data()
 
     def _maybe_pulse(self, t: float) -> list[Overlay]:
         """A state of play when one is due, the ball is in play and nothing just aired."""

@@ -96,11 +96,13 @@ export class Session {
   }
 
   setSpeed(speed: number): void {
+    if (this.opts.live) return
     this.source?.controls?.setSpeed(speed)
     this.store.getState().set({ speed })
   }
 
   setPaused(paused: boolean): void {
+    if (this.opts.live) return
     this.source?.controls?.setPaused(paused)
     this.store.getState().set({ paused })
   }
@@ -111,6 +113,7 @@ export class Session {
    * whose time has come, so seeking back hides later cards and seeking forward shows them again.
    */
   seek(tMatch: number): void {
+    if (this.opts.live) return // the gateway streams live; there is nothing to seek to
     const t = Math.max(0, tMatch)
     this.source?.controls?.seek(t)
     this.seekTarget = t

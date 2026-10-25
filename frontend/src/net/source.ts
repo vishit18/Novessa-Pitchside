@@ -37,4 +37,6 @@ export interface SourceOptions {
   speed?: number
   /** A backdrop or preview, not the viewer watching: do not count it as seen. */
   ambient?: boolean
+  /** Live through the event bus (Event Hubs in Azure): no pause, seek or speed. */
+  live?: boolean
 }

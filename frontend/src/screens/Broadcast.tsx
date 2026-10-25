@@ -35,6 +35,8 @@ export function Broadcast({ query }: { query: URLSearchParams }) {
   const matchId = query.get('match') ?? 'derby_01'
   const playerParam = query.get('player')
   const clean = query.get('view') === 'clean'
+  // ?live=1: fed from the event bus as the engine publishes, not from the replay timeline.
+  const live = query.get('live') === '1'
   const [view, setView] = useState(() => {
     const p = loadProfile() ?? defaultProfile({ persona: 'casual' })
     return {
@@ -43,7 +45,7 @@ export function Broadcast({ query }: { query: URLSearchParams }) {
       speed: Number(query.get('speed') ?? 1),
     }
   })
-  const session = useLiveSession({ matchId, ...view })
+  const session = useLiveSession({ matchId, ...view, live })
   const [sheet, setSheet] = useState(false)
 
   // A new pick reconnects at the same second and speed, so the change is the only thing that moves.

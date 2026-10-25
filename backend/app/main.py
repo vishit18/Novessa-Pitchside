@@ -50,6 +50,8 @@ from engine.schema import League, MatchMeta
 FRAME_HZ = 10.0
 BAD_REQUEST = 4400
 NOT_FOUND = 4404
+RATE_LIMITED = 4429
+LIVE_MAX_SPEED = 30.0  # a live stream may run fast for a demo, never as one big burst
 PERSONAS = ("analyst", "casual", "kids", "accessibility")
 TEXT_WAIT_S = 90.0  # how long a socket waits for the agents before leaving the fallback card
 MAX_AUDIO_BYTES = 1_000_000  # about 30 seconds of Opus; a question is a few seconds
@@ -218,6 +220,45 @@ class Session:
             self.restart()
 
 
+class LiveSession(Session):
+    """A viewer fed from the event bus (Event Hubs in Azure) instead of the replay timeline.
+
+    The match engine publishes to the bus, the gateway's consumer runs every message through the
+    state engine, and this socket gets what the consumer produced, as it produces it. Live means
+    live: the viewer cannot pause, seek or change speed. Same filtering, translation and agent
+    text as a replay viewer.
+    """
+
+    def __init__(
+        self, ws: WebSocket, match: LoadedMatch, profile: ViewerProfile, **kw: Any
+    ) -> None:
+        super().__init__(ws, match, profile, speed=1.0, start=0.0, **kw)
+        self.live: LiveIngest | None = None
+
+    async def _run(self) -> None:
+        assert self.live is not None
+        match_id = self.match.meta.match_id
+        if self.texts:
+            self.texts.table(self.match, self.profile.lang)
+        q = self.live.watch(match_id)
+        try:
+            while (msg := await q.get()) is not None:
+                kind, data = msg
+                if kind == "overlay":
+                    shown = self._for_me(data)
+                    if shown is None:
+                        continue
+                    await self.send(kind, shown)
+                    self._with_text(shown)
+                else:
+                    await self.send(kind, data)
+        finally:
+            self.live.unwatch(match_id, q)
+
+    def handle(self, msg: dict[str, Any]) -> None:
+        """Live has no transport: play, pause, speed and seek are ignored."""
+
+
 def _phrases(store: MatchStore, meta: MatchMeta) -> list[str]:
     """Club names and player names (full and surname) for the two teams in this match."""
     codes = (meta.home.code, meta.away.code)
@@ -339,9 +380,11 @@ def create_app(data_dir: Path | None = None) -> FastAPI:
 
     @app.post("/agents/{agent}/kill")
     async def agents_kill(
-        request: Request, agent: str, seconds: float = Query(30.0, gt=0, le=300)
+        request: Request, agent: str, seconds: float = Query(30.0, gt=0, le=30)
     ) -> dict[str, Any]:
-        """Chaos switch: make one agent fail for a while so the recovery paths can be shown."""
+        """Chaos switch: make one agent fail for a while so the recovery paths can be shown.
+
+        Capped at 30 seconds: the link is public, so nobody can switch an agent off for long."""
         limits.kill(request)
         runtime: AgentRuntime = app.state.agents
         runtime.kill(agent, seconds)
@@ -598,6 +641,7 @@ def create_app(data_dir: Path | None = None) -> FastAPI:
         lang: str = "en",
         speed: float = 1.0,
         t: float = 0.0,
+        live: bool = False,
     ) -> None:
         await ws.accept()
         try:
@@ -620,7 +664,22 @@ def create_app(data_dir: Path | None = None) -> FastAPI:
             return
         runtime: AgentRuntime = app.state.agents
         runtime.start(match_id)
-        session = Session(ws, match, profile, speed, max(t, 0.0), runtime, app.state.overlay_text)
+        session: Session
+        if live:
+            ingest: LiveIngest = app.state.live
+            if not ingest.is_running(match_id):
+                try:
+                    limits.fresh_start()
+                except HTTPException:
+                    await ws.close(code=RATE_LIMITED)
+                    return
+                ingest.start(match_id, min(max(speed, 1.0), LIVE_MAX_SPEED))
+            session = LiveSession(ws, match, profile, agents=runtime, texts=app.state.overlay_text)
+            session.live = ingest
+        else:
+            session = Session(
+                ws, match, profile, speed, max(t, 0.0), runtime, app.state.overlay_text
+            )
         session.clock.play()
         session.restart()
         try:

@@ -102,6 +102,7 @@ export class WebSocketSource implements MatchSource {
     if (p.club) q.set('club', p.club)
     if (p.player) q.set('player', p.player)
     if (p.metric) q.set('metric', p.metric)
+    if (this.opts.live) q.set('live', 'true')
     return `${this.baseUrl}/ws/matches/${encodeURIComponent(this.opts.matchId)}?${q}`
   }
 

@@ -60,7 +60,8 @@ var sharedEnv = {
   COSMOS_ENDPOINT: data.outputs.cosmosEndpoint
   COSMOS_DATABASE: data.outputs.cosmosDatabase
   REAL_VIDEO_BASE_URL: storage.outputs.footageBaseUrl
-  EVENT_BUS: 'memory'
+  // Live viewers (/watch?live=1) are fed through the hub. Replays never touch it.
+  EVENT_BUS: 'eventhubs'
   STORE: 'cosmos'
   RATE_LIMIT: 'on'
   GUARDRAILS: 'true'

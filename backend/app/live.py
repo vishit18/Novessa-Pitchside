@@ -10,8 +10,10 @@ consumer times each message from publish to overlay ready: that is the number be
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import logging
 import time
+import uuid
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any, Literal
@@ -27,6 +29,11 @@ log = logging.getLogger("pitchside.live")
 
 BUDGET_MS = 150.0
 FLUSH_S = 0.05
+# A viewer that falls this far behind loses messages rather than holding up everyone else.
+VIEWER_QUEUE = 4000
+STATE_EVERY_S = 1.0
+# (message type, data) for one viewer socket; None ends the stream.
+ViewerMessage = tuple[str, dict[str, Any]] | None
 
 
 def _percentile(sorted_values: list[float], pct: float) -> float:
@@ -82,6 +89,27 @@ class LiveIngest:
         self.stats: dict[str, LiveStats] = {}
         self.overlay_sinks: dict[str, list[Callable[[Overlay], None]]] = {}
         self._tasks: dict[str, list[asyncio.Task[None]]] = {}
+        # Live viewers: every socket watching a match through the bus gets its own queue.
+        self._viewers: dict[str, set[asyncio.Queue[ViewerMessage]]] = {}
+        # Latest state and player stats per match, so a viewer joining mid-stream starts with them.
+        self._latest: dict[str, dict[str, dict[str, Any]]] = {}
+
+    def watch(self, match_id: str) -> asyncio.Queue[ViewerMessage]:
+        """A queue that receives this match's live messages, as the consumer reads them."""
+        q: asyncio.Queue[ViewerMessage] = asyncio.Queue(maxsize=VIEWER_QUEUE)
+        for kind, data in self._latest.get(match_id, {}).items():
+            q.put_nowait((kind, data))
+        self._viewers.setdefault(match_id, set()).add(q)
+        return q
+
+    def unwatch(self, match_id: str, q: asyncio.Queue[ViewerMessage]) -> None:
+        self._viewers.get(match_id, set()).discard(q)
+
+    def _push(self, match_id: str, msg: ViewerMessage) -> None:
+        for q in self._viewers.get(match_id, set()):
+            # A stalled socket drops messages; the match goes on for everyone else.
+            with contextlib.suppress(asyncio.QueueFull):
+                q.put_nowait(msg)
 
     def is_running(self, match_id: str) -> bool:
         """True while this match's stream is still going."""
@@ -102,9 +130,11 @@ class LiveIngest:
             return self.stats[match_id]
         stats = self.stats[match_id] = LiveStats(status="starting", speed=speed)
         ready = asyncio.Event()
+        run = uuid.uuid4().hex[:12]
+        self._latest.pop(match_id, None)
         self._tasks[match_id] = [
-            asyncio.create_task(self._consume(match_id, stats, ready)),
-            asyncio.create_task(self._produce(match_id, stats, speed, ready, until)),
+            asyncio.create_task(self._consume(match_id, stats, ready, run)),
+            asyncio.create_task(self._produce(match_id, stats, speed, ready, until, run)),
         ]
         return stats
 
@@ -123,6 +153,7 @@ class LiveIngest:
         speed: float,
         ready: asyncio.Event,
         until: float | None,
+        run: str = "",
     ) -> None:
         try:
             loaded = await self.store.get(match_id)
@@ -140,7 +171,7 @@ class LiveIngest:
                 is_event = isinstance(item, MatchEvent)
                 payload: dict[str, Any] = item.model_dump(mode="json")  # type: ignore[attr-defined]
                 kind: Literal["event", "frame"] = "event" if is_event else "frame"
-                pending.append(Envelope.wrap(match_id, kind, item.t_match, payload))
+                pending.append(Envelope.wrap(match_id, kind, item.t_match, payload, run))
                 # Events go out at once. Frames ride along, or go after FLUSH_S.
                 if is_event or time.monotonic() - last_flush >= FLUSH_S:
                     await self.bus.publish(pending)
@@ -156,13 +187,18 @@ class LiveIngest:
             log.exception("live producer failed for %s", match_id)
             stats.status = "failed"
 
-    async def _consume(self, match_id: str, stats: LiveStats, ready: asyncio.Event) -> None:
+    async def _consume(
+        self, match_id: str, stats: LiveStats, ready: asyncio.Event, run: str = ""
+    ) -> None:
         try:
             loaded = await self.store.get(match_id)
             builder = TimelineBuilder(loaded.meta, self.store.league)
             subscription = await self.bus.subscribe(match_id)
             ready.set()
+            next_tick = 0.0
             async for env in subscription:
+                if run and env.run and env.run != run:
+                    continue  # another replica's stream of the same match
                 took = time.time()
                 if env.kind == "event":
                     _, overlays = builder.feed_event(MatchEvent.model_validate(env.payload))
@@ -177,6 +213,8 @@ class LiveIngest:
                     for sink in self.overlay_sinks.get(match_id, []):
                         for ov in overlays:
                             sink(ov)
+                if self._viewers.get(match_id):
+                    next_tick = self._to_viewers(match_id, builder, env, overlays, next_tick)
                 if stats.status == "finished" and stats.consumed >= stats.published:
                     break
         except asyncio.CancelledError:
@@ -184,3 +222,29 @@ class LiveIngest:
         except Exception:
             log.exception("live consumer failed for %s", match_id)
             stats.status = "failed"
+        finally:
+            self._push(match_id, ("end", {"live": True, "status": stats.status}))
+            self._push(match_id, None)
+
+    def _to_viewers(
+        self,
+        match_id: str,
+        builder: TimelineBuilder,
+        env: Envelope,
+        overlays: list[Overlay],
+        next_tick: float,
+    ) -> float:
+        """Hand one consumed message to the live viewers, with state and stats once a second,
+        in the same order the replay timeline uses: state first, then the event or frame, then
+        the overlays it raised. Returns the next state tick."""
+        while env.t_match >= next_tick:
+            state = builder.state_message(next_tick)
+            player_stats = builder.stats_message(next_tick)
+            self._latest[match_id] = {"state": state, "player_stats": player_stats}
+            self._push(match_id, ("state", state))
+            self._push(match_id, ("player_stats", player_stats))
+            next_tick += STATE_EVERY_S
+        self._push(match_id, (env.kind, env.payload))
+        for ov in overlays:
+            self._push(match_id, ("overlay", ov.model_dump(mode="json")))
+        return next_tick

@@ -22,10 +22,18 @@ class Envelope(BaseModel):
     # Wall clock at publish, from time.time(), so the consumer can measure bus latency.
     published_at: float
     payload: dict[str, Any]
+    # Which producer run sent it. Two replicas streaming the same match share one hub; each
+    # consumer keeps only its own run, so the two streams never interleave. Empty means any.
+    run: str = ""
 
     @classmethod
     def wrap(
-        cls, match_id: str, kind: Literal["event", "frame"], t_match: float, payload: dict[str, Any]
+        cls,
+        match_id: str,
+        kind: Literal["event", "frame"],
+        t_match: float,
+        payload: dict[str, Any],
+        run: str = "",
     ) -> Envelope:
         return cls(
             match_id=match_id,
@@ -33,6 +41,7 @@ class Envelope(BaseModel):
             t_match=t_match,
             published_at=time.time(),
             payload=payload,
+            run=run,
         )
 
 

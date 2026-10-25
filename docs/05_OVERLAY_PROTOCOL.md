@@ -65,7 +65,7 @@ The gateway sends JSON text frames over `WS /ws/matches/{id}?viewer=...&persona=
 
 On connect and after every seek, before the stream resumes, the gateway sends the latest `state` and `player_stats`, then a **backfill**: the viewer's last 40 story overlays (`lower_third` insights, milestones and state of play) from before the start time, filtered and translated for that viewer, with `payload.backfill: true` and agent text attached as usual. Their show time has passed, so a renderer puts them in a story list and never on screen. A viewer who joins at 60 minutes gets the story so far.
 
-The client may send `{"op": "play"|"pause"}`, `{"op": "speed", "value": 4}` and `{"op": "seek", "t": 1200}`. Query parameters: `persona` (analyst, casual, kids, accessibility), `club`, `player`, `metric`, `lang`. `GET /matches/{id}` returns `MatchMeta`. `t_wall_emit` is set when the gateway sends the message and is null in exports.
+The client may send `{"op": "play"|"pause"}`, `{"op": "speed", "value": 4}` and `{"op": "seek", "t": 1200}`. Query parameters: `persona` (analyst, casual, kids, accessibility), `club`, `player`, `metric`, `lang`, and `live=true`: the socket is fed by the event bus consumer (Event Hubs in Azure) as the engine publishes, with `state` and `player_stats` once a second and the same overlays the replay timeline has; control messages are ignored and the stream ends with `end`. Without it the socket replays the prepared timeline. `GET /matches/{id}` returns `MatchMeta`. `t_wall_emit` is set when the gateway sends the message and is null in exports.
 
 ## player_stats
 
@@ -79,6 +79,7 @@ The `state` message carries `team_stats`: `{TEAM: {fouls, yellows, reds, corners
 
 - `pass_difficulty`: slot `pitch_annotation`, anchor `{"type": "pitch", "x", "y"}` at the pass start. Payload: `difficulty` (0-100), `distance_m`, `ball_speed_kmh`, `end_x`, `end_y`, `complete` (bool), `player_id`, `factors` `[{name, points}]` (omitted for the casual persona).
 - `shot_speed`: slot `lower_third`, anchored to the shooter. Payload: `speed_kmh`, `xg`, `outcome`, `player_id`.
+- `player_tag`: slot `player_tag`, anchored to the shooter on every shot, for every persona, 3.5 s. Payload: `player_id`, `team`, `name`. The renderer adds the shirt number from the league data.
 - `speed_burst`: slot `player_tag`, anchored to the player. Payload: `speed_kmh`, `rank_in_match`.
 - `distance_milestone`: slot `player_tag`. Payload: `km`.
 - An offside flag arrives as an instant `milestone` overlay (`payload.milestone` is `offside`, headline "Offside", body the player and club, `tone` `milestone`). It is a trigger, not a moment, so it never reaches the agents and never shifts a moment id.
