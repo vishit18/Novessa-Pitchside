@@ -15,8 +15,7 @@ Read these before writing any code, in this order:
 6. `docs/05_OVERLAY_PROTOCOL.md` — the timed, machine-readable overlay format.
 7. `docs/06_VISION_AUTO_EVENTING.md` — real-footage auto-eventing.
 8. `docs/07_FRONTEND_DESIGN.md` — design direction, screens, the frontend tooling you must use.
-9. `docs/08_BUILD_PLAN.md` — day-by-day plan with priorities.
-10. `docs/09_DEMO_AND_SUBMISSION.md` — 2-minute video script and submission copy.
+9. `docs/09_DEMO_AND_SUBMISSION.md` — 2-minute video script and submission copy.
 
 ---
 
@@ -151,5 +150,4 @@ azd up            # provision + deploy everything to Azure
 - When you need him to do something in a browser or portal (sign-ups, approvals, quotas), stop and give him exact numbered steps, then wait.
 - Treat first versions as drafts. He'll iterate.
 - When you finish a task, tick the matching box in `docs/00_REQUIREMENTS_CHECKLIST.md` and note where it lives (file path or screen).
-- At the end of each day of work, update the "Status" section at the bottom of `docs/08_BUILD_PLAN.md`: what's done, what's broken, what's next.
 - If you're about to cut something from the checklist for time, say so explicitly and get his OK first.
