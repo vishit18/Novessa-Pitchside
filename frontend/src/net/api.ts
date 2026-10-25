@@ -1,8 +1,16 @@
 import type { MatchMeta } from '@/types/schema'
 
-/** Gateway base URL. VITE_GATEWAY_URL overrides; local dev runs the gateway on 127.0.0.1:8000. */
+/** The deployed gateway, used by production builds that do not set VITE_GATEWAY_URL. */
+const DEPLOYED_GATEWAY =
+  'wss://ca-api-uirzml34ufpge.salmonocean-c33a3a80.swedencentral.azurecontainerapps.io'
+
+/**
+ * Gateway base URL. VITE_GATEWAY_URL overrides; a production build uses the deployed gateway;
+ * local dev runs the gateway on 127.0.0.1:8000.
+ */
 export const GATEWAY_WS =
-  (import.meta.env.VITE_GATEWAY_URL as string | undefined) ?? 'ws://127.0.0.1:8000'
+  (import.meta.env.VITE_GATEWAY_URL as string | undefined) ??
+  (import.meta.env.PROD ? DEPLOYED_GATEWAY : 'ws://127.0.0.1:8000')
 
 export const GATEWAY_HTTP = GATEWAY_WS.replace(/^ws/, 'http')
 
