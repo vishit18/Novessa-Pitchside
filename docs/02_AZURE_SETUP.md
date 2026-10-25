@@ -90,11 +90,11 @@ azd provision          # creates the resources (this is the first spend)
 azd deploy api         # builds the Dockerfile in ACR and rolls out the container
 ```
 
-Cosmos DB free tier is one per subscription. If Sweden Central will not take a new Cosmos account, deploy it to another region with a `cosmosLocation` parameter. `API_MIN_REPLICAS=1` keeps the api warm for judging.
+Cosmos DB free tier is one per subscription. If Sweden Central will not take a new Cosmos account, deploy it to another region with a `cosmosLocation` parameter. `API_MIN_REPLICAS=2` keeps two api replicas warm for judging (set on 23 Oct after the load test, see `docs/LOAD_TEST.md`).
 
 ## Step 4 — keep it alive for judging (27 Oct – 10 Nov)
 
-- `api` container: **min replicas 1** from 26 Oct until 11 Nov so judges never hit a cold start. Everything else scales to zero.
+- `api` container: **min replicas 2** until 11 Nov so judges never hit a cold start and a sudden crowd lands on two warm replicas. `a2a` keeps one warm replica (a cold start took over 30 s and the agent card timed out). Everything else scales to zero.
 - The default judge experience is the **cached replay**, so judges clicking around don't burn tokens.
 - Rate-limit the "go live" button (e.g. 5 fresh matches per hour globally).
 - Add an Application Insights availability test on the frontend URL and the `/health` endpoint, with an email alert.

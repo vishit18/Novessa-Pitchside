@@ -105,7 +105,8 @@ resource a2a 'Microsoft.App/containerApps@2024-03-01' = {
         }
       ]
       scale: {
-        minReplicas: 0
+        // Kept warm for judging: from cold the agent card took over 30 s and timed out.
+        minReplicas: 1
         maxReplicas: 2
         rules: [{ name: 'http', http: { metadata: { concurrentRequests: '10' } } }]
       }
