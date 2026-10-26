@@ -93,7 +93,7 @@ Do not warm the chaos question. A repeated question comes back from the cache an
 
 ## Keep it ready for the recording
 
-1. **One API replica while you record.** The kill state and the "agents finished" state live in memory inside each API replica. With two replicas the page can poll one while you press the switch on the other, and nothing seems to happen. For the recording only: `az containerapp update -n ca-api-uirzml34ufpge -g pitchside --min-replicas 1 --max-replicas 1`. Check the names first with `az containerapp list -g pitchside -o table`. Put it back to two straight after (`--min-replicas 2 --max-replicas 3`) and keep it there until 10 Nov. This comes from reading the code, so confirm it in rehearsal.
+1. **One API replica.** The kill state and the "agents finished" state live in memory inside each API replica, so with two replicas the page could poll one while you pressed the switch on the other. On 26 Oct the API was set to min 1, max 3 and tested: eight health reads after a kill all showed the agent switched off, and four fresh questions all came back as plain numbers. Check it is still one before recording: `az containerapp replica list -n ca-api-uirzml34ufpge -g pitchside -o table` should list one row. After a scale-down it takes about five minutes for the second replica to go. Keep min 1 until 10 Nov. (`API_MIN_REPLICAS=1` in `azd env`, so a later `azd up` keeps it.)
 2. **Do not burn the rate limits.** Fresh agent runs are 5 an hour for the whole service, Ask is 12 a minute, the chaos switch 10 a minute. Start the agents once. A retake does not need a new run.
 3. **Do the chaos shot last in each take.** The switch lasts 30 seconds. Wait for the plate to return to normal before the next take.
 4. **Choose the exact start minute for each scene in rehearsal** and write it on a sticky note, so every take lands on the same shot.
@@ -137,4 +137,4 @@ _(VJ rewrites anything that doesn't sound like him. Check the form's length limi
 - [ ] Pitch names the Microsoft and Azure tech
 - [ ] Project linked to the challenge
 - [ ] Team members listed on the submission, with no personal data in the text
-- [ ] Budget alert active, uptime test active, API min replicas back at 2 until 10 Nov
+- [ ] Budget alert active, uptime test active, API min replicas 1 (max 3) until 10 Nov

@@ -94,7 +94,7 @@ Cosmos DB free tier is one per subscription. If Sweden Central will not take a n
 
 ## Step 4 — keep it alive for judging (27 Oct – 10 Nov)
 
-- `api` container: **min replicas 2** until 11 Nov so judges never hit a cold start and a sudden crowd lands on two warm replicas. `a2a` keeps one warm replica (a cold start took over 30 s and the agent card timed out). Everything else scales to zero.
+- `api` container: **min replicas 1, max 3** until 11 Nov (changed from 2 on 26 Oct). One warm replica means judges never hit a cold start, and the Control Room's switch-off and agent counters, which live in memory inside a replica, read the same on every request. A sudden crowd still scales out to three, but the first minute lands on one replica (see `docs/LOAD_TEST.md`). `a2a` keeps one warm replica (a cold start took over 30 s and the agent card timed out). Everything else scales to zero.
 - The default judge experience is the **cached replay**, so judges clicking around don't burn tokens.
 - Rate-limit the "go live" button (e.g. 5 fresh matches per hour globally).
 - Add an Application Insights availability test on the frontend URL and the `/health` endpoint, with an email alert.
