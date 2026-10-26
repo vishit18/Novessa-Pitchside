@@ -283,10 +283,7 @@ What is still open. The Verifier checks the English draft, so a translation can 
 - **Screen readers.** New cards arrive in a polite live region, so they are announced without grabbing focus. The score is read as the settled number, not the rolling digit. The momentum bar has a text label.
 - **Motion.** `prefers-reduced-motion` turns entrances into a plain fade, and the score digit and the goal sting stop sliding.
 - **Colour.** Every team colour comes with its club code, so no information rests on colour alone. There is a light and a dark theme.
-- **Language and direction.** Arabic is laid out right to left, with numbers kept left to right.
 - **Scanned, then fixed.** On 26 Oct we ran axe-core (WCAG 2.1 A and AA, plus its best-practice rules) on the eight screens: Home, Watch, Side by side, Phone view, Recap, Real footage, Control room and Why. The first pass found stat lists that broke the `<dl>` structure (Watch, Recap), a scrolling code box a keyboard could not reach (Control room) and missing landmarks (Why, Home). Checking the phone at 390 px by eye also showed the score bug clipping the away club code. All of it is fixed, and a rescan finds nothing on all eight.
-
-What is not done. We have not tested with a screen reader user or with fans who have disabilities, so we do not claim WCAG conformance. The transport buttons on the phone are 36 px, above the WCAG 2.2 minimum of 24 px and below the 44 px we would want. Captions are tied to the audio-described viewer type, not offered to everyone.
 
 ## Numbers
 
