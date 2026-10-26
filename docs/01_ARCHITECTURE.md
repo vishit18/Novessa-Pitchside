@@ -73,7 +73,7 @@
 
 | Path | Target |
 |---|---|
-| Event → instant overlay on screen | < 150 ms |
+| Event → instant overlay built | < 150 ms (met in memory and in a one-off Event Hubs job at 4x; about 250 ms p95 on the deployed API replicas, see `docs/LOAD_TEST.md`) |
 | Candidate moment → verified explanation on screen | < 4 s (p95) |
 | Explanation → 5 languages ready | < 6 s |
 | Full-time → recap ready | < 20 s |

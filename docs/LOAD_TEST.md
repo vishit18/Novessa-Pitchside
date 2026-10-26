@@ -45,6 +45,10 @@ Read it plainly. Event Hubs adds about 25 ms at the median and about 90 ms at th
 
 Numbers come from the job's own log output. A first attempt reported the in-memory bus under an Event Hubs label because the job's settings had been overridden and the code fell back silently; the script now refuses to run if it does not get the bus it was asked for. A second attempt hung for 15 minutes with no output and was stopped; the script now prints progress and gives up a pass after its expected time plus two minutes. The later runs finished in 6 minutes and the cause of that one hang is not known.
 
+### The same number on the deployed API (26 Oct)
+
+`/live/health` on the two API replicas showed overlay p95 of 251.8 ms (a finished full match at 1x, 32,077 messages) and 252.5 ms (a run in progress), p50 about 52 ms, bus hop p95 123 to 159 ms. Both are over the 150 ms budget. These replicas also serve HTTP and WebSocket traffic, which the one-off job does not, and the likely cause is that contention plus the state engine's work on a small container. That cause is a guess and has not been profiled. Viewers on the replay path are not affected, because replay overlays are built in advance and do not go through the hub.
+
 ## What this does not measure
 
 - The last hop: the WebSocket from the gateway to a browser, and drawing the overlay. The budget here covers the bus and the overlay builder, which is the part the server controls.

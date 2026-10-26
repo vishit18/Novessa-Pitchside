@@ -122,7 +122,7 @@ That is the live path: the engine publishes to Event Hubs and the gateway consum
 | Microsoft Foundry | Two chat models: a small one for the high-volume agents (Producer, Narrator, Localiser, Scout), a reasoning one for the Analyst, Ask and recaps. Foundry's evaluators (`azure-ai-evaluation`) score the output in `scripts/eval_single_vs_multi.py` |
 | Microsoft Agent Framework | The Producer, Analyst, Verifier, Narrator and Gate workflow (`backend/agents/workflow.py`) |
 | Azure AI Translator, Speech, Content Safety | Localiser, Voice and the QA gate, all on the Foundry resource |
-| Azure Event Hubs | The live feed: engine to hub to gateway (`backend/bus/`, `backend/app/live.py`). Measured at 140 ms p95 from publish to overlay (`docs/LOAD_TEST.md`). Replays read the prepared timeline |
+| Azure Event Hubs | The live feed: engine to hub to gateway (`backend/bus/`, `backend/app/live.py`). Publish to overlay was 140 ms p95 in a one-off job at 4x, and nearer 250 ms p95 on the API replicas themselves (`docs/LOAD_TEST.md`). Replays read the prepared timeline |
 | Azure Cosmos DB | Verified agent output per match, moment, persona and language |
 | Azure Container Apps and Container Registry | Three apps from one image: the gateway and agents (`api`), our Match Intelligence MCP server (`mcp`) and the Recap Editor as its own A2A agent (`a2a`), plus a manual job that prepares the demo matches. Two API replicas stay up for judging and the others scale to zero |
 | Azure Static Web Apps | The frontend, built against the live gateway |
@@ -147,7 +147,7 @@ These are measured, not hoped for.
 - **Safety:** 14 of 14 red-team attacks held with guardrails on ([`docs/REDTEAM.md`](docs/REDTEAM.md)).
 - **Cost:** running the agents over all three demo matches (94 moments) cost about $0.09 in model tokens. A replay of those matches costs nothing.
 - **Synthetic data:** 200 simulated matches (545,639 events) measured against typical top-flight ranges. All 16 measures with a reference range are inside it or within its sampling error. Chart and table: [`docs/CALIBRATION.md`](docs/CALIBRATION.md).
-- **Live feed:** 19,830 messages sent through a real Event Hub from inside Azure and read back with none lost. Publish to overlay was 140 ms at the 95th percentile at 4x replay and 115 ms at 30x, against a 150 ms budget. In memory it is 65 ms.
+- **Live feed:** 19,830 messages sent through a real Event Hub from inside Azure and read back with none lost. Publish to overlay was 140 ms at the 95th percentile at 4x replay and 115 ms at 30x, against a 150 ms budget, measured by a one-off job in the same region. On the deployed API replicas, which also serve traffic, the same figure ran at about 250 ms p95 at 1x, over the budget. In memory it is 51 to 54 ms. The replay you watch does not go through the hub.
 - **Agent text:** typically 3 to 5 seconds per step. It attaches after the instant overlay, so the picture never waits.
 - **Real footage,** one 100 second window, scored against the dataset's labels (`data/real/117093_w1890/results.json`):
 
@@ -195,7 +195,7 @@ Run the checks with `uv run pytest`, `uv run ruff check .`, `uv run python -m my
 | Explain why a moment matters | Analyst writes it, Verifier proves it, Control Room shows the trail |
 | Render it beside the match | The overlay protocol, drawn on a 2D pitch and on real footage |
 | Personalise | Four viewer types, favourite club or player, player focus, one number, six languages |
-| Name tags, speed and distance triggers, pass quality, ball and shot speed | Instant overlays from the stats layer, under 150 ms |
+| Name tags, speed and distance triggers, pass quality, ball and shot speed | Instant overlays from the stats layer, built in under 150 ms (51 to 54 ms p95 in memory) |
 | Auto-eventing from video | `vision/`, scored against ground truth |
 | Control and chaos, pressure, rhythm, milestones, recaps | "Who's on top" panel, state-of-play lines, `/recap` |
 | Synthetic data | A calibrated engine and a published 200-match dataset |
