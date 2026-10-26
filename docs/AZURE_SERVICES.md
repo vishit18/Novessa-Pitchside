@@ -74,4 +74,4 @@ Translator, Speech and Content Safety all live on the same Foundry resource, so 
 
 ## Costs, roughly
 
-Foundry tokens are the biggest variable spend, and a replay costs nothing (the three demo matches cost about $0.09 to prepare). The always-on parts are the two API replicas, Event Hubs Basic (about $11 a month) and Container Registry Basic (about $5). Cosmos and Static Web Apps are free tier, and Load Testing is billed only while a test runs. There is a budget alert at $150 (`pitchside-150`). Rate limits on everything that calls a model or Speech stop a runaway.
+Foundry tokens are the biggest variable spend, and a replay costs nothing (the three demo matches cost about $0.09 to prepare). The always-on parts are one replica each of the API, MCP server and A2A agent, Event Hubs Basic (about $11 a month) and Container Registry Basic (about $5). Cosmos and Static Web Apps are free tier, and Load Testing is billed only while a test runs. There is a budget alert at $150 (`pitchside-150`). Rate limits on everything that calls a model or Speech stop a runaway.

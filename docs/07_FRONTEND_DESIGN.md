@@ -12,7 +12,7 @@ Stack: React 18 + Vite + TypeScript, Tailwind CSS, Framer Motion (overlay animat
 
 ## Art direction: "Matchday broadcast"
 
-A bright matchday afternoon with TV graphics on top. White page, black broadcast plates, a proper green pitch in a black frame like a monitor in the gallery. VJ picked every colour below (look 6 in `/design-lab`); use them exactly.
+A bright matchday afternoon with TV graphics on top. White page, black broadcast plates, a proper green pitch in a black frame like a monitor in the gallery. We picked every colour below (look 6 in `/design-lab`); use them exactly.
 
 - **Not** the Premier League look. No purple-and-neon, no lion, no crown, nothing that copies a real broadcaster's graphics package.
 - **Page:** white `#FFFFFF`, raised surfaces `#F3F5F2`, hairlines `#D3D9D4`, text `#101418`, muted text `#4F5A54`.

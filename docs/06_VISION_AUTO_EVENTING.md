@@ -13,19 +13,19 @@ Rules §4.7: footage is allowed, but we must source it ourselves and hold the ri
 
 **What this data is, precisely:** real video of real university matches, plus human-made labels (player positions, jersey numbers, ball events). The only reconstructed part is the `ball` track, which is interpolated between labelled events rather than measured. None of it is synthetic, and none of it touches the synthetic engine or the main match experience. See [ADR 0005](adr/0005-real-footage-kept-apart.md).
 
-- Hugging Face: `atomscott/soccertrack-v2` (gated: VJ logs in and accepts the conditions). Paper: arXiv 2508.01802. Code: github.com/AtomScott/SoccerTrack-v2.
+- Hugging Face: `atomscott/soccertrack-v2` (gated: log in and accept the conditions). Paper: arXiv 2508.01802. Code: github.com/AtomScott/SoccerTrack-v2.
 - 10 full-length **university-level amateur** matches, 4K **panoramic full-pitch** video (BePro cameras). A fixed full-pitch view is ideal: one homography covers the whole clip.
 - Comes with **ground truth**: 2D pitch coordinates per player, track IDs, team side, jersey numbers, and ball action labels for 12 event classes. That means we can *measure* how good our auto-eventing is. Most entries can't.
 - Pseudonymised: players are jersey numbers and IDs only, no names. So our tags show **team + number** (e.g. "Blue #7"), never invented real-sounding names on real people.
 
-### Before using it (VJ, 10 minutes, do it Tuesday)
+### Before using it (10 minutes)
 1. Accept the conditions on the Hugging Face page and **read them**. If anything there forbids public demos or commercial use, stop and tell the team; we switch to the fallback below.
 2. Check frames for visible sponsor logos or club badges. If any are obvious, either pick a clip where they're not readable or blur them in preprocessing (`vision/redact.py`, simple fixed-region blur).
 3. Add the attribution to `docs/ASSET_LICENSES.md`, the README credits, and a small on-screen credit in real-footage mode: "Footage: SoccerTrack v2 (CC BY 4.0)".
 
 ### Download only what we need (~6 GB once, ~150 MB kept)
 
-**Never download the whole 145 GB repo.** We use one match, one half: match `117093` (paper label M2), 1st half. Pull only these files with the `hf` CLI (VJ runs `hf auth login` once with a read token):
+**Never download the whole 145 GB repo.** We use one match, one half: match `117093` (paper label M2), 1st half. Pull only these files with the `hf` CLI (run `hf auth login` once with a read token):
 
 ```bash
 mkdir -p footage/raw && cd footage/raw
@@ -76,7 +76,7 @@ Notes on this footage:
 
 All dependencies must be permissively licensed (Apache/MIT/BSD). **No Ultralytics YOLO (AGPL).**
 
-1. **Detection:** RF-DETR (Apache 2.0) or RT-DETR via Hugging Face `transformers` (Apache 2.0), classes `person` and `sports ball`. Panoramic 4K frames: tile or downscale smartly so the ball isn't lost. Offline on GPU if VJ has one, else CPU on a short clip.
+1. **Detection:** RF-DETR (Apache 2.0) or RT-DETR via Hugging Face `transformers` (Apache 2.0), classes `person` and `sports ball`. Panoramic 4K frames: tile or downscale smartly so the ball isn't lost. Offline on a GPU if there is one, else CPU on a short clip.
 2. **Tracking:** ByteTrack from Roboflow `supervision` (MIT). Ball tracked separately with interpolation for missed frames.
 3. **Team assignment:** torso colour k-means (k=2) plus a referee/other cluster.
 4. **Pitch calibration (homography):** use the dataset's own `homography.npy`, keypoints and undistortion maps. No manual clicking needed. Keep `vision/calibrate.py` (click 4+ points) only for any other footage source.

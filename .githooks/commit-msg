@@ -1,5 +1,5 @@
 #!/bin/sh
-# Strips AI attribution trailers so VJ is the only author on every commit.
+# Strips AI attribution trailers so every commit carries only its author's name.
 msg_file="$1"
 tmp="$(mktemp)"
 grep -v -i -E '^(co-authored-by:.*(claude|anthropic|copilot|noreply@anthropic)|claude-session:|.*generated with \[?claude)' "$msg_file" > "$tmp"

@@ -11,6 +11,9 @@ Every third-party asset used in the app, repo or demo video goes here before it'
 | RT-DETR r50vd detector weights (`PekingU/rtdetr_r50vd`) | Hugging Face | Apache 2.0 | `vision/detect.py` | not required |
 | Noto Sans Devanagari | Fontsource / Google Fonts | SIL OFL | Hindi text in the frontend | not required |
 | Big Shoulders Display, Figtree | Fontsource (`@fontsource/*`) / Google Fonts | SIL OFL 1.1 | App-wide since look 6 (`frontend/src/index.css`), and `/design-lab` | not required |
+| Demo video score | Our own, synthesised in code (sine pads, filtered noise, sub hits), no samples or third-party audio | Ours (MIT, same as the repo) | Demo video | not required |
+| Demo video voiceover | A team member's own voice, cloned from their own recording with Cartesia and generated from our script | Ours | Demo video | not required |
+| Inter (caption font in the demo video) | Google Fonts | SIL OFL 1.1 | Demo video captions | not required |
 | Bricolage Grotesque, Fraunces, Libre Franklin, Archivo, Caveat Brush, Atkinson Hyperlegible | Fontsource (`@fontsource/*`) / Google Fonts | SIL OFL 1.1 | `/design-lab` only (`frontend/src/screens/lab/lab.css`) | not required |
 
 ## Citation

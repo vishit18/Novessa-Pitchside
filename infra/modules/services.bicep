@@ -62,7 +62,8 @@ resource mcp 'Microsoft.App/containerApps@2024-03-01' = {
         }
       ]
       scale: {
-        minReplicas: 0
+        // Kept warm for judging: from cold the first MCP call took about 20 s.
+        minReplicas: 1
         maxReplicas: 2
         rules: [{ name: 'http', http: { metadata: { concurrentRequests: '20' } } }]
       }

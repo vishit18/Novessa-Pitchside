@@ -24,7 +24,7 @@
  * 5. Floodlights (baseline)
  *    Type: Barlow Condensed, Inter. Colour: graphite #0D1014, amber #FFB020. Spacing and motion
  *    as the app ships today (docs/07): plates wipe in 150-250ms.
- * 6. Matchday broadcast (1 + 3). VJ's pick for the whole app; colours chosen by him.
+ * 6. Matchday broadcast (1 + 3). Our pick for the whole app.
  *    Matchday's daylight with broadcast graphics on top. Type: Big Shoulders Display 800 caps
  *    (headlines), Figtree (text). Colour: white page #FFFFFF, ink #101418, deep red #C1121F
  *    (buttons, clocks on the page, second viewer tab), signal yellow #FFD100 (inside black plates,

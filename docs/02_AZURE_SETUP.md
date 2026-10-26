@@ -1,6 +1,6 @@
 # Azure setup
 
-Written for VJ (first time on Azure) and for anyone provisioning from this repo (almost everything is code once the basics exist).
+Written for someone new to Azure provisioning this repo (almost everything is code once the basics exist).
 
 ## How Azure is organised (read this once, it clears up 90% of the confusion)
 
@@ -12,7 +12,7 @@ Written for VJ (first time on Azure) and for anyone provisioning from this repo 
 - The hackathon site (innovationstudio.microsoft.com) "project" is just your submission page. It has nothing to do with Azure.
 - **Sentry** isn't a Microsoft product and isn't needed. For monitoring we use Azure Application Insights, which also counts as Azure tech for the judges.
 
-## Step 1 — VJ: account and tools (about 30 minutes)
+## Step 1 — Account and tools (about 30 minutes)
 
 1. Go to **azure.microsoft.com/free** → *Try Azure for free*. Sign in with your Microsoft account. It asks for a card for identity verification; you're not charged unless you manually upgrade. You get **$200 credit for 30 days**.
    - Sign up **today**. 30 days from 19–20 Oct covers the whole judging period (ends 10 Nov) with about a week spare.
@@ -36,7 +36,7 @@ Written for VJ (first time on Azure) and for anyone provisioning from this repo 
    done
    ```
 
-## Step 2 — VJ: Foundry project and models (about 20 minutes)
+## Step 2 — Foundry project and models (about 20 minutes)
 
 Do this one by hand. It's quick, and it's how you'll check model quota.
 
@@ -174,7 +174,7 @@ No code change and no new resource. Prompts and answers are not recorded.
 
 ### Foundry Agent Service (item 5)
 
-1. Your identity needs **Azure AI User** on the Foundry resource (VJ has it as owner; the app's managed identity already has it from `roles.bicep`).
+1. Your identity needs **Azure AI User** on the Foundry resource (the subscription owner has it; the app's managed identity already has it from `roles.bicep`).
 2. Publish the agents. Safe to re-run; only changed prompts get a new version:
    ```bash
    uv run python -m scripts.register_agents --dry-run
