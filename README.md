@@ -260,30 +260,72 @@ We started with Microsoft Fabric and took it out on 25 Oct. It was not part of t
 
 ## Responsible AI
 
-We built this around one worry: a live broadcast puts a model's words on screen before anyone can check them. The sections below say what we did about it, what we measured and what we have not solved.
+We built this around one worry: a live broadcast puts a model's words on screen before anyone can check them. This section follows Microsoft's six Responsible AI principles. Each one says what we did, what we measured and what is still open. Accessibility has its own section straight after, because it is more than one principle's worth of work.
 
-### Made-up match narratives
+| Principle | What we did | Where to see it |
+|---|---|---|
+| Fairness | Invented data checked against real ranges; a viewer's choices change emphasis, never the facts | [`docs/CALIBRATION.md`](docs/CALIBRATION.md) |
+| Reliability and safety | Every number recomputed before it airs; **14 of 14** red-team attacks held; Content Safety on every line; the broadcast carries on if an agent is down | [`docs/REDTEAM.md`](docs/REDTEAM.md), [`docs/EVALUATION.md`](docs/EVALUATION.md) |
+| Privacy and security | No personal data; no keys in the repo or the services; public endpoints rate limited | [ADR 0003](docs/adr/0003-keyless-entra-auth.md) |
+| Inclusiveness | Six languages, four viewer types, an audio-described mode | [Accessibility](#accessibility-and-inclusive-design) |
+| Transparency | Every line can show the numbers behind it, and says when its wording could not be checked | "How this was worked out" in the app |
+| Accountability | Every model call traced; every rejected claim logged; decisions written down | Control Room, Application Insights, `docs/adr/` |
+
+### Fairness
+
+- **The data is invented.** There is no real player's data in the system, so there is no real person for a model to describe. Real footage is a separate, openly licensed dataset kept inside `vision/`.
+- **Invented does not mean neutral.** Our engine encodes our assumptions about football. We simulated 200 matches and measured them against typical top-flight ranges, and published the table, including the measures that sit at the edge of their range ([`docs/CALIBRATION.md`](docs/CALIBRATION.md)).
+- **A viewer's choices change emphasis, not facts.** Every variant is written from one verified analysis. A favourite club raises the priority of that club's overlays by a fixed amount and tags a goal as scored or conceded for the viewer, which changes the tone. The other side's goal is still shown, and the numbers in it are not changed.
+- **Language is the least checked part.** There are six languages, and machine translation is not equally good in all of them. Numbers and names are protected, and the fallback is English text. We have not measured translation quality per language, or compared tone across viewer types in a systematic way. Both would be the next thing to test.
+- **Real footage is one amateur match.** The vision scores (**71%** of labelled player positions found, median position error **1.0 m**) describe that clip only. We do not claim they hold for other pitches, kits or cameras.
+
+### Reliability and safety
 
 - **Numbers never come from a model.** The state engine computes every figure. Agents are handed the numbers and explain them ([ADR 0001](docs/adr/0001-numbers-in-code-language-in-models.md)).
 - **Every claim is recomputed before it airs.** The Verifier runs each number in a draft back through the same stats code. A claim that fails goes back to the Analyst once. If it fails again, the viewer gets a numbers-only card, not a nice-sounding guess.
 - **A story check catches the errors numbers cannot.** The same code checks that the right club and the right minute are named, that a result is not called before full time, and that a booking is not said to change tactics.
-- **Viewers can see the working.** "How this was worked out" and "Why am I seeing this?" open the numbers behind a line. The Control Room shows each rejected claim.
-- **We measured it.** On the same 41 moments and evidence, one prompt aired a story error in 10 and an unsupported number in 3. The newsroom aired none of either, after sending 12 claims back ([`docs/EVALUATION.md`](docs/EVALUATION.md)). Spoiler questions are held by code: nothing after the viewer's minute is looked up.
-- **We attacked it.** A fully hijacked model tried 14 attacks on Ask the Analyst: prompt injection, spoilers, links, markup, prompt extraction, harmful text and off-topic requests. With the guardrails on, all 14 were held ([`docs/REDTEAM.md`](docs/REDTEAM.md)). The run is in CI on every agent change.
+- **Azure AI Content Safety checks every line before it airs,** and every question a viewer asks.
+- **A failing agent does not stop the match.** Every model call has a timeout, one retry, a circuit breaker and a fallback. The Control Room has a switch on each agent plate that turns it off for 30 seconds, so the recovery can be watched.
+- **We measured it.** On the same 41 moments and evidence, one prompt aired a story error in **10** and an unsupported number in **3**. The newsroom aired **none** of either, after sending 12 claims back ([`docs/EVALUATION.md`](docs/EVALUATION.md)). Spoiler questions are held by code: nothing after the viewer's minute is looked up.
+- **We attacked it.** A fully hijacked model tried 14 attacks on Ask the Analyst: prompt injection, spoilers, links, markup, prompt extraction, harmful text and off-topic requests. With the guardrails on, **all 14** were held ([`docs/REDTEAM.md`](docs/REDTEAM.md)). The run is in CI on every agent change.
 
 What is still open. The Verifier checks the English draft, so a translation can still change a clock or a name. It stops a number that appears nowhere in the evidence, but not a false claim built from numbers that happen to be there. If the Scout and the Analyst are both hijacked, harmless off-topic text with no numbers can still air. On Foundry's quality judges the single prompt scored higher on fluency and relevance than the newsroom, so we do not claim the newsroom writes better. It writes safer.
 
-### Data bias
+### Privacy and security
 
-- **The data is invented.** There is no real player's data in the system, so there is no personal data and no real person for a model to describe. Real footage is a separate, openly licensed dataset kept inside `vision/`.
-- **Invented does not mean neutral.** Our engine encodes our assumptions about football. We simulated 200 matches and measured them against typical top-flight ranges, and published the table, including the measures that sit at the edge of their range ([`docs/CALIBRATION.md`](docs/CALIBRATION.md)).
-- **A viewer's choices change emphasis, not facts.** Every variant is written from one verified analysis. A favourite club raises the priority of that club's overlays by a fixed amount and tags a goal as scored or conceded for the viewer, which changes the tone. The other side's goal is still shown, and the numbers in it are not changed.
-- **Language is the least checked part.** There are six languages, and machine translation is not equally good in all of them. Numbers and names are protected, and the fallback is English text. We have not measured translation quality per language, or compared tone across viewer types in a systematic way. Both would be the next thing to test.
-- **Real footage is one amateur match.** The vision scores (71% of labelled player positions found, median position error 1.0 m) describe that clip only. We do not claim they hold for other pitches, kits or cameras.
+- **No personal data.** The matches, clubs and players are invented. The real footage is a pseudonymised open dataset, and we painted out the university marks on the pitch.
+- **No keys to leak.** Services reach each other with Entra ID and managed identity. The repo is public and holds no secret ([ADR 0003](docs/adr/0003-keyless-entra-auth.md)).
+- **Traces hold no viewer text.** A span per model call records the agent, model, latency and outcome. The prompt and the answer are not attached.
+- **No viewer accounts.** A question and its answer are cached by question, minute, viewer type and language, so a repeat costs nothing. No account or viewer ID is kept with them.
+- **Public endpoints are limited.** Each client gets 12 Ask questions a minute and 10 presses of the switch-off button a minute, and the button only lasts 30 seconds. Fresh agent runs are 5 an hour for the whole service. The link is public, so none of this is left open.
+- **We assume the model can be hijacked.** That is what the red team in the previous section tests.
 
-### Accessible for fans with disabilities
+### Inclusiveness
 
-- **Hearing the match.** The audio-described viewer type gives spoken commentary with captions and a bigger ball on the pitch, and its lines are written to be read aloud, saying who and where. Voice runs on Azure AI Speech in all six languages.
+- **Language.** The interface, the on-screen cards, the recaps and the voice work in English, Spanish, French, Arabic, Hindi and Portuguese. Arabic is laid out right to left.
+- **Different fans, different broadcasts.** Four viewer types (analyst, casual, first match, audio-described), plus a favourite club, a followed player or a single number, each get their own explanation of the same moment.
+- **Disability.** See the next section.
+
+### Transparency
+
+- **Viewers can see the working.** "How this was worked out" and "Why am I seeing this?" open the numbers behind a line. Every overlay message carries its source, a verified flag and its evidence ([`docs/05_OVERLAY_PROTOCOL.md`](docs/05_OVERLAY_PROTOCOL.md)).
+- **A card says when it could not be checked.** When the wording failed verification, the answer is labelled "Straight from the numbers: the wording could not be checked".
+- **We publish where we are weaker.** The single prompt beats the newsroom on fluency, translation is unmeasured, and the vision scores come from one clip. Each has its own line in this README.
+- **Credit and changes are on screen.** The real-footage screen shows the dataset, its licence and what we changed.
+
+### Accountability
+
+- **Every model call is traced** in Application Insights with its outcome, and the Control Room shows each rejected claim and what happened next.
+- **Checks run on every change.** Tests, lint and types run in CI on every push. The red team and the evaluation run in CI when agent code, prompts or evaluation data change.
+- **Decisions are written down.** The reasons for the main design choices are in [`docs/adr/`](docs/adr/).
+- **A person can stop an agent.** The switch on each Control Room plate turns one off.
+- **What we did not build.** No human editor approves a line before it airs. The Verifier and the Safety gate are code, a deliberate trade for live speed, so the checks above are what stand between a model and the screen.
+
+## Accessibility and inclusive design
+
+This is the Inclusiveness principle in practice. It covers deaf and hard-of-hearing fans, blind and low-vision fans, fans who cannot use a mouse, and fans who are sensitive to motion.
+
+- **Hearing the match.** The audio-described viewer type gives spoken commentary and a caption strip that keeps the last line on screen between cards, plus a bigger ball on the pitch. Its lines are written to be read aloud, saying who and where. Voice runs on Azure AI Speech in all six languages. If the browser blocks sound until the first tap, a "Tap to hear the commentary" button appears and the waiting line plays on that tap.
 - **Asking without a screen or a keyboard.** Ask the analyst takes typed or spoken questions, and `/` opens it from the keyboard. The catch-up sheet works from the keyboard.
 - **Screen readers.** New cards arrive in a polite live region, so they are announced without grabbing focus. The score is read as the settled number, not the rolling digit. The momentum bar has a text label.
 - **Motion.** `prefers-reduced-motion` turns entrances into a plain fade, and the score digit and the goal sting stop sliding.
@@ -294,20 +336,20 @@ What is still open. The Verifier checks the English draft, so a translation can 
 
 These are measured, not hoped for.
 
-- **Tests:** 252 Python, 88 frontend unit, 16 browser end-to-end. Lint and types run in CI.
-- **Load:** 150 simulated viewers calling the live API's endpoints for five minutes: 32,120 requests, 0 errors, p95 11 ms, scaled from 1 to 3 replicas and back ([`docs/LOAD_TEST.md`](docs/LOAD_TEST.md)).
-- **Newsroom against one prompt:** on the same 41 moments and evidence, a single prompt aired a story error in 10 (a fouler called the victim, a booking said to change tactics, feelings the data cannot show) and an unsupported number in 3. The newsroom aired 0 and 0, after sending 12 back. The single prompt still scores higher on Foundry's fluency and relevance judges; we say so in [`docs/EVALUATION.md`](docs/EVALUATION.md).
-- **Safety:** 14 of 14 red-team attacks held with guardrails on ([`docs/REDTEAM.md`](docs/REDTEAM.md)).
-- **Cost:** running the agents over all three demo matches (94 moments) cost about $0.09 in model tokens. A replay of those matches costs nothing.
-- **Synthetic data:** 200 simulated matches (545,639 events) measured against typical top-flight ranges. All 16 measures with a reference range are inside it or within its sampling error. Chart and table: [`docs/CALIBRATION.md`](docs/CALIBRATION.md).
-- **Live feed:** 19,830 messages sent through a real Event Hub from inside Azure and read back with none lost. Publish to overlay was 140 ms at the 95th percentile at 4x replay and 115 ms at 30x, against a 150 ms budget, measured by a one-off job in the same region. On the deployed API replicas, which also serve traffic, the same figure ran at about 250 ms p95 at 1x, over the budget. In memory it is 51 to 54 ms. The replay you watch does not go through the hub.
+- **Tests: 252** Python, **88** frontend unit, **16** browser end-to-end. Lint and types run in CI.
+- **Load:** **150** simulated viewers calling the live API's endpoints for five minutes: **32,120 requests, 0 errors, p95 11 ms**, scaled from 1 to 3 replicas and back. A second test, with all 150 arriving at once on one replica, also had **0 errors** but stalled for about 15 seconds while the extra replicas started ([`docs/LOAD_TEST.md`](docs/LOAD_TEST.md)).
+- **Newsroom against one prompt:** on the same 41 moments and evidence, a single prompt aired a story error in **10** (a fouler called the victim, a booking said to change tactics, feelings the data cannot show) and an unsupported number in **3**. The newsroom aired **0 and 0**, after sending 12 back. The single prompt still scores higher on Foundry's fluency and relevance judges; we say so in [`docs/EVALUATION.md`](docs/EVALUATION.md).
+- **Safety: 14 of 14** red-team attacks held with guardrails on ([`docs/REDTEAM.md`](docs/REDTEAM.md)).
+- **Cost:** running the agents over all three demo matches (94 moments) cost about **$0.09** in model tokens. A replay of those matches costs nothing.
+- **Synthetic data:** **200** simulated matches (**545,639** events) measured against typical top-flight ranges. All **16** measures with a reference range are inside it or within its sampling error. Chart and table: [`docs/CALIBRATION.md`](docs/CALIBRATION.md).
+- **Live feed:** **19,830** messages sent through a real Event Hub from inside Azure and read back with **none lost**. Publish to overlay was **140 ms** at the 95th percentile at 4x replay and **115 ms** at 30x, against a 150 ms budget, measured by a one-off job in the same region. On the deployed API replicas, which also serve traffic, the same figure ran at about 250 ms p95 at 1x, over the budget. In memory it is **51 to 54 ms**. The replay you watch does not go through the hub.
 - **Agent text:** typically 3 to 5 seconds per step. It attaches after the instant overlay, so the picture never waits.
 - **Real footage,** one 100 second window, scored against the dataset's labels (`data/real/117093_w1890/results.json`):
 
 | Measure | Result |
 |---|---|
-| Players found | 71% of 11,000 labelled positions |
-| Position error | median 1.0 m, 90th percentile 2.3 m |
+| Players found | **71%** of 11,000 labelled positions |
+| Position error | median **1.0 m**, 90th percentile 2.3 m |
 | Player speed error | median 2.9 km/h, top speed within 3.2 km/h |
 
 ## Real footage and credits

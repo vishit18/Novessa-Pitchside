@@ -116,7 +116,7 @@ The Control Room only lists moments the viewer has reached. `t=4640` stops at cl
   - A normal answer to a similar question is a full sentence with a green tick and "Checked against the match data". That contrast is the shot.
   - The switch applies to one API replica. With two replicas, about one question in four reaches the other and gets a normal answer. Record with one replica (see "Keep it ready for the recording").
   - A question someone has asked before comes back from the cache and ignores the switch. Use a fresh question every take.
-  - The switch is capped at 30 seconds and limited to 10 presses a minute for the whole service.
+  - The switch is capped at 30 seconds and limited to 10 presses a minute for each client.
 - **Audio-described scene.** The voice needs a click on the page first. If you see the yellow "Tap to hear the commentary" button, click anywhere and the waiting line plays. The caption strip sits at the bottom of the pitch whenever no card is on screen.
 - **Arabic recap.** Warmed on the live site on 26 Oct, so it opens in well under a second. If the cache is ever cleared the first open takes about 15 seconds, with skeleton bars and "Writing the recap".
 
@@ -149,7 +149,7 @@ Do not warm the chaos question. A repeated question comes back from the cache an
 ## Keep it ready for the recording
 
 1. **One API replica.** The kill state and the "agents finished" state live in memory inside each API replica, so with two replicas the page could poll one while you pressed the switch on the other. On 26 Oct the API was set to min 1, max 3 and tested: eight health reads after a kill all showed the agent switched off, and four fresh questions all came back as plain numbers. Check it is still one before recording: `az containerapp replica list -n ca-api-uirzml34ufpge -g pitchside -o table` should list one row. After a scale-down it takes about five minutes for the second replica to go. Keep min 1 until 10 Nov. (`API_MIN_REPLICAS=1` in `azd env`, so a later `azd up` keeps it.)
-2. **Do not burn the rate limits.** Fresh agent runs are 5 an hour for the whole service, Ask is 12 a minute, the chaos switch 10 a minute. Start the agents once. A retake does not need a new run.
+2. **Do not burn the rate limits.** Fresh agent runs are 5 an hour for the whole service, Ask is 12 a minute per client, the chaos switch 10 a minute per client. Start the agents once. A retake does not need a new run.
 3. **Do the chaos shot last in each take.** The switch lasts 30 seconds. Wait for the plate to return to normal before the next take.
 4. **Choose the exact start minute for each scene in rehearsal** and write it on a sticky note, so every take lands on the same shot.
 5. **Screen set-up.** 1920x1080, 60 fps, browser zoom 125%, bookmarks and other tabs hidden, notifications off. Pick light or dark and keep it for the whole video.
