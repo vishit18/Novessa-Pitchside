@@ -49,6 +49,19 @@ Numbers come from the job's own log output. A first attempt reported the in-memo
 
 `/live/health` on the two API replicas showed overlay p95 of 251.8 ms (a finished full match at 1x, 32,077 messages) and 252.5 ms (a run in progress), p50 about 52 ms, bus hop p95 123 to 159 ms. Both are over the 150 ms budget. These replicas also serve HTTP and WebSocket traffic, which the one-off job does not, and the likely cause is that contention plus the state engine's work on a small container. That cause is a guess and has not been profiled. Viewers on the replay path are not affected, because replay overlays are built in advance and do not go through the hub.
 
+### A sudden crowd with the API at min 1 replica (26 Oct)
+
+After the API was set to min 1, max 3, a script put 150 viewers on it at once. Each one looped over the cheap read endpoints (match, moments, pulse, matches) about ten times a second, for 75 to 90 seconds. It does not open WebSockets and makes no model calls, so it measures the read path only.
+
+| Run | Requests | Errors | p50 | p95 | Notes |
+|---|---|---|---|---|---|
+| Cold start, 1 replica | 55,256 | 0 | 92 ms | 142 ms | Scaled to 3 replicas within about 30 s. A stall in the fourth 15 seconds: most requests waited up to 19.7 s, then it recovered |
+| Again, 3 replicas already warm | 49,834 | 0 | 74 ms | 110 ms | No stall |
+| Cold start again, after scaling back to 1 | 40,196 | 0 | 102 ms | 154 ms | Same stall, from about 45 s: requests waited up to 16 s |
+| 20 viewers on 3 replicas | 3,722 | 0 | 58 ms | 67 ms | |
+
+So no request failed, and the median stayed near 100 ms. The cold start is not clean: for roughly 15 seconds, once the first crowd has pushed the API out to extra replicas, many requests wait for several seconds. It happened both times and did not happen with warm replicas. We did not find the cause. A crowd of 20 does not touch any of this. The earlier run above, where 150 viewers started on one replica, saw p95 rise to 2.1 s, so this is the same weakness, a bit worse in the tail.
+
 ## What this does not measure
 
 - The last hop: the WebSocket from the gateway to a browser, and drawing the overlay. The budget here covers the bus and the overlay builder, which is the part the server controls.

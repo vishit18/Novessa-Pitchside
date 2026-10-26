@@ -31,9 +31,9 @@ Before the first take, click once anywhere on the page. Browsers block sound unt
 | 0:07-0:16 | `/control?match=derby_01` | Scroll so one overlay message in the feed is in shot, large enough to read. | "This is Novessa Pitchside. A made-up league, no real club or player. Every graphic is a timed message a broadcaster can render, built in about 50 milliseconds." | Synthetic data. Machine-readable overlays. |
 | 0:16-0:30 | `/watch?match=derby_01`. Drag to about 01:50 and let it run past 02:00. | The instant overlay lands, then the "Ashford lift the pressure" card. Cut to the Control Room moment queue for that moment, with "verifier: 3/3 claims proven" in the trail. | "A producer agent picks the moment, an analyst explains it, and a verifier recomputes every number before it airs. If a claim fails, the viewer gets plain figures." | Nothing airs unchecked. |
 | 0:30-0:46 | `/split?match=derby_01` (it opens about 40 s before the first goal). Left: Analyst, English. Right: First match, Spanish, voice on. | Play through the 26:47 goal. Left shows pressing halos and evidence chips. Right shows the big direction arrow, no shirt numbers, Spanish text and voice. | "Same moment, two viewers. The analyst gets pressing lines and numbers. The new fan gets the story, in Spanish, out loud." | Your story. |
-| 0:46-0:54 | `/watch?match=derby_01`, drag to about 45:00 | Player focus on Zakaria Tazi: the camera follows and the card shows his rank among forwards. Then pick "Just one number", sprint speed. | "Follow one player all match, or pick the single number you care about." | One player. One number. |
+| 0:46-0:54 | `/watch?match=derby_01`, drag to about 45:00 | Player focus on Zakaria Tazi: the camera follows and the card shows his speed, distance and passes with ranks, such as "#3 of 8". He is a midfielder. Then pick "Just one number", sprint speed. | "Follow one player all match, or pick the single number you care about." | One player. One number. |
 | 0:54-1:06 | `/real` | Play, let a sprint speed appear, scrub the clock once, end on the scorecard (players found 71%, position error about 1 m). Keep the SoccerTrack v2 credit in shot. | "Real video too, from an open amateur dataset: players tracked, speeds measured, scored against its labels. Players are strong. The ball is the weak spot, and we say so." | Real footage, CC BY 4.0. Players found 71%. |
-| 1:06-1:22 | `/control?match=derby_01&t=4640` (77:20) | Open the 77:17 moment: first draft rejected for using club codes, second proven. Press **Switch off for 30 s** on the Analyst plate. Go to the broadcast, press `/` and ask a question nobody has asked before. | "The verifier caught this draft and sent it back. Now I switch the analyst off. The broadcast keeps playing, and a new question gets plain numbers." | Switch an agent off. Nothing breaks. |
+| 1:06-1:22 | `/control?match=derby_01&t=4830` (clock 77:22) | Open the 77:17 moment: first draft rejected for using club codes, second proven. Press **Switch off for 30 s** on the Analyst plate. Go to the broadcast, press `/` and ask a question nobody has asked before. | "The verifier caught this draft and sent it back. Now I switch the analyst off. The broadcast keeps playing, and a new question gets plain numbers." | Switch an agent off. Nothing breaks. |
 | 1:22-1:32 | `/why`, scroll to "What does the work" | Slow scroll so the service names are readable. | "It runs on Microsoft Foundry and Agent Framework, Azure Container Apps, Event Hubs, Cosmos DB, Content Safety, Translator and Speech, with an MCP server. All Bicep." | Foundry. Agent Framework. Azure. |
 | 1:32-1:40 | `/watch?match=derby_01&t=325`. Viewer type: Audio-described. | Wait for the yellow card: the voice plays and the caption stays on screen between cards. | "Every line passes Content Safety. A red team assumes the model is hijacked: 14 of 14 attacks held. And there is an audio-described mode with captions." | Content Safety. 14 of 14 attacks held. |
 | 1:40-1:47 | `/recap?match=derby_01&kind=full_time&persona=analyst&lang=ar` | Show the Arabic recap right to left. | "Recaps in six languages, and other agents can ask for them over A2A." | 6 languages. A2A. |
@@ -46,6 +46,61 @@ uv run python -m scripts.a2a_client https://ca-a2a-uirzml34ufpge.salmonocean-c33
 ```
 
 Run it once before recording and check it answers. If it is slow, record the terminal separately and cut it in, or skip it and keep the spoken line.
+
+### Two clocks (read this before you drag any timeline)
+
+`t=` in a URL is match seconds, counted straight through. The clock on screen stops for half-time stoppage and runs on, so after the break the two differ by about three minutes. The moment you want is in the clock column, the URL needs the seconds column.
+
+| Moment | Clock on screen | `t=` seconds |
+|---|---|---|
+| Pressure shift | 02:00 | 120 |
+| Penalty, then goal | 26:33, 26:47 | 1593, 1607 |
+| Tazi's pass | 45:07 | 2894 |
+| Red card | 71:45 | 4493 |
+| Penalty with the rejected draft | 77:17 | 4825 |
+| Penalty saved | 77:31 | 4839 |
+
+The Control Room only lists moments the viewer has reached. `t=4640` stops at clock 74:10 and the 77:17 moment is not there. Use `t=4830`.
+
+### Before every take (five minutes, do it in this order)
+
+1. **One replica.** `az containerapp replica list -n ca-api-uirzml34ufpge -g pitchside -o table` shows one row. After any crowd it takes about five minutes to get back to one. With two or three replicas the Control Room can read a different replica on every refresh.
+2. **Warm start.** Open `/control?match=derby_01&t=4830`. If the Moments panel says "No moments yet", press **Start the agents**. It takes about 22 seconds and ends on "Moments processed 28 of 28". You should then see 20 moments, newest first, with 77:17 on top. This uses one of the five fresh runs an hour.
+3. **Click once on the page** you are about to record, so the browser allows sound.
+4. **Chaos check.** Do not press the switch in rehearsal more than once or twice. It is rate limited, and the state clears itself after 30 seconds.
+5. **Hard refresh** (Ctrl+Shift+R) each page right before the shot so the clock starts where you expect.
+
+### What you will see, scene by scene (all checked on the live site on 26 Oct)
+
+1. **0:00 Watch, 4x, around 26:20.** The pitch, the score bug at 0-0, then the penalty at 26:33 and the goal at 26:47. The goal band lands first, then the lower third "Wragg scores penalty" and a name tag. At 4x the whole thing passes in about 8 seconds.
+2. **0:07 Control Room overlay feed.** A list of rows (time, slot, headline, who it is for). Click a row and the JSON for that overlay appears under it, with the line "Renders as: lower third, for 00:07 from 77:17". Click the 77:17 row for a readable example.
+3. **0:16 Watch around 01:50, then the moment queue.** The instant overlay lands, then the "why" card (its headline depends on the viewer type). In the Control Room the 02:00 moment is the row "Ashford lift the pressure", marked "Proven".
+4. **0:30 Split view.** Opens at 26:12, with Viewer 1 as "Analyst, English" and Viewer 2 as "First match, Español" already. The Spanish text is automatic. The Spanish voice needs you to switch Viewer 2's commentary on once, and the page click from step 3 of the checklist. The goal at 26:47 is the one to rely on.
+5. **0:46 Player focus.** Zakaria Tazi (ASH-06) is a **midfielder**, not a forward. His card shows speed, distance, passes and shots with ranks, for example "5.54 km, #3 of 8" and "Passes 35/43, #2 of 8". Do not call him a forward.
+6. **0:54 Real footage.** A 100-second window from 31:30 to 33:10, with "Footage: SoccerTrack v2 (CC BY 4.0)" under the video, then the list of passes it found (for example "White player to white team-mate, 23 m, 53 km/h, difficulty 33"). The scorecard is lower on the page: players found 71%, position error about 1 m. Scroll to it before you start talking about it.
+7. **1:06 Control Room at `t=4830`.** The 77:17 moment sits at the top of the list as "Wragg to take the penalty, Proven on retry". Click it and the trail reads, in this order:
+   - "verifier rejected (attempt 1): use club names, never their codes"
+   - "verifier: 3/3 claims proven (attempt 2)"
+   - "narrator text rejected: Viggo Falkman committed the foul; he was not fouled"
+   - "served from cache"
+
+   Then press **Switch off for 30 s** on the Analyst plate and go to the broadcast (see "Switching the Analyst off" below).
+8. **1:22 `/why`, "What does the work".** The list of Azure and Microsoft services with a status dot for each. Scroll slowly. The Event Hubs line says 140 ms p95 in a one-off job and over budget on the busy replicas. That is true, so do not linger on it.
+9. **1:32 Audio-described.** Pick "Audio-described" as the viewer type, start at `t=325`. The yellow card at 05:31 shows "Early caution for Balogun", the voice reads it, and the caption strip stays at the bottom of the pitch after the card fades. If the voice is silent and a yellow "Tap to hear the commentary" button shows, click anywhere.
+10. **1:40 Arabic recap.** The page is right to left. The Arabic recap was opened on the live site on 26 Oct, so it now loads in well under a second. If the cache is ever cleared it shows "Writing the recap" for about 15 seconds first. The key-moments list under the headline is in English, the body and highlights are Arabic.
+11. **1:47 Close.** Wordmark over the broadcast, then the URL.
+
+### If something looks wrong
+
+| You see | Why | What to do |
+|---|---|---|
+| Control Room says "No moments yet" | The agents have not run on this replica, or the API restarted or scaled | Press **Start the agents**, wait 22 s |
+| Control Room counters differ between refreshes | More than one API replica is up | Wait for one replica, refresh |
+| Plate does not turn red when you press the switch | Same cause: you pressed it on one replica and the page read another | Same fix, then press again |
+| The Ask answer is a full sentence while the Analyst is off | The question was asked before and came from the cache, or it reached another replica | Use a new question, check one replica |
+| No voice | Browser blocked sound until a click | Click the page, or the yellow "Tap to hear" button |
+| First Arabic recap shows skeleton bars for 15 s | Cache was cold | Wait, then retake |
+| A page is slow for a few seconds after you start | The API had scaled down to one replica and a lot of people are on it | Wait 30 s and retry |
 
 ### What to expect, and what to do if it does not happen
 
@@ -63,7 +118,7 @@ Run it once before recording and check it answers. If it is slow, record the ter
   - A question someone has asked before comes back from the cache and ignores the switch. Use a fresh question every take.
   - The switch is capped at 30 seconds and limited to 10 presses a minute for the whole service.
 - **Audio-described scene.** The voice needs a click on the page first. If you see the yellow "Tap to hear the commentary" button, click anywhere and the waiting line plays. The caption strip sits at the bottom of the pitch whenever no card is on screen.
-- **Arabic recap.** For `derby_01` only the English recaps and a Hindi casual full-time recap are cached. The Arabic one is not, so it calls the model on first open (a few seconds). Warm it first.
+- **Arabic recap.** Warmed on the live site on 26 Oct, so it opens in well under a second. If the cache is ever cleared the first open takes about 15 seconds, with skeleton bars and "Writing the recap".
 
 ## Warm everything (the day before, and again right before recording)
 
@@ -99,7 +154,7 @@ Do not warm the chaos question. A repeated question comes back from the cache an
 4. **Choose the exact start minute for each scene in rehearsal** and write it on a sticky note, so every take lands on the same shot.
 5. **Screen set-up.** 1920x1080, 60 fps, browser zoom 125%, bookmarks and other tabs hidden, notifications off. Pick light or dark and keep it for the whole video.
 6. **Show the address bar once**, at 0:00 or at the close, so it is clear this is the deployed Azure site and not localhost.
-7. **Read the script aloud with a timer.** Under 1:55 spoken, or cut words.
+7. **Read the script aloud with a timer.** Under 1:45 spoken, or cut words.
 
 ## Edit
 
