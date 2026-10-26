@@ -212,53 +212,55 @@ export function Why() {
       <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-16 px-4 pb-20 pt-4 sm:px-10">
         <AppNav match={MATCH} />
 
-        <header className="flex flex-col gap-4">
-          <h1 className="max-w-[18ch] font-display text-[48px] font-bold leading-[0.92] sm:text-[80px]">
-            Same moment. Two fans. Two broadcasts.
-          </h1>
-          <p className="text-[17px] text-muted">
-            For broadcasters and streaming platforms: one feed in, a broadcast per viewer out.
-          </p>
-        </header>
-
-        <section
-          aria-label="Today, what is missing, what Pitchside adds"
-          className="grid gap-x-8 gap-y-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,2.2fr)]"
-        >
-          <Beat n={1} title="Today">
-            <Fact icon={<StatsIcon />} text="Stats overlays" />
-            <Fact icon={<OneToManyIcon />} text="One broadcast for everyone" />
-            <Fact icon={<MicIcon />} text="One human pundit" />
-          </Beat>
-
-          <Beat n={2} title="Missing">
-            <Gap icon="?" text="Why it happened" />
-            <Gap icon={<PeopleIcon />} text="Told your way" />
-          </Beat>
-
-          <Beat n={3} title="Pitchside adds" wide>
-            <Proof tellings={tellings} />
-            <ol className="mt-6 grid gap-x-6 gap-y-2.5 sm:grid-cols-2">
-              {STAGES.map((s, i) => (
-                <li key={s.name} className="grid grid-cols-[1.5rem_1fr] items-baseline gap-x-2">
-                  <span className="num text-[18px] text-amber">{i + 1}</span>
-                  <span>
-                    <span className="font-display text-[22px] font-semibold leading-none">
-                      {s.name}
-                    </span>
-                    <span className="ms-2 text-[15px] text-text/80">{s.line}</span>
-                  </span>
-                </li>
-              ))}
-            </ol>
-            <p className="mt-5 border-s-2 border-amber ps-3 text-[16px] leading-snug">
-              Every number is checked before it airs. 12 of 41 moments were caught and sent back.
-              One prompt alone got the story wrong in 10 of the same 41.
+        <main className="flex flex-col gap-16">
+          <div className="flex flex-col gap-4">
+            <h1 className="max-w-[18ch] font-display text-[48px] font-bold leading-[0.92] sm:text-[80px]">
+              Same moment. Two fans. Two broadcasts.
+            </h1>
+            <p className="text-[17px] text-muted">
+              For broadcasters and streaming platforms: one feed in, a broadcast per viewer out.
             </p>
-          </Beat>
-        </section>
+          </div>
 
-        <Stack />
+          <section
+            aria-label="Today, what is missing, what Pitchside adds"
+            className="grid gap-x-8 gap-y-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,2.2fr)]"
+          >
+            <Beat n={1} title="Today">
+              <Fact icon={<StatsIcon />} text="Stats overlays" />
+              <Fact icon={<OneToManyIcon />} text="One broadcast for everyone" />
+              <Fact icon={<MicIcon />} text="One human pundit" />
+            </Beat>
+
+            <Beat n={2} title="Missing">
+              <Gap icon="?" text="Why it happened" />
+              <Gap icon={<PeopleIcon />} text="Told your way" />
+            </Beat>
+
+            <Beat n={3} title="Pitchside adds" wide>
+              <Proof tellings={tellings} />
+              <ol className="mt-6 grid gap-x-6 gap-y-2.5 sm:grid-cols-2">
+                {STAGES.map((s, i) => (
+                  <li key={s.name} className="grid grid-cols-[1.5rem_1fr] items-baseline gap-x-2">
+                    <span className="num text-[18px] text-amber">{i + 1}</span>
+                    <span>
+                      <span className="font-display text-[22px] font-semibold leading-none">
+                        {s.name}
+                      </span>
+                      <span className="ms-2 text-[15px] text-text/80">{s.line}</span>
+                    </span>
+                  </li>
+                ))}
+              </ol>
+              <p className="mt-5 border-s-2 border-amber ps-3 text-[16px] leading-snug">
+                Every number is checked before it airs. 12 of 41 moments were caught and sent back.
+                One prompt alone got the story wrong in 10 of the same 41.
+              </p>
+            </Beat>
+          </section>
+
+          <Stack />
+        </main>
 
         <footer className="flex flex-wrap items-center justify-between gap-4 border-t border-hairline pt-6">
           <p className="text-[14px] text-muted">

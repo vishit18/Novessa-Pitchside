@@ -58,13 +58,12 @@ export function HeadToHead() {
         const fmt = (side: 'home' | 'away') =>
           r.pct ? `${side === 'home' ? homePct : 100 - homePct}%` : String(r[side])
         return (
-          <div key={r.key}>
-            <div className="flex items-baseline justify-between">
-              <dd className="num m-0 text-[19px] leading-none">{fmt('home')}</dd>
-              <dt className="text-[13px] text-muted">{t(r.key)}</dt>
-              <dd className="num m-0 text-[19px] leading-none">{fmt('away')}</dd>
-            </div>
-            <div className="mt-1 flex h-[5px] gap-[3px]" aria-hidden>
+          // dt and dd sit directly in the row: a <dl> row may not nest them a level deeper.
+          <div key={r.key} className="grid grid-cols-[auto_1fr_auto] items-baseline">
+            <dd className="num m-0 text-[19px] leading-none">{fmt('home')}</dd>
+            <dt className="text-center text-[13px] text-muted">{t(r.key)}</dt>
+            <dd className="num m-0 text-[19px] leading-none">{fmt('away')}</dd>
+            <div className="col-span-3 mt-1 flex h-[5px] gap-[3px]" aria-hidden>
               {total === 0 ? (
                 <span className="flex-1 bg-text/10" />
               ) : (

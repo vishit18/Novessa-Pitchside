@@ -21,14 +21,13 @@ export function StatBars({ facts, homeColour, awayColour }: Props) {
       </h2>
       <dl className="flex flex-col gap-3.5" dir="ltr">
         {rows.map((r) => (
-          <div key={r.key}>
-            <div className="flex items-baseline justify-between">
-              <dd className="num m-0 text-[22px] leading-none">{formatStat(r, 'home')}</dd>
-              <dt className="text-[13px] text-muted">{r.label}</dt>
-              <dd className="num m-0 text-[22px] leading-none">{formatStat(r, 'away')}</dd>
-            </div>
+          // dt and dd sit directly in the row: a <dl> row may not nest them a level deeper.
+          <div key={r.key} className="grid grid-cols-[auto_1fr_auto] items-baseline">
+            <dd className="num m-0 text-[22px] leading-none">{formatStat(r, 'home')}</dd>
+            <dt className="text-center text-[13px] text-muted">{r.label}</dt>
+            <dd className="num m-0 text-[22px] leading-none">{formatStat(r, 'away')}</dd>
             {/* Nothing either side (0 and 0) is a quiet track, not a half-and-half split. */}
-            <div className="mt-1.5 flex h-[6px] gap-[3px]" aria-hidden>
+            <div className="col-span-3 mt-1.5 flex h-[6px] gap-[3px]" aria-hidden>
               {r.home + r.away === 0 ? (
                 <span className="flex-1 bg-text/10" />
               ) : (

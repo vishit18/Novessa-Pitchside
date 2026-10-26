@@ -129,6 +129,8 @@ export function OverlayFeed({ matchId, upto }: { matchId: string; upto: number |
             <div className="flex min-w-0 flex-col gap-3">
               <Preview o={chosen} />
               <pre
+                // Scrollable, so a keyboard user has to be able to reach it.
+                tabIndex={0}
                 className="max-h-[340px] overflow-auto border border-hairline bg-raised p-3 text-[12px] leading-snug"
                 dir="ltr"
                 aria-label="The overlay message"

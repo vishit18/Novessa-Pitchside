@@ -111,7 +111,10 @@ export function Home() {
 
   return (
     <div className="bg-ink">
-      <section className="relative isolate min-h-[min(100dvh,980px)] overflow-hidden">
+      <section
+        aria-label="Introduction"
+        className="relative isolate min-h-[min(100dvh,980px)] overflow-hidden"
+      >
         <HeroPitch />
         <div className="relative mx-auto flex w-full max-w-[1440px] flex-col px-4 pb-16 pt-4 sm:px-10">
           <AppNav match={MATCH} />

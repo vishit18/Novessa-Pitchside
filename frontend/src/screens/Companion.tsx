@@ -71,12 +71,12 @@ function CompanionBody({ matchId }: { matchId: string }) {
     >
       <h1 className="sr-only">Novessa Pitchside companion</h1>
       <header className="sticky top-0 z-10 flex flex-col gap-2 bg-ink/90 px-4 pb-3 pt-3 backdrop-blur-sm">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0 flex-1">
-            <ScoreBug showMatchLine={false} />
-          </div>
-          <div className="flex shrink-0 flex-col items-end gap-1">
-            <StatusPill />
+        {/* The score bug gets the full width: beside a stack of controls it was squeezed
+            until the away code ran off the end of the plate on a phone. */}
+        <ScoreBug showMatchLine={false} />
+        <div className="flex items-center justify-between gap-3">
+          <StatusPill />
+          <div className="flex items-center gap-1">
             <button
               className="inline-flex min-h-11 items-center px-1 text-[14px] text-muted underline decoration-text/25 underline-offset-4 hover:text-text"
               onClick={() => navigate(withParams('/start', { match: matchId }))}
