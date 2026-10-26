@@ -423,21 +423,22 @@ export function Controls({ transport = true }: { transport?: boolean }) {
 }
 
 /**
- * Connection and playback in one word. "Live" only when connected at normal speed and playing;
- * a viewer at 4x or paused is watching a replay and is told so.
+ * Connection and playback in one word. "Live" only for a session fed live from the event bus,
+ * and only while it is playing; every other viewer is watching a replay and is told so.
  */
 export function StatusPill() {
+  const fromBus = useSession().opts.live === true
   const status = useSessionState((s) => s.status)
   const detail = useSessionState((s) => s.statusDetail)
   const speed = useSessionState((s) => s.speed)
   const paused = useSessionState((s) => s.paused)
   const t = useT()
   const connected = status === 'live'
-  const live = connected && !paused && speed === 1
+  const live = connected && !paused && fromBus
   const label = connected
     ? paused
       ? t('pausedLabel')
-      : speed === 1
+      : fromBus
         ? t('live')
         : `${t('replay')} ${speed}x`
     : t(
