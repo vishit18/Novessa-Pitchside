@@ -26,6 +26,8 @@ The agents at work. Every moment passes the Producer, Analyst, Verifier and Safe
 
 **Fastest:** open the live demo above. Start with Watch, then Side by side, then Control room. Press `/` on the broadcast to ask the analyst a question.
 
+**Accessibility modes:** on Watch, open "Watching as" and pick **Audio-described**, then press **Commentary** to turn the voice on. You get spoken commentary with captions, written to say who and where. **First match** gives plain words and an arrow for the way play is going, **Just one number** keeps a single stat on screen, and the same panel switches language (try العربية for right to left). `/` opens Ask, typed or spoken. Turn on reduced motion in your system settings and the entrances become plain fades.
+
 **On your machine,** in about a minute. You need Python 3.12 with [`uv`](https://docs.astral.sh/uv/), and Node 22.
 
 ```bash
