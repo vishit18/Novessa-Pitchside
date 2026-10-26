@@ -146,7 +146,7 @@ const STACK: Part[] = [
     kind: 'Azure',
     does: 'The live event stream from engine to gateway',
     status: 'proven',
-    note: 'Feeds live viewers (?live=1). Publish to overlay 140 ms p95 inside Azure, 19,830 messages, none lost',
+    note: 'Publish to overlay 140 ms p95 inside Azure, 19,830 messages, none lost',
   },
   {
     name: 'Application Insights',
