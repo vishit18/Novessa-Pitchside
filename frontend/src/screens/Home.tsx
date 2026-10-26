@@ -55,12 +55,12 @@ const STEPS: { name: string; does: string; on: string }[] = [
   {
     name: 'Stream',
     does: 'Every pass, shot, tackle and press arrives the moment it happens.',
-    on: 'Azure Event Hubs, in live mode',
+    on: 'Azure Event Hubs, for the live feed',
   },
   {
     name: 'Measure',
     does: 'Code, not a model, turns events into numbers: momentum, pressure, pass difficulty, speed.',
-    on: 'Instant graphics in under 150 ms',
+    on: 'Instant graphics in about 50 ms, no model call',
   },
   {
     name: 'Pick',

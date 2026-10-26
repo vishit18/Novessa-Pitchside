@@ -348,7 +348,7 @@ Run the checks with `uv run pytest` (about three minutes; 251 pass and one skips
 | Explain why a moment matters | Analyst writes it, Verifier proves it, Control Room shows the trail |
 | Render it beside the match | The overlay protocol, drawn on a 2D pitch and on real footage |
 | Personalise | Four viewer types, favourite club or player, player focus, one number, six languages |
-| Name tags, speed and distance triggers, pass quality, ball and shot speed | Instant overlays from the stats layer, built in under 150 ms (51 to 54 ms p95 in memory) |
+| Name tags, speed and distance triggers, pass quality, ball and shot speed | Instant overlays from the stats layer, built in about 50 ms with no model call (51 to 54 ms p95 in memory) |
 | Auto-eventing from video | `vision/`, scored against ground truth |
 | Control and chaos, pressure, rhythm, milestones, recaps | "Who's on top" panel, state-of-play lines, `/recap` |
 | Synthetic data | A calibrated engine and a published 200-match dataset |

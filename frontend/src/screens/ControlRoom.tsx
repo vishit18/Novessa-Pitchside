@@ -47,7 +47,12 @@ export function ControlRoom({ query }: { query: URLSearchParams }) {
   }, [])
 
   const start = () => void startAgents(matchId).then(refresh)
-  const kill = (agent: string) => void killAgent(agent, KILL_SECONDS)
+  // Ask the Analyst runs as its own agent ("ask"), so the Analyst plate switches both off. Without
+  // this, switching the Analyst off changes nothing a viewer can see when they ask a question.
+  const kill = (agent: string) => {
+    void killAgent(agent, KILL_SECONDS)
+    if (agent === 'analyst') void killAgent('ask', KILL_SECONDS)
+  }
 
   return (
     <main className="flex min-h-dvh w-full flex-col gap-6 px-4 py-5 sm:px-8">

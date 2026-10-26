@@ -41,7 +41,7 @@ const CAPTURED: Telling[] = [
 /** The brief's five stages, one line each. */
 const STAGES: { name: string; line: string }[] = [
   { name: 'Ingest', line: 'Every pass, shot and press, as it happens' },
-  { name: 'Interpret', line: 'Code turns events into numbers in under 150 ms' },
+  { name: 'Interpret', line: 'Code turns events into numbers in about 50 ms, no model call' },
   { name: 'Explain', line: 'Agents say why the moment matters' },
   { name: 'Render', line: 'Timed graphics on the pitch' },
   { name: 'Personalise', line: 'Your style, club, player and language' },
