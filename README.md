@@ -28,12 +28,15 @@ The agents at work. Every moment passes the Producer, Analyst, Verifier and Safe
 
 **Accessibility modes:** on Watch, open "Watching as" and pick **Audio-described**, then press **Commentary** to turn the voice on. You get spoken commentary with captions, written to say who and where. **First match** gives plain words and an arrow for the way play is going, **Just one number** keeps a single stat on screen, and the same panel switches language (try العربية for right to left). `/` opens Ask, typed or spoken. Turn on reduced motion in your system settings and the entrances become plain fades.
 
-**On your machine,** in about a minute. You need Python 3.12 with [`uv`](https://docs.astral.sh/uv/), and Node 22.
+**On your machine,** in about a minute. You need Git, Python 3.12 with [`uv`](https://docs.astral.sh/uv/), and Node 22 or newer. The first install downloads about 650 MB. No `.env` file and no Azure account are needed.
 
 ```bash
+git clone https://github.com/vishit18/Novessa-Pitchside.git
+cd Novessa-Pitchside
+
 # terminal 1: the gateway
 uv sync
-AGENTS=off uv run uvicorn backend.app.main:app --port 8000
+uv run uvicorn backend.app.main:app --port 8000
 
 # terminal 2: the app
 cd frontend
@@ -41,9 +44,11 @@ npm install
 npm run dev
 ```
 
+The same commands work in PowerShell and in bash.
+
 Open http://localhost:5173. The home page says what this is, shows one goal told three ways, and links to every screen. Every page has the same menu.
 
-`AGENTS=off` runs without any Azure account: you get the pitch, the instant overlays, the stats and the recap numbers.
+With no model endpoint set, the agents stay off by themselves: you get the pitch, the instant overlays, the stats and the recap numbers. Ask the analyst and the written recaps need the agents (below), so Ask answers "The analyst is off right now" until then. To force the agents off when an endpoint is set, start the gateway with `AGENTS=off` (bash) or `$env:AGENTS='off'` first (PowerShell).
 
 ### With the agents on
 
@@ -289,7 +294,7 @@ What is still open. The Verifier checks the English draft, so a translation can 
 
 These are measured, not hoped for.
 
-- **Tests:** 258 Python, 88 frontend unit, 16 browser end-to-end. Lint and types run in CI.
+- **Tests:** 252 Python, 88 frontend unit, 16 browser end-to-end. Lint and types run in CI.
 - **Load:** 150 simulated viewers calling the live API's endpoints for five minutes: 32,120 requests, 0 errors, p95 11 ms, scaled from 1 to 3 replicas and back ([`docs/LOAD_TEST.md`](docs/LOAD_TEST.md)).
 - **Newsroom against one prompt:** on the same 41 moments and evidence, a single prompt aired a story error in 10 (a fouler called the victim, a booking said to change tactics, feelings the data cannot show) and an unsupported number in 3. The newsroom aired 0 and 0, after sending 12 back. The single prompt still scores higher on Foundry's fluency and relevance judges; we say so in [`docs/EVALUATION.md`](docs/EVALUATION.md).
 - **Safety:** 14 of 14 red-team attacks held with guardrails on ([`docs/REDTEAM.md`](docs/REDTEAM.md)).
@@ -332,7 +337,7 @@ The detector is RT-DETR (Apache 2.0). We do not use Ultralytics YOLO because of 
 | `data/` | The league, three demo matches and the dataset datasheet ([`data/README.md`](data/README.md)) |
 | `docs/` | Design docs, Azure setup, calibration report, decisions (`adr/`), asset licences |
 
-Run the checks with `uv run pytest`, `uv run ruff check .`, `uv run python -m mypy .`, and in `frontend/` with `npm test`, `npm run lint` and `npm run e2e` (start the gateway with `AGENTS=off` first).
+Run the checks with `uv run pytest` (about three minutes; 251 pass and one skips), `uv run ruff check .` and `uv run python -m mypy .`, and in `frontend/` with `npm test` and `npm run lint`. The browser tests need Chromium once: run `npx playwright install chromium` in `frontend/`, then `npm run e2e`. It starts the gateway and the app itself, or reuses them if they are already running.
 
 ## How it answers the brief
 
