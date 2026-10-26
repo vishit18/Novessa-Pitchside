@@ -1,5 +1,6 @@
 import { useCallback, useEffect, type ReactNode } from 'react'
 import { AskSheet } from '@/components/AskSheet'
+import { CaptionBar, SoundPrompt } from '@/components/Captions'
 import { GoalSting } from '@/components/GoalSting'
 import {
   BallChip,
@@ -92,6 +93,8 @@ function PaneBody({ compact, transport, corner, focus, framed, ask }: Omit<Props
       <div
         className={`absolute inset-x-0 bottom-0 flex flex-col gap-3 p-4 sm:p-6 ${compact ? 'hud-compact' : ''}`}
       >
+        <SoundPrompt />
+        <CaptionBar />
         <div className="flex items-end justify-between gap-4">
           <LowerThird />
           {!compact && !focus && (

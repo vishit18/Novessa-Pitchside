@@ -2,6 +2,7 @@ import { ThemeToggle } from '@/components/ThemeToggle'
 import { storyFeed } from '@/core/feed'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { AskSheet } from '@/components/AskSheet'
+import { SoundPrompt } from '@/components/Captions'
 import { FeedCard } from '@/components/companion/FeedCard'
 import { CatchUpSheet } from '@/components/companion/CatchUpSheet'
 import { ScoreBug, StatusPill } from '@/components/Hud'
@@ -88,6 +89,10 @@ function CompanionBody({ matchId }: { matchId: string }) {
         </div>
         <Timeline narrow />
       </header>
+
+      <div className="px-4">
+        <SoundPrompt />
+      </div>
 
       <section aria-labelledby="feed-h" className="flex-1 px-4 pb-32 pt-2">
         <h2 id="feed-h" className="font-display text-[26px] font-semibold leading-none">
