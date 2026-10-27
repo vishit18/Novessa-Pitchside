@@ -455,8 +455,8 @@ def _cache_key(ctx: MatchContext, question: str, t: float, persona: str, lang: s
     # Grounded answers are cached apart, so switching retrieval on never serves an old answer.
     grounded = "-k" if get_retriever() is not None else ""
     # Answers are shared within a 30-second slice of match time: the numbers barely move.
-    # "ask2": answers from before questions were read in English are not served again.
-    return cache_key(ctx.seed, f"ask2-{digest}-{int(t // 30)}{grounded}", "ask", persona, lang)
+    # "ask3": answers from before the 27 Oct Verifier and Scout fixes are not served again.
+    return cache_key(ctx.seed, f"ask3-{digest}-{int(t // 30)}{grounded}", "ask", persona, lang)
 
 
 async def ask(ctx: MatchContext, question: str, t: float, persona: Persona, lang: str) -> AskAnswer:
