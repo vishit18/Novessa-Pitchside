@@ -71,6 +71,9 @@ export const WATCH = {
     penMissed: 'penalty missed ({n})',
     booked: 'booked',
     rankShort: '#{rank} of {n}',
+    liveNote:
+      'Live off Event Hubs as the engine publishes it. Live means you wait for the next minute.',
+    liveToReplay: 'Watch the replay to scrub',
   },
   es: {
     ms_first_goal: 'Primer gol',
@@ -140,6 +143,9 @@ export const WATCH = {
     penMissed: 'penalti fallado ({n})',
     booked: 'amonestado',
     rankShort: 'n.º {rank} de {n}',
+    liveNote:
+      'En directo desde Event Hubs según lo publica el motor. En directo toca esperar al siguiente minuto.',
+    liveToReplay: 'Ver la repetición para moverte por el partido',
   },
   fr: {
     ms_first_goal: 'Premier but',
@@ -210,6 +216,9 @@ export const WATCH = {
     penMissed: 'penalty manqué ({n})',
     booked: 'averti',
     rankShort: 'n° {rank} sur {n}',
+    liveNote:
+      'En direct depuis Event Hubs, au fil de ce que publie le moteur. En direct, on attend la minute suivante.',
+    liveToReplay: 'Voir la rediffusion pour naviguer',
   },
   ar: {
     ms_first_goal: 'الهدف الأول',
@@ -278,6 +287,8 @@ export const WATCH = {
     penMissed: 'ركلة جزاء ضائعة ({n})',
     booked: 'إنذار',
     rankShort: 'رقم {rank} من {n}',
+    liveNote: 'بث مباشر من Event Hubs كما ينشره المحرك. في البث المباشر تنتظر الدقيقة التالية.',
+    liveToReplay: 'شاهد الإعادة للتنقل في المباراة',
   },
   hi: {
     ms_first_goal: 'पहला गोल',
@@ -346,6 +357,9 @@ export const WATCH = {
     penMissed: 'पेनल्टी चूकी ({n})',
     booked: 'पीला कार्ड',
     rankShort: '{n} में #{rank}',
+    liveNote:
+      'इंजन जैसे ही भेजता है, Event Hubs से लाइव। लाइव में अगले मिनट का इंतज़ार करना होता है।',
+    liveToReplay: 'आगे-पीछे जाने के लिए रीप्ले देखें',
   },
   pt: {
     ms_first_goal: 'Primeiro gol',
@@ -414,5 +428,8 @@ export const WATCH = {
     penMissed: 'pênalti perdido ({n})',
     booked: 'advertido',
     rankShort: '{rank}º de {n}',
+    liveNote:
+      'Ao vivo a partir do Event Hubs, à medida que o motor publica. Ao vivo, espera-se pelo minuto seguinte.',
+    liveToReplay: 'Ver o replay para navegar pela partida',
   },
 }

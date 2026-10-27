@@ -19,6 +19,7 @@ import {
 } from '@/state/profile'
 import type { Session } from '@/state/session'
 import { SessionContext, useLiveSession, useSessionState, useT } from '@/state/useSession'
+import { navigate } from '@/router'
 import { BroadcastPane } from './BroadcastPane'
 
 /** Room the page takes around the monitor at full height: nav, fixture bar, timeline, gaps. */
@@ -76,6 +77,7 @@ export function Broadcast({ query }: { query: URLSearchParams }) {
         matchId={matchId}
         openSheet={() => setSheet(true)}
         sheetOpen={sheet}
+        live={live}
       />
       <WatchingAsSheet open={sheet} onClose={() => setSheet(false)} onChange={change} />
     </SessionContext.Provider>
@@ -87,11 +89,13 @@ function MatchCentre({
   matchId,
   openSheet,
   sheetOpen,
+  live,
 }: {
   session: Session
   matchId: string
   openSheet: () => void
   sheetOpen: boolean
+  live: boolean
 }) {
   const t = useT()
   const lang = useSessionState((s) => s.profile.lang)
@@ -163,7 +167,24 @@ function MatchCentre({
             style={{ maxWidth: `calc((100dvh - ${CHROME_PX}px) * 16 / 9)` }}
           >
             <div className="plate plate-open px-4 py-2.5" style={{ ['--cut' as string]: '10px' }}>
-              <Timeline />
+              {live ? (
+                // Live has no transport: the gateway ignores play, seek and speed, so offer the replay.
+                <div className="flex min-h-9 flex-wrap items-center justify-between gap-x-4 gap-y-1">
+                  <span className="text-[14px] text-muted">{t('liveNote')}</span>
+                  <a
+                    href={`/watch?match=${matchId}&speed=4`}
+                    onClick={(e) => {
+                      e.preventDefault()
+                      navigate(`/watch?match=${matchId}&speed=4`)
+                    }}
+                    className="text-[14px] font-semibold text-amber underline-offset-4 hover:underline"
+                  >
+                    {t('liveToReplay')}
+                  </a>
+                </div>
+              ) : (
+                <Timeline />
+              )}
             </div>
           </div>
         </section>

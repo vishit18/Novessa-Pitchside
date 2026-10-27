@@ -76,6 +76,7 @@ Places worth a look:
 
 | Screen | Link | What to try |
 |---|---|---|
+| Live | `/watch?match=derby_01&live=1` | The same broadcast, fed straight off Event Hubs as the engine publishes it. Live means live: it starts at kick-off at real speed with nothing to scrub, so you wait for the next minute like you would on TV. To jump around, follow "Watch the replay to scrub" under the pitch, or use the Broadcast row below. |
 | Broadcast | `/watch?match=derby_01&speed=4` | Overlays land instantly, the "why" text a moment later. Move the mouse for the timeline: drag to any minute, skip 30 s, change speed, or switch on "Key moments" to mark the goals and cards (it shows the result, so it is off by default). The menu in the corner reaches every other screen. |
 | Split | `/split?match=derby_01` | Two viewers on the same second of the same match: an analyst in English and a first-timer in Spanish. Starts just before the first goal. The pitch itself differs: the analyst sees who is pressing the ball and the two simplest passes, the first-timer a big arrow showing which way the team on the ball is going and "Kestrel Bay FC tiene el balón". Change either viewer with "Viewing as". Under each pane is what that viewer has been told so far. One timeline drives both. |
 | Ask the analyst | press `/` on the broadcast, or Ask on the phone view | Ask anything about the match in any of the six languages, typed or out loud (hold the mic, speak, let go). A Scout agent picks the lookups, code runs them up to your minute only (no spoilers), the Analyst answers, the Verifier checks every number. Open "How this was worked out" to see each number used. |
@@ -147,14 +148,14 @@ flowchart LR
   API -.-> MON
 ```
 
-The path through Event Hubs is the live one: the engine publishes, the gateway consumes. The broadcast you open here is a replay, so anyone can scrub and seek: it reads the same events from a timeline the same state engine prepared in advance. Both paths produce identical overlays, and a test checks it. The numbers always come from the state engine. The agents only explain them.
+The path through Event Hubs is the live one: the engine publishes, the gateway consumes, and `/watch?live=1` shows it. The broadcast you open by default is a replay, so anyone can scrub and seek: it reads the same events from a timeline the same state engine prepared in advance. Both paths produce identical overlays, and a test checks it. The numbers always come from the state engine. The agents only explain them.
 
 | Microsoft technology | Where it is used |
 |---|---|
 | Microsoft Foundry | Two chat models: a small one for the high-volume agents (Producer, Narrator, Localiser, Scout), a reasoning one for the Analyst, Ask and recaps. Foundry's evaluators (`azure-ai-evaluation`) score the output in `scripts/eval_single_vs_multi.py` |
 | Microsoft Agent Framework | The Producer, Analyst, Verifier, Narrator and Gate workflow (`backend/agents/workflow.py`) |
 | Azure AI Translator, Speech, Content Safety | Localiser, Voice and the QA gate, all on the Foundry resource |
-| Azure Event Hubs | The live feed: engine to hub to gateway (`backend/bus/`, `backend/app/live.py`). Publish to overlay was 140 ms p95 in a one-off job at 4x, and nearer 250 ms p95 on the API replicas themselves (`docs/LOAD_TEST.md`). Replays read the prepared timeline |
+| Azure Event Hubs | The live feed: engine to hub to gateway to viewer, for `/watch?live=1` (`backend/bus/`, `backend/app/live.py`). Publish to overlay was 140 ms p95 in a one-off job at 4x, and nearer 250 ms p95 on the API replicas themselves (`docs/LOAD_TEST.md`). Replays read the prepared timeline |
 | Azure Cosmos DB | Verified agent output per match, moment, persona and language |
 | Azure Container Apps and Container Registry | Three apps from one image: the gateway and agents (`api`), our Match Intelligence MCP server (`mcp`) and the Recap Editor as its own A2A agent (`a2a`), plus a manual job that prepares the demo matches. One API replica stays warm (up to three under load), and so do the MCP server and the A2A agent, so nothing a judge calls starts cold. The prep job runs only when started |
 | Azure Static Web Apps | The frontend, built against the live gateway |
