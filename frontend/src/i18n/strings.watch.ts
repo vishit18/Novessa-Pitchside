@@ -74,6 +74,8 @@ export const WATCH = {
     liveNote:
       'Live off Event Hubs as the engine publishes it. Live means you wait for the next minute.',
     liveToReplay: 'Watch the replay to scrub',
+    watchLive: 'Watch live',
+    watchReplay: 'Watch replay',
   },
   es: {
     ms_first_goal: 'Primer gol',
@@ -146,6 +148,8 @@ export const WATCH = {
     liveNote:
       'En directo desde Event Hubs según lo publica el motor. En directo toca esperar al siguiente minuto.',
     liveToReplay: 'Ver la repetición para moverte por el partido',
+    watchLive: 'Ver en directo',
+    watchReplay: 'Ver repetición',
   },
   fr: {
     ms_first_goal: 'Premier but',
@@ -219,6 +223,8 @@ export const WATCH = {
     liveNote:
       'En direct depuis Event Hubs, au fil de ce que publie le moteur. En direct, on attend la minute suivante.',
     liveToReplay: 'Voir la rediffusion pour naviguer',
+    watchLive: 'Voir en direct',
+    watchReplay: 'Voir la rediffusion',
   },
   ar: {
     ms_first_goal: 'الهدف الأول',
@@ -289,6 +295,8 @@ export const WATCH = {
     rankShort: 'رقم {rank} من {n}',
     liveNote: 'بث مباشر من Event Hubs كما ينشره المحرك. في البث المباشر تنتظر الدقيقة التالية.',
     liveToReplay: 'شاهد الإعادة للتنقل في المباراة',
+    watchLive: 'شاهد مباشرة',
+    watchReplay: 'شاهد الإعادة',
   },
   hi: {
     ms_first_goal: 'पहला गोल',
@@ -360,6 +368,8 @@ export const WATCH = {
     liveNote:
       'इंजन जैसे ही भेजता है, Event Hubs से लाइव। लाइव में अगले मिनट का इंतज़ार करना होता है।',
     liveToReplay: 'आगे-पीछे जाने के लिए रीप्ले देखें',
+    watchLive: 'लाइव देखें',
+    watchReplay: 'रीप्ले देखें',
   },
   pt: {
     ms_first_goal: 'Primeiro gol',
@@ -431,5 +441,7 @@ export const WATCH = {
     liveNote:
       'Ao vivo a partir do Event Hubs, à medida que o motor publica. Ao vivo, espera-se pelo minuto seguinte.',
     liveToReplay: 'Ver o replay para navegar pela partida',
+    watchLive: 'Ver ao vivo',
+    watchReplay: 'Ver o replay',
   },
 }

@@ -147,6 +147,21 @@ export function Onboarding({ query }: { query: URLSearchParams }) {
                   Or watch two viewers side by side
                 </button>
               )}
+              {matches && (
+                <button
+                  className="self-start text-[15px] text-amber underline decoration-amber/40 underline-offset-4 hover:decoration-amber"
+                  onClick={() =>
+                    navigate(
+                      withParams('/watch', {
+                        match: matchId ?? matches[0]?.match_id ?? 'derby_01',
+                        live: '1',
+                      }),
+                    )
+                  }
+                >
+                  Or join it live, straight off Event Hubs (no scrubbing)
+                </button>
+              )}
             </Question>
           )}
 

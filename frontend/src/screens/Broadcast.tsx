@@ -135,6 +135,23 @@ function MatchCentre({
               >
                 {t('fullscreen')}
               </button>
+              {/* Live and replay are the same broadcast: live comes off the event bus and cannot seek. */}
+              <button
+                className="flex h-11 items-center gap-2 border border-text px-3 text-[15px] hover:border-amber hover:text-amber"
+                onClick={() =>
+                  navigate(
+                    live ? `/watch?match=${matchId}&speed=4` : `/watch?match=${matchId}&live=1`,
+                  )
+                }
+              >
+                {!live && (
+                  <span
+                    className="size-2 rounded-full bg-chaos shadow-[0_0_8px_var(--color-chaos)]"
+                    aria-hidden="true"
+                  />
+                )}
+                {t(live ? 'watchReplay' : 'watchLive')}
+              </button>
             </div>
           </div>
 
