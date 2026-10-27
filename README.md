@@ -364,7 +364,7 @@ These are measured, not hoped for.
 
 ## Real footage and credits
 
-![The real-footage screen: tracked players on a real match, with a scrubbable match clock and the scorecard against the dataset's labels](docs/img/real-footage.png)
+![The real-footage screen: the dataset credit and licence, then tracked players on a real match with a scrubbable match clock](docs/img/real-footage.png)
 
 Footage: **SoccerTrack v2 (CC BY 4.0)**, an openly licensed dataset of amateur matches on Hugging Face (`atomscott/soccertrack-v2`), used under that licence with credit to its authors. It stays inside `vision/` and is used for exactly two things: showing that auto-eventing works on video, and scoring our output against its labels. It is never used to build or tune the synthetic engine.
 
