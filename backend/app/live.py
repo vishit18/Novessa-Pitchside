@@ -93,6 +93,8 @@ class LiveIngest:
         self._viewers: dict[str, set[asyncio.Queue[ViewerMessage]]] = {}
         # Latest state and player stats per match, so a viewer joining mid-stream starts with them.
         self._latest: dict[str, dict[str, dict[str, Any]]] = {}
+        # How far each live stream has got, kept whether or not anyone is watching.
+        self._t: dict[str, float] = {}
 
     def watch(self, match_id: str) -> asyncio.Queue[ViewerMessage]:
         """A queue that receives this match's live messages, as the consumer reads them."""
@@ -101,6 +103,10 @@ class LiveIngest:
             q.put_nowait((kind, data))
         self._viewers.setdefault(match_id, set()).add(q)
         return q
+
+    def match_time(self, match_id: str) -> float:
+        """How far the live stream has got, in match seconds (0 before the first state tick)."""
+        return self._t.get(match_id, 0.0)
 
     def unwatch(self, match_id: str, q: asyncio.Queue[ViewerMessage]) -> None:
         self._viewers.get(match_id, set()).discard(q)
@@ -132,6 +138,7 @@ class LiveIngest:
         ready = asyncio.Event()
         run = uuid.uuid4().hex[:12]
         self._latest.pop(match_id, None)
+        self._t.pop(match_id, None)
         self._tasks[match_id] = [
             asyncio.create_task(self._consume(match_id, stats, ready, run)),
             asyncio.create_task(self._produce(match_id, stats, speed, ready, until, run)),
@@ -206,6 +213,7 @@ class LiveIngest:
                     _, overlays = builder.feed_frame(TrackingFrame.model_validate(env.payload))
                 done = time.time()
                 stats.consumed += 1
+                self._t[match_id] = env.t_match
                 stats.bus_ms.append((took - env.published_at) * 1000)
                 if overlays:
                     stats.overlays += len(overlays)

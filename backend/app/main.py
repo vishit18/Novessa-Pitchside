@@ -241,6 +241,11 @@ class LiveSession(Session):
         if self.texts:
             self.texts.table(self.match, self.profile.lang)
         q = self.live.watch(match_id)
+        # Joining mid-match: send the story so far, as a replay viewer gets it. The live consumer
+        # builds the same overlays as the prepared timeline, so the timeline is the record.
+        joined_at = self.live.match_time(match_id)
+        if joined_at > 0:
+            await self._backfill(joined_at)
         try:
             while (msg := await q.get()) is not None:
                 kind, data = msg

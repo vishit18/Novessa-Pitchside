@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 
 from backend.app.live import BUDGET_MS, LiveIngest
+from backend.app.main import LIVE_MAX_SPEED
 from backend.app.store import MatchStore
 from backend.bus import Envelope, InMemoryBus
 
@@ -73,3 +74,26 @@ def test_a_live_socket_streams_from_the_bus() -> None:
         assert {"state", "frame"} <= seen
         ws.send_json({"op": "seek", "t": 4000})  # ignored live: nothing breaks
         assert ws.receive_json()["type"] in {"state", "frame", "event", "player_stats", "overlay"}
+
+
+def test_a_late_live_viewer_gets_the_story_so_far() -> None:
+    from fastapi.testclient import TestClient
+
+    from backend.app.main import STORY_KINDS, create_app
+
+    with TestClient(create_app()) as client:
+        app = client.app
+        live: LiveIngest = app.state.live  # type: ignore[attr-defined]
+        portal = client.portal
+        assert portal is not None
+        portal.call(lambda: live.start("derby_01", speed=LIVE_MAX_SPEED, until=900))
+        while live.match_time("derby_01") < 600:
+            portal.call(asyncio.sleep, 0.05)
+        with client.websocket_connect("/ws/matches/derby_01?live=true&persona=casual") as ws:
+            first = [ws.receive_json() for _ in range(5)]
+        story = [
+            m["data"] for m in first if m["type"] == "overlay" and m["data"]["kind"] in STORY_KINDS
+        ]
+        assert story, "a viewer joining at minute 10 should see the story so far"
+        assert all(d["payload"].get("backfill") for d in story)
+        assert all(d["show_at"] < 600 + 5 for d in story)
