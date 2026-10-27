@@ -71,7 +71,7 @@ Create `infra/main.bicep` and modules, referencing the existing Foundry resource
 | Container Apps `mcp`, `a2a` and Job `job-warm` | Consumption, same image as `api`; `mcp` and `a2a` keep one replica warm, the job runs only when started | MCP server, A2A Recap Editor, manual cache-warming job (decided 23 Oct) | free monthly grant covers it |
 | Storage account (Standard LRS, `footage` container) | Standard, anonymous blob read on one container | the real-footage clip, 31 MB (decided 23 Oct) | pence a month |
 | Foundry model usage | pay per token | agents | the main cost; budget ~$40–80 total with caching |
-| Azure AI Search (Person B, item 7, not provisioned yet) | **Free** (50 MB, keyless, API keys off) | league and glossary facts that ground Ask the Analyst | free; one free search service per subscription |
+| Azure AI Search (`srch-uirzml34ufpge`, North Europe, live since 27 Oct) | **Free** (50 MB, keyless, API keys off) | league and glossary facts that ground Ask the Analyst | free; one free search service per subscription |
 
 Rough total for the whole hackathon plus judging: **$60–120**, inside the $200 credit. Check actual spend daily in Cost Management.
 

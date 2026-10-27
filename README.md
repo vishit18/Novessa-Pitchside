@@ -81,7 +81,7 @@ Places worth a look:
 | Live | `/watch?match=derby_01&live=1` | The same broadcast, fed straight off Event Hubs as the engine publishes it. Live means live: it starts at kick-off at real speed with nothing to scrub, so you wait for the next minute like you would on TV. To jump around, follow "Watch the replay to scrub" under the pitch, or use the Broadcast row below. |
 | Broadcast | `/watch?match=derby_01&speed=4` | Overlays land instantly, the "why" text a moment later. Move the mouse for the timeline: drag to any minute, skip 30 s, change speed, or switch on "Key moments" to mark the goals and cards (it shows the result, so it is off by default). The menu in the corner reaches every other screen. |
 | Split | `/split?match=derby_01` | Two viewers on the same second of the same match: an analyst in English and a first-timer in Spanish. Starts just before the first goal. The pitch itself differs: the analyst sees who is pressing the ball and the two simplest passes, the first-timer a big arrow showing which way the team on the ball is going and "Kestrel Bay FC tiene el balón". Change either viewer with "Viewing as". Under each pane is what that viewer has been told so far. One timeline drives both. |
-| Ask the analyst | press `/` on the broadcast, or Ask on the phone view | Ask anything about the match in any of the six languages, typed or out loud (hold the mic, speak, let go). A Scout agent picks the lookups, code runs them up to your minute only (no spoilers), the Analyst answers, the Verifier checks every number. Open "How this was worked out" to see each number used. |
+| Ask the analyst | press `/` on the broadcast, or Ask on the phone view | Ask anything about the match in any of the six languages, typed or out loud (hold the mic, speak, let go). A Scout agent picks the lookups, code runs them up to your minute only (no spoilers), Azure AI Search adds league facts, the Analyst answers, the Verifier checks every number. Open "How this was worked out" to see each number used. |
 | Companion | `/companion?match=derby_01&speed=10` | The phone view, with its own timeline. Tap "What did I miss?" for a spoiler-safe catch-up. |
 | Control Room | `/control?match=derby_01` | The agents at work, the Verifier rejecting a claim, and the chaos switch that kills an agent mid-match. |
 | Recap | `/recap?match=derby_01&kind=full_time` | Half-time and full-time recaps in six languages. |
@@ -155,12 +155,14 @@ The path through Event Hubs is the live one: the engine publishes, the gateway c
 
 Every part that does the work, most work first (the live version is on `/why`):
 
-![What does the work: sixteen parts from the match engine to Blob Storage](docs/img/stack.png)
+![What does the work: eighteen parts from the match engine to Blob Storage](docs/img/stack.png)
 
 | Microsoft technology | Where it is used |
 |---|---|
 | Microsoft Foundry | Two chat models: a small one for the high-volume agents (Producer, Narrator, Localiser, Scout), a reasoning one for the Analyst, Ask and recaps. Foundry's evaluators (`azure-ai-evaluation`) score the output in `scripts/eval_single_vs_multi.py` |
 | Microsoft Agent Framework | The Producer, Analyst, Verifier, Narrator and Gate workflow (`backend/agents/workflow.py`) |
+| Foundry Agent Service | Our prompts are published as versioned agents (`pitchside-producer`, `pitchside-analyst` and the rest, `scripts/register_agents.py`), and the live app calls them by reference. Each version carries the hash of its prompt, so a prompt edited without re-publishing is never called; that agent goes straight to the model instead (`backend/agents/foundry_agents.py`). The Scout stays on direct calls, where its output is more reliable |
+| Azure AI Search | Grounds Ask the Analyst in 177 league facts: clubs, squads, players and what each metric means (`backend/agents/knowledge.py`, `scripts/index_knowledge.py`). Keyless, free tier. The index holds no match results, so it cannot spoil a match |
 | Azure AI Translator, Speech, Content Safety | Localiser, Voice and the QA gate, all on the Foundry resource |
 | Azure Event Hubs | The live feed: engine to hub to gateway to viewer, for `/watch?live=1` (`backend/bus/`, `backend/app/live.py`). Publish to overlay was 140 ms p95 inside Azure at 4x, 19,830 messages, none lost (`docs/LOAD_TEST.md`). Replays read the prepared timeline |
 | Azure Cosmos DB | Verified agent output per match, moment, persona and language |
@@ -222,7 +224,9 @@ The agents write a small set of variants per moment, one for each viewer type an
 flowchart LR
   Q["Question and the viewer's own match minute"] --> SC["Scout picks the lookups"]
   SC --> RUN["Code runs them, clipped to that minute"]
+  Q --> KB["Azure AI Search: league facts"]
   RUN --> AN["Analyst answers from the evidence"]
+  KB --> AN
   AN --> VF{"Verifier: every number and scoreline match?"}
   VF -->|no, once| AN
   VF -->|yes| GR["Guardrails and Content Safety"]
@@ -231,7 +235,7 @@ flowchart LR
   NO --> OUT
 ```
 
-The clip to the viewer's minute is code, not a prompt. Nothing after that minute is ever looked up, whatever the Scout asks for, so a question cannot spoil the match.
+The clip to the viewer's minute is code, not a prompt. Nothing after that minute is ever looked up, whatever the Scout asks for, so a question cannot spoil the match. The league facts from Azure AI Search are static (who a player is, what a metric means) and hold no results.
 
 ### Real footage
 

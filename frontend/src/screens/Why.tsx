@@ -93,6 +93,13 @@ const STACK: Part[] = [
     note: 'One workflow, with a retry edge from Verifier back to Analyst',
   },
   {
+    name: 'Foundry Agent Service',
+    kind: 'Azure',
+    does: 'Our prompts run as versioned agents: Producer, Analyst, Narrator, Localiser, Recap, Ask',
+    status: 'live',
+    note: 'Each version carries its prompt hash, so an edited prompt never runs stale',
+  },
+  {
     name: 'Producer',
     kind: 'Agent',
     does: 'Picks which moments air, and drops the rest',
@@ -126,6 +133,13 @@ const STACK: Part[] = [
     does: 'Half and full-time stories, also offered to other agents over A2A',
     status: 'live',
     note: 'Every number must be in a fact sheet computed in code',
+  },
+  {
+    name: 'Azure AI Search',
+    kind: 'Azure',
+    does: 'Grounds Ask the Analyst in league facts: clubs, players, what each metric means',
+    status: 'live',
+    note: '177 facts, no match results in them, so a lookup can never spoil the match',
   },
   {
     name: 'Azure Cosmos DB',
