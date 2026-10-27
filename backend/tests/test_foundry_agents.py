@@ -129,9 +129,9 @@ def test_output_text_reads_the_message() -> None:
 
 
 async def test_a_registered_agent_is_called_by_reference() -> None:
-    foundry = Foundry(agent_json("scout"))
+    foundry = Foundry(agent_json("producer"))
     t, direct = transport(foundry)
-    spec = SPECS["scout"]
+    spec = SPECS["producer"]
     out = await t.chat(spec.model, spec.instructions, "question JSON", 5.0)
     assert json.loads(out) == {"via": "agent"}
     assert direct.calls == 0
@@ -144,25 +144,33 @@ async def test_a_registered_agent_is_called_by_reference() -> None:
     assert sum(r.method == "GET" for r in foundry.requests) == 1
 
 
-@pytest.mark.parametrize("agent", [None, agent_json("scout", sha="f" * 16)])
+@pytest.mark.parametrize("agent", [None, agent_json("producer", sha="f" * 16)])
 async def test_missing_or_stale_agents_go_direct(agent: dict[str, Any] | None) -> None:
     t, direct = transport(Foundry(agent))
-    spec = SPECS["scout"]
+    spec = SPECS["producer"]
     assert json.loads(await t.chat(spec.model, spec.instructions, "q", 5.0)) == {"via": "direct"}
     assert direct.calls == 1
 
 
 async def test_unknown_prompts_and_models_go_direct() -> None:
-    foundry = Foundry(agent_json("scout"))
+    foundry = Foundry(agent_json("producer"))
     t, direct = transport(foundry)
     await t.chat("chat-fast", "some other system prompt", "q", 5.0)
-    await t.chat("not-the-model", SPECS["scout"].instructions, "q", 5.0)
+    await t.chat("not-the-model", SPECS["producer"].instructions, "q", 5.0)
     assert direct.calls == 2 and foundry.requests == []
 
 
-async def test_a_failed_call_raises_then_goes_direct_for_a_while() -> None:
-    t, _ = transport(Foundry(agent_json("scout"), fail_responses=True))
+async def test_the_scout_is_registered_but_called_directly() -> None:
+    foundry = Foundry(agent_json("scout"))
+    t, direct = transport(foundry)
     spec = SPECS["scout"]
+    assert json.loads(await t.chat(spec.model, spec.instructions, "q", 5.0)) == {"via": "direct"}
+    assert direct.calls == 1 and foundry.requests == []
+
+
+async def test_a_failed_call_raises_then_goes_direct_for_a_while() -> None:
+    t, _ = transport(Foundry(agent_json("producer"), fail_responses=True))
+    spec = SPECS["producer"]
     with pytest.raises(httpx.HTTPStatusError):
         await t.chat(spec.model, spec.instructions, "q", 5.0)
     assert json.loads(await t.chat(spec.model, spec.instructions, "q", 5.0)) == {"via": "direct"}

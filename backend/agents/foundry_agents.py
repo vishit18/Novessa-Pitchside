@@ -47,6 +47,9 @@ AGENTS: dict[str, str] = {
     "scout": "fast",
     "ask": "strong",
 }
+# Registered, but called on the model directly. Through the Responses endpoint the Scout
+# returns several JSON objects back to back (4 of 4 on 27 Oct), which fails validation.
+DIRECT_ONLY = frozenset({"scout"})
 DESCRIPTIONS = {
     "producer": "Decides which moments go on air, in which slot and for how long.",
     "analyst": "Explains why a moment matters, as claims tied to computed numbers.",
@@ -154,7 +157,7 @@ class AgentServiceTransport:
         self.direct = direct
         self.usage = direct.usage
         self.endpoint = (endpoint or os.environ["FOUNDRY_PROJECT_ENDPOINT"]).rstrip("/")
-        self.by_prompt = {s.instructions: s for s in agent_specs()}
+        self.by_prompt = {s.instructions: s for s in agent_specs() if s.stem not in DIRECT_ONLY}
         self._checked: dict[str, str | None] = {}  # agent name -> version, None if stale
         self._down_until: dict[str, float] = {}
         self._credential: DefaultAzureCredential | None = None
