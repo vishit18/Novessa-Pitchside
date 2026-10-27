@@ -13,5 +13,5 @@ The live feed from engine to gateway should be a real message stream in Azure, a
 ## Consequences
 
 - The same tests run against both versions of the feed.
-- Publish-to-overlay latency is measured per message, and through a real hub from a laptop it came to p95 177 ms against a 150 ms budget. It still needs measuring from inside Azure.
+- Publish-to-overlay latency is measured per message, and through a real hub from a laptop it came to p95 177 ms against a 150 ms budget. Measured from inside Azure on 23 Oct: 140 ms p95 at 4x in a one-off job beside the API, but about 250 ms p95 on the API replica itself at 1x, which also serves viewers ([`docs/LOAD_TEST.md`](../LOAD_TEST.md)).
 - No checkpoint store, so a restarted consumer misses what it was not listening to. That is acceptable for a live feed.
