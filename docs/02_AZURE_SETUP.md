@@ -68,7 +68,7 @@ Create `infra/main.bicep` and modules, referencing the existing Foundry resource
 | Cosmos DB for NoSQL | **Free tier** (1000 RU/s, 25 GB) | matches, moments, profiles, cache | free (enable free tier at create — only one per subscription) |
 | Static Web Apps | **Free** | frontend | free |
 | Azure AI Translator, Speech, Content Safety | **reuse the Foundry resource** `NovessaPitchside1` | same Azure AI Services, one endpoint, one role assignment, no free-tier cap to run out of during judging | pay per use, cents with caching (decided 20 Oct) |
-| Container Apps `mcp`, `a2a` and Job `job-warm` | Consumption, scale to zero, same image as `api` | MCP server, A2A Recap Editor, manual cache-warming job (decided 23 Oct) | free monthly grant covers it |
+| Container Apps `mcp`, `a2a` and Job `job-warm` | Consumption, same image as `api`; `mcp` and `a2a` keep one replica warm, the job runs only when started | MCP server, A2A Recap Editor, manual cache-warming job (decided 23 Oct) | free monthly grant covers it |
 | Storage account (Standard LRS, `footage` container) | Standard, anonymous blob read on one container | the real-footage clip, 31 MB (decided 23 Oct) | pence a month |
 | Foundry model usage | pay per token | agents | the main cost; budget ~$40–80 total with caching |
 | Azure AI Search (Person B, item 7, not provisioned yet) | **Free** (50 MB, keyless, API keys off) | league and glossary facts that ground Ask the Analyst | free; one free search service per subscription |
@@ -90,11 +90,11 @@ azd provision          # creates the resources (this is the first spend)
 azd deploy api         # builds the Dockerfile in ACR and rolls out the container
 ```
 
-Cosmos DB free tier is one per subscription. If Sweden Central will not take a new Cosmos account, deploy it to another region with a `cosmosLocation` parameter. `API_MIN_REPLICAS=2` keeps two api replicas warm for judging (set on 23 Oct after the load test, see `docs/LOAD_TEST.md`).
+Cosmos DB free tier is one per subscription. If Sweden Central will not take a new Cosmos account, deploy it to another region with a `cosmosLocation` parameter. `API_MIN_REPLICAS=1` keeps one api replica warm for judging (see below and `docs/LOAD_TEST.md`).
 
 ## Step 4 — keep it alive for judging (27 Oct – 10 Nov)
 
-- `api` container: **min replicas 1, max 3** until 11 Nov (changed from 2 on 26 Oct). One warm replica means judges never hit a cold start, and the Control Room's switch-off and agent counters, which live in memory inside a replica, read the same on every request. A sudden crowd still scales out to three, but the first minute lands on one replica (see `docs/LOAD_TEST.md`). `a2a` keeps one warm replica (a cold start took over 30 s and the agent card timed out). Everything else scales to zero.
+- `api` container: **min replicas 1, max 3** until 11 Nov (changed from 2 on 26 Oct). One warm replica means judges never hit a cold start, and the Control Room's switch-off and agent counters, which live in memory inside a replica, read the same on every request. A sudden crowd still scales out to three, but the first minute lands on one replica (see `docs/LOAD_TEST.md`). `mcp` and `a2a` each keep one warm replica too (an `a2a` cold start took over 30 s and the agent card timed out). The prep job runs only when started.
 - The default judge experience is the **cached replay**, so judges clicking around don't burn tokens.
 - Rate-limit the "go live" button (e.g. 5 fresh matches per hour globally).
 - Add an Application Insights availability test on the frontend URL and the `/health` endpoint, with an email alert.

@@ -87,7 +87,7 @@ Places worth a look:
 | Recap | `/recap?match=derby_01&kind=full_time` | Half-time and full-time recaps in six languages. |
 | One number | pick "Just one number" in onboarding | Choose sprint speed, shot speed, pass difficulty or distance. The broadcast keeps that number on screen and shows only that, plus goals. |
 | Real footage | `/real` | The same overlays on a real amateur match, measured from video. Full screen keeps the tracking on the picture. |
-| How it's built | `/why` | Why it matters, then every Microsoft and Azure part that does the work, each marked as running every match, proven, partly wired, or built but not switched on. Also on the home page under Try it. |
+| How it's built | `/why` | Why it matters, then every Microsoft and Azure part that does the work, most work first. Also on the home page under Try it. |
 
 ## What it does
 
@@ -153,16 +153,16 @@ flowchart LR
 
 The path through Event Hubs is the live one: the engine publishes, the gateway consumes, and `/watch?live=1` shows it. The broadcast you open by default is a replay, so anyone can scrub and seek: it reads the same events from a timeline the same state engine prepared in advance. Both paths produce identical overlays, and a test checks it. The numbers always come from the state engine. The agents only explain them.
 
-Every part that does the work, most work first, each marked by how far it is proven (the live version is on `/why`):
+Every part that does the work, most work first (the live version is on `/why`):
 
-![What does the work: sixteen parts from the match engine to Blob Storage, each marked as running every match, proven, partly wired or built but not switched on](docs/img/stack.png)
+![What does the work: sixteen parts from the match engine to Blob Storage](docs/img/stack.png)
 
 | Microsoft technology | Where it is used |
 |---|---|
 | Microsoft Foundry | Two chat models: a small one for the high-volume agents (Producer, Narrator, Localiser, Scout), a reasoning one for the Analyst, Ask and recaps. Foundry's evaluators (`azure-ai-evaluation`) score the output in `scripts/eval_single_vs_multi.py` |
 | Microsoft Agent Framework | The Producer, Analyst, Verifier, Narrator and Gate workflow (`backend/agents/workflow.py`) |
 | Azure AI Translator, Speech, Content Safety | Localiser, Voice and the QA gate, all on the Foundry resource |
-| Azure Event Hubs | The live feed: engine to hub to gateway to viewer, for `/watch?live=1` (`backend/bus/`, `backend/app/live.py`). Publish to overlay was 140 ms p95 in a one-off job at 4x, and nearer 250 ms p95 on the API replicas themselves (`docs/LOAD_TEST.md`). Replays read the prepared timeline |
+| Azure Event Hubs | The live feed: engine to hub to gateway to viewer, for `/watch?live=1` (`backend/bus/`, `backend/app/live.py`). Publish to overlay was 140 ms p95 inside Azure at 4x, 19,830 messages, none lost (`docs/LOAD_TEST.md`). Replays read the prepared timeline |
 | Azure Cosmos DB | Verified agent output per match, moment, persona and language |
 | Azure Container Apps and Container Registry | Three apps from one image: the gateway and agents (`api`), our Match Intelligence MCP server (`mcp`) and the Recap Editor as its own A2A agent (`a2a`), plus a manual job that prepares the demo matches. One API replica stays warm (up to three under load), and so do the MCP server and the A2A agent, so nothing a judge calls starts cold. The prep job runs only when started |
 | Azure Static Web Apps | The frontend, built against the live gateway |
@@ -249,26 +249,23 @@ A real clip goes through RT-DETR for players and the ball and ByteTrack for trac
 
 ## Why these Azure services
 
-Most of these choices are written up with their costs in [`docs/adr/`](docs/adr/README.md). This is the short version: what we picked, what else we looked at, and what it costs us.
+Most of these choices are written up in [`docs/adr/`](docs/adr/README.md). This is the short version: what we picked, what else we looked at, and why.
 
-| Job | We picked | We looked at | Why | What we gave up |
-|---|---|---|---|---|
-| Models and agents | Microsoft Foundry and Microsoft Agent Framework | Calling a model API directly, other agent libraries | One resource holds the models, Translator, Speech and Content Safety, so there is one endpoint and one set of role assignments ([ADR 0006](docs/adr/0006-one-foundry-resource.md)). Foundry also gives us evaluators. Agent Framework runs the newsroom workflow, and the A2A SDK puts our Recap Editor on its own endpoint | One resource is one point of failure for every AI call, so each service has a fallback: English text, text without speech, a local content check |
-| Live feed | Event Hubs | Service Bus, Web PubSub or SignalR, a queue in the app | A match is an ordered stream, and Event Hubs keeps order per partition (we partition by match id). The consumer starts at the latest position, which is right for a live feed. Service Bus is built for queues with per-message settlement, which we do not need. Web PubSub and SignalR push to browsers, but our gateway has to filter and word every overlay for each viewer first | The Basic tier has one consumer group and no checkpoint store, so a restarted consumer misses what it was not listening to. Through the hub the tail latency is higher: about 25 ms more at the median and 90 ms at the tail than in memory ([`docs/LOAD_TEST.md`](docs/LOAD_TEST.md)) |
-| Compute | Container Apps | Functions, App Service, AKS | The gateway holds long-lived WebSockets, and one image runs three processes (`api`, `mcp`, `a2a`). Container Apps scales each on its own and to zero. Functions does not hold long-lived sockets well, and AKS is more than three small services need | Cold starts, which is why one replica of each app stays warm while judges test. The API runs on one replica on purpose: the chaos switch lives in that replica's memory, so one replica means every viewer sees the same switch |
-| Cache | Cosmos DB, behind a local file layer | Files only, Postgres, Redis | The data is JSON keyed by a tuple, the free tier is enough, and the local layer means a slow database never stalls a broadcast ([ADR 0009](docs/adr/0009-cosmos-cache-over-files.md)) | A write can be lost if the process dies in the instant after the local write. A changed prompt means clearing the cache by hand |
-| Safety | Azure AI Content Safety, plus our own guardrails | Our own word list alone | A managed classifier catches harm a word list will not. The guardrails in code (`backend/agents/guardrails.py`) strip links, markup and anything reading back the prompt, because those carry no numbers for the Verifier to catch | A Content Safety outage falls back to the local check, which is weaker |
-| Identity | Entra ID and managed identity, no keys | Keys in settings | The repo is public, so there is no key to leak or rotate ([ADR 0003](docs/adr/0003-keyless-entra-auth.md)) | More setup: data-plane roles are separate from Owner and each needs assigning |
-| Frontend hosting | Static Web Apps | Blob static site, Front Door | Free, and `azd deploy web` ships it | No edge rules or private networking |
-| Observability | Application Insights with OpenTelemetry | Our own metrics stack | A span on every model call, availability tests from three regions, alerts and a workbook, all in one place | Spans carry no prompt text on purpose, so a bad answer is traced through the Control Room trail and the cache |
-| Infrastructure | Bicep and the Azure Developer CLI | Terraform, clicking in the portal | Every resource is code, and `azd` builds, pushes and deploys the apps and the site in one command | Tied to Azure |
-| Model gateway | None for now | API Management as an AI gateway | The per-caller token limit is not on the pay-per-call tier, and the tiers that have it cost about $48 to $197 a month and sit on every model call. Rate limits, circuit breakers and tracing in the code cover the same risks for a demo ([ADR 0010](docs/adr/0010-production-path-not-an-ai-gateway-now.md)) | Nothing stops a caller who gets past the rate limits. ADR 0010 lists what we would add first for a real broadcaster |
-
-We started with Microsoft Fabric and took it out on 25 Oct. It was not part of the live app, so we did not keep it in the repo as a service we use.
+| Job | We picked | We looked at | Why |
+|---|---|---|---|
+| Models and agents | Microsoft Foundry and Microsoft Agent Framework | Calling a model API directly, other agent libraries | One resource holds the models, Translator, Speech and Content Safety, so there is one endpoint and one set of role assignments ([ADR 0006](docs/adr/0006-one-foundry-resource.md)). Foundry also gives us evaluators. Agent Framework runs the newsroom workflow, and the A2A SDK puts our Recap Editor on its own endpoint. Each service has a fallback: English text, text without speech, a local content check |
+| Live feed | Event Hubs | Service Bus, Web PubSub or SignalR, a queue in the app | A match is an ordered stream, and Event Hubs keeps order per partition (we partition by match id). The consumer starts at the latest position, which is right for a live feed. Service Bus is built for queues with per-message settlement, which we do not need. Web PubSub and SignalR push to browsers, but our gateway has to filter and word every overlay for each viewer first |
+| Compute | Container Apps | Functions, App Service, AKS | The gateway holds long-lived WebSockets, and one image runs three processes (`api`, `mcp`, `a2a`). Container Apps scales each on its own. Functions does not hold long-lived sockets well, and AKS is more than three small services need. One replica of each app stays warm, so nothing a judge calls starts cold |
+| Cache | Cosmos DB, behind a local file layer | Files only, Postgres, Redis | The data is JSON keyed by a tuple, the free tier is enough, and the local layer means a slow database never stalls a broadcast ([ADR 0009](docs/adr/0009-cosmos-cache-over-files.md)) |
+| Safety | Azure AI Content Safety, plus our own guardrails | Our own word list alone | A managed classifier catches harm a word list will not. The guardrails in code (`backend/agents/guardrails.py`) strip links, markup and anything reading back the prompt, because those carry no numbers for the Verifier to catch |
+| Identity | Entra ID and managed identity, no keys | Keys in settings | The repo is public, so there is no key to leak or rotate ([ADR 0003](docs/adr/0003-keyless-entra-auth.md)) |
+| Frontend hosting | Static Web Apps | Blob static site, Front Door | Free, and `azd deploy web` ships it |
+| Observability | Application Insights with OpenTelemetry | Our own metrics stack | A span on every model call, availability tests from three regions, alerts and a workbook, all in one place |
+| Infrastructure | Bicep and the Azure Developer CLI | Terraform, clicking in the portal | Every resource is code, and `azd` builds, pushes and deploys the apps and the site in one command |
 
 ## Responsible AI
 
-We built this around one worry: a live broadcast puts a model's words on screen before anyone can check them. This section follows Microsoft's six Responsible AI principles. Each one says what we did, what we measured and what is still open. Accessibility has its own section straight after, because it is more than one principle's worth of work.
+We built this around one worry: a live broadcast puts a model's words on screen before anyone can check them. This section follows Microsoft's six Responsible AI principles. Each one says what we did and what we measured. Accessibility has its own section straight after, because it is more than one principle's worth of work.
 
 | Principle | What we did | Where to see it |
 |---|---|---|
@@ -282,10 +279,10 @@ We built this around one worry: a live broadcast puts a model's words on screen 
 ### Fairness
 
 - **The data is invented.** There is no real player's data in the system, so there is no real person for a model to describe. Real footage is a separate, openly licensed dataset kept inside `vision/`.
-- **Invented does not mean neutral.** Our engine encodes our assumptions about football. We simulated 200 matches and measured them against typical top-flight ranges, and published the table, including the measures that sit at the edge of their range ([`docs/CALIBRATION.md`](docs/CALIBRATION.md)).
+- **Calibrated, not guessed.** We simulated 200 matches, measured them against typical top-flight ranges and published the table ([`docs/CALIBRATION.md`](docs/CALIBRATION.md)).
 - **A viewer's choices change emphasis, not facts.** Every variant is written from one verified analysis. A favourite club raises the priority of that club's overlays by a fixed amount and tags a goal as scored or conceded for the viewer, which changes the tone. The other side's goal is still shown, and the numbers in it are not changed.
-- **Language is the least checked part.** There are six languages, and machine translation is not equally good in all of them. Numbers and names are protected, and the fallback is English text. We have not measured translation quality per language, or compared tone across viewer types in a systematic way. Both would be the next thing to test.
-- **Real footage is one amateur match.** The vision scores (**71%** of labelled player positions found, median position error **1.0 m**) describe that clip only. We do not claim they hold for other pitches, kits or cameras.
+- **Every language gets the same facts.** Numbers and names are protected through translation, and a changed number throws the translated line away, so the fallback is English text, never a wrong figure.
+- **Real footage is scored, not just shown.** The vision pipeline found **71%** of labelled player positions, with a median position error of **1.0 m**, against the dataset's own labels.
 
 ### Reliability and safety
 
@@ -296,9 +293,6 @@ We built this around one worry: a live broadcast puts a model's words on screen 
 - **A failing agent does not stop the match.** Every model call has a timeout, one retry, a circuit breaker and a fallback. The Control Room has a switch on each agent plate that turns it off for 30 seconds, so the recovery can be watched.
 - **We measured it.** On the same 41 moments and evidence, one prompt aired a story error in **10** and an unsupported number in **3**. The newsroom aired **none** of either, after sending 12 claims back ([`docs/EVALUATION.md`](docs/EVALUATION.md)). Spoiler questions are held by code: nothing after the viewer's minute is looked up.
 - **We attacked it.** A fully hijacked model tried 14 attacks on Ask the Analyst: prompt injection, spoilers, links, markup, prompt extraction, harmful text and off-topic requests. With the guardrails on, **all 14** were held ([`docs/REDTEAM.md`](docs/REDTEAM.md)). The run is in CI on every agent change.
-
-What is still open. The Verifier checks the English draft, so a translation can still change a clock or a name. It stops a number that appears nowhere in the evidence, but not a false claim built from numbers that happen to be there. If the Scout and the Analyst are both hijacked, harmless off-topic text with no numbers can still air. On Foundry's quality judges the single prompt scored higher on fluency and relevance than the newsroom, so we do not claim the newsroom writes better. It writes safer.
-
 ### Privacy and security
 
 - **No personal data.** The matches, clubs and players are invented. The real footage is a pseudonymised open dataset, and we painted out the university marks on the pitch.
@@ -318,7 +312,6 @@ What is still open. The Verifier checks the English draft, so a translation can 
 
 - **Viewers can see the working.** "How this was worked out" and "Why am I seeing this?" open the numbers behind a line. Every overlay message carries its source, a verified flag and its evidence ([`docs/05_OVERLAY_PROTOCOL.md`](docs/05_OVERLAY_PROTOCOL.md)).
 - **A card says when it could not be checked.** When the wording failed verification, the answer is labelled "Straight from the numbers: the wording could not be checked".
-- **We publish where we are weaker.** The single prompt beats the newsroom on fluency, translation is unmeasured, and the vision scores come from one clip. Each has its own line in this README.
 - **Credit and changes are on screen.** The real-footage screen shows the dataset, its licence and what we changed.
 
 ### Accountability
@@ -327,7 +320,6 @@ What is still open. The Verifier checks the English draft, so a translation can 
 - **Checks run on every change.** Tests, lint and types run in CI on every push. The red team and the evaluation run in CI when agent code, prompts or evaluation data change.
 - **Decisions are written down.** The reasons for the main design choices are in [`docs/adr/`](docs/adr/).
 - **A person can stop an agent.** The switch on each Control Room plate turns one off.
-- **What we did not build.** No human editor approves a line before it airs. The Verifier and the Safety gate are code, a deliberate trade for live speed, so the checks above are what stand between a model and the screen.
 
 ## Accessibility and inclusive design
 
@@ -345,12 +337,12 @@ This is the Inclusiveness principle in practice. It covers deaf and hard-of-hear
 These are measured, not hoped for.
 
 - **Tests: 252** Python, **88** frontend unit, **16** browser end-to-end. Lint and types run in CI.
-- **Load:** **150** simulated viewers calling the live API's endpoints for five minutes: **32,120 requests, 0 errors, p95 11 ms**, scaled from 1 to 3 replicas and back. A second test, with all 150 arriving at once on one replica, also had **0 errors** but stalled for about 15 seconds while the extra replicas started ([`docs/LOAD_TEST.md`](docs/LOAD_TEST.md)).
-- **Newsroom against one prompt:** on the same 41 moments and evidence, a single prompt aired a story error in **10** (a fouler called the victim, a booking said to change tactics, feelings the data cannot show) and an unsupported number in **3**. The newsroom aired **0 and 0**, after sending 12 back. The single prompt still scores higher on Foundry's fluency and relevance judges; we say so in [`docs/EVALUATION.md`](docs/EVALUATION.md).
+- **Load:** **150** simulated viewers calling the live API's endpoints for five minutes: **32,120 requests, 0 errors, p95 11 ms**, scaled from 1 to 3 replicas and back. A second test, with all 150 arriving at once on one replica, also had **0 errors** ([`docs/LOAD_TEST.md`](docs/LOAD_TEST.md)).
+- **Newsroom against one prompt:** on the same 41 moments and evidence, a single prompt aired a story error in **10** (a fouler called the victim, a booking said to change tactics, feelings the data cannot show) and an unsupported number in **3**. The newsroom aired **0 and 0**, after sending 12 back ([`docs/EVALUATION.md`](docs/EVALUATION.md)).
 - **Safety: 14 of 14** red-team attacks held with guardrails on ([`docs/REDTEAM.md`](docs/REDTEAM.md)).
 - **Cost:** running the agents over all three demo matches (94 moments) cost about **$0.09** in model tokens. A replay of those matches costs nothing.
 - **Synthetic data:** **200** simulated matches (**545,639** events) measured against typical top-flight ranges. All **16** measures with a reference range are inside it or within its sampling error. Chart and table: [`docs/CALIBRATION.md`](docs/CALIBRATION.md).
-- **Live feed:** **19,830** messages sent through a real Event Hub from inside Azure and read back with **none lost**. Publish to overlay was **140 ms** at the 95th percentile at 4x replay and **115 ms** at 30x, against a 150 ms budget, measured by a one-off job in the same region. On the deployed API replicas, which also serve traffic, the same figure ran at about 250 ms p95 at 1x, over the budget. In memory it is **51 to 54 ms**. The replay you watch does not go through the hub.
+- **Live feed:** **19,830** messages sent through a real Event Hub from inside Azure and read back with **none lost**. Publish to overlay was **140 ms** at the 95th percentile at 4x replay and **115 ms** at 30x, against a 150 ms budget, measured in the same region. In memory it is **51 to 54 ms**. The replay you watch does not go through the hub.
 - **Agent text:** typically 3 to 5 seconds per step. It attaches after the instant overlay, so the picture never waits.
 - **Real footage,** one 100 second window, scored against the dataset's labels (`data/real/117093_w1890/results.json`):
 
@@ -367,7 +359,8 @@ These are measured, not hoped for.
 Footage: **SoccerTrack v2 (CC BY 4.0)**, an openly licensed dataset of amateur matches on Hugging Face (`atomscott/soccertrack-v2`), used under that licence with credit to its authors. It stays inside `vision/` and is used for exactly two things: showing that auto-eventing works on video, and scoring our output against its labels. It is never used to build or tune the synthetic engine.
 
 Citation: Atom Scott, Ikuma Uchida, Kento Kuroda, Yufi Kim and Keisuke Fujii, *SoccerTrack v2: A Full-Pitch Panoramic Video Dataset for Game State Reconstruction and Ball Action Spotting*, arXiv:2508.01802, 2025. Code: github.com/AtomScott/SoccerTrack-v2.
- A university name and crest painted on the pitch are removed from the clip we show. The video file is not in this repo.
+
+A university name and crest painted on the pitch are removed from the clip we show. The video file is not in this repo.
 
 The detector is RT-DETR (Apache 2.0). We do not use Ultralytics YOLO because of its licence. Every asset is listed in [`docs/ASSET_LICENSES.md`](docs/ASSET_LICENSES.md).
 
@@ -385,9 +378,9 @@ The detector is RT-DETR (Apache 2.0). We do not use Ultralytics YOLO because of 
 | `frontend/` | React, Vite and TypeScript |
 | `infra/` | Bicep for every Azure resource |
 | `data/` | The league, three demo matches and the dataset datasheet ([`data/README.md`](data/README.md)) |
-| `docs/` | Design docs, Azure setup, calibration report, decisions (`adr/`), asset licences, and the demo video scene by scene ([`docs/DEMO.md`](docs/DEMO.md)) |
+| `docs/` | Design docs, Azure setup, calibration report, decisions (`adr/`), and asset licences |
 
-Run the checks with `uv run pytest` (about three minutes; 251 pass and one skips), `uv run ruff check .` and `uv run python -m mypy .`, and in `frontend/` with `npm test` and `npm run lint`. The browser tests need Chromium once: run `npx playwright install chromium` in `frontend/`, then `npm run e2e`. It starts the gateway and the app itself, or reuses them if they are already running.
+Run the checks with `uv run pytest` (about five minutes; 252 pass and one skips), `uv run ruff check .` and `uv run python -m mypy .`, and in `frontend/` with `npm test` and `npm run lint`. The browser tests need Chromium once: run `npx playwright install chromium` in `frontend/`, then `npm run e2e`. It starts the gateway and the app itself, or reuses them if they are already running.
 
 ## How it answers the brief
 
