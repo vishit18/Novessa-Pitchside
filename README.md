@@ -4,6 +4,8 @@
 
 **Live demo:** https://ashy-pebble-0f5b51c1e.5.azurestaticapps.net (no login, runs on Azure)
 
+**Demo video (under 2 minutes):** https://www.youtube.com/watch?v=1SrFywZFIYE
+
 Everyone watching a match gets the same broadcast. The analyst who wants pressing numbers and the mate who just wants to know why their team suddenly looks rattled see exactly the same thing. Novessa Pitchside gives each of them their own version of the game, live.
 
 A match engine plays a full 90 minutes of football in an invented league. A stats layer turns it into momentum, pressure, control and chaos, pass difficulty, speeds and distances, in code. A team of agents on Microsoft Foundry decides which moments matter, explains why in football terms, proves every number against the stats layer before it airs, then writes it up for each viewer: their persona, their language, their club or player. The output is a timed overlay protocol, so any graphics engine could draw it.
