@@ -265,7 +265,7 @@ Most of these choices are written up in [`docs/adr/`](docs/adr/README.md). This 
 
 ## Responsible AI
 
-We built this around one worry: a live broadcast puts a model's words on screen before anyone can check them. This section follows Microsoft's six Responsible AI principles. Each one says what we did and what we measured. Accessibility has its own section straight after, because it is more than one principle's worth of work.
+We built this around one worry: a live broadcast puts a model's words on screen before anyone can check them. This section follows Microsoft's six Responsible AI principles. Each one says what we did and what we measured, and the last part names the few limits we know about. Accessibility has its own section straight after, because it is more than one principle's worth of work.
 
 | Principle | What we did | Where to see it |
 |---|---|---|
@@ -320,6 +320,12 @@ We built this around one worry: a live broadcast puts a model's words on screen 
 - **Checks run on every change.** Tests, lint and types run in CI on every push. The red team and the evaluation run in CI when agent code, prompts or evaluation data change.
 - **Decisions are written down.** The reasons for the main design choices are in [`docs/adr/`](docs/adr/).
 - **A person can stop an agent.** The switch on each Control Room plate turns one off.
+
+### Known limits, and what we would do next
+
+- **Translation quality is protected, not yet scored.** Numbers, names and clocks survive translation by construction, and a changed number throws the line away. We have not had a native speaker score the wording in each of the six languages. That is the next evaluation we would add.
+- **The vision scores come from one clip.** 71% of players found and a 1.0 m median error describe one 100 second window of one amateur match. Other pitches, kits and cameras would need their own run before we quoted a number for them.
+- **Traces leave the prompt out on purpose.** A span records the agent, model, latency and outcome, never the viewer's text. So a strange answer is traced through the Control Room trail and the cache rather than in Application Insights.
 
 ## Accessibility and inclusive design
 

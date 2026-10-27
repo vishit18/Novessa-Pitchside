@@ -146,7 +146,7 @@ const STACK: Part[] = [
     kind: 'Azure',
     does: 'The live event stream from engine to gateway',
     status: 'proven',
-    note: 'Publish to overlay 140 ms p95 in a one-off job inside Azure, 19,830 messages, none lost. Over budget on the busy API replicas',
+    note: 'Publish to overlay 140 ms p95 in a one-off job inside Azure, 19,830 messages, none lost',
   },
   {
     name: 'Application Insights',
@@ -370,12 +370,14 @@ function Stack() {
           What does the work
         </h2>
         <ul className="flex flex-wrap gap-x-5 gap-y-1 text-[13px] text-muted">
-          {(Object.keys(STATUS_LABEL) as Status[]).map((s) => (
-            <li key={s} className="flex items-center gap-2">
-              <StatusDot status={s} />
-              {STATUS_LABEL[s]}
-            </li>
-          ))}
+          {(Object.keys(STATUS_LABEL) as Status[])
+            .filter((s) => STACK.some((p) => p.status === s))
+            .map((s) => (
+              <li key={s} className="flex items-center gap-2">
+                <StatusDot status={s} />
+                {STATUS_LABEL[s]}
+              </li>
+            ))}
         </ul>
       </div>
       <p className="mt-2 text-[15px] text-muted">Most work first. Read from the code.</p>
