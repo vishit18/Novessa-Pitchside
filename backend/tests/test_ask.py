@@ -22,6 +22,7 @@ from backend.agents.ask import (
 from backend.agents.cache import FileCache
 from backend.agents.intel import MatchIntel
 from backend.agents.models import ToolCall
+from backend.agents.services import ServiceUnavailable
 from backend.app.timeline import NameBook
 from backend.tests.test_agents import ScriptedTransport, make_ctx
 from backend.tests.test_agents import intel as intel
@@ -194,3 +195,64 @@ def test_scorelines_are_checked_as_pairs() -> None:
     assert stray_scorelines("Ashford have 7-3 on shots.", found) == []
     assert stray_scorelines("Ashford won 5-0, final score.", found) == ["5-0"]
     assert stray_scorelines("Up 26:47, 9-4 now.", found) == ["9-4"]
+
+
+class QuestionTranslator:
+    """Reads any question as one English sentence; prefixes answers going out."""
+
+    def __init__(self, down: bool = False) -> None:
+        self.down = down
+        self.to_english = 0
+
+    async def translate(
+        self, texts: list[str], to: str, keep: list[str], source: str | None = "en"
+    ) -> list[str]:
+        if to == "en":
+            self.to_english += 1
+            if self.down:
+                raise ServiceUnavailable("translator: down")
+            return ["Who is pressing more right now?" for _ in texts]
+        return [f"[{to}] {t}" for t in texts]
+
+
+class ScoutEars(AskTransport):
+    """Remembers the question the Scout was given."""
+
+    heard: list[str]
+
+    async def chat(self, deployment: str, system: str, user: str, timeout_s: float) -> str:
+        if "scout v1" in system:
+            self.heard = [*getattr(self, "heard", []), json.loads(user.split(SPLIT)[0])["question"]]
+        return await super().chat(deployment, system, user, timeout_s)
+
+
+async def test_the_scout_reads_a_foreign_question_in_english(
+    intel: MatchIntel, names: NameBook
+) -> None:
+    transport = ScoutEars()
+    ctx = make_ctx(intel, names, transport)
+    ctx.translator = QuestionTranslator()
+    out = await ask(ctx, "من يضغط أكثر الآن؟", 1800, "casual", "ar")
+    assert transport.heard == ["Who is pressing more right now?"]
+    assert out.question == "من يضغط أكثر الآن؟"
+    assert out.status == "verified"
+    assert any(line.startswith("Translator: read the question as") for line in out.trail)
+
+
+async def test_an_english_question_is_not_translated(intel: MatchIntel, names: NameBook) -> None:
+    ctx = make_ctx(intel, names, ScoutEars())
+    translator = QuestionTranslator()
+    ctx.translator = translator
+    await ask(ctx, "Who is on top right now?", 1800, "casual", "en")
+    assert translator.to_english == 0
+
+
+async def test_translator_down_keeps_the_original_question(
+    intel: MatchIntel, names: NameBook
+) -> None:
+    transport = ScoutEars()
+    ctx = make_ctx(intel, names, transport)
+    ctx.translator = QuestionTranslator(down=True)
+    out = await ask(ctx, "¿Quién presiona más?", 1800, "casual", "es")
+    assert transport.heard == ["¿Quién presiona más?"]
+    assert out.status == "verified"

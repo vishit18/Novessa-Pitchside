@@ -40,7 +40,9 @@ class ServiceUnavailable(RuntimeError):
 
 
 class Translator(Protocol):
-    async def translate(self, texts: list[str], to: str, keep: list[str]) -> list[str]: ...
+    async def translate(
+        self, texts: list[str], to: str, keep: list[str], source: str | None = "en"
+    ) -> list[str]: ...
 
 
 class Speech(Protocol):
@@ -103,13 +105,20 @@ class AzureTranslator:
         self._auth = _Entra()
         self._client = httpx.AsyncClient()
 
-    async def translate(self, texts: list[str], to: str, keep: list[str]) -> list[str]:
-        if to == "en":
+    async def translate(
+        self, texts: list[str], to: str, keep: list[str], source: str | None = "en"
+    ) -> list[str]:
+        """Translate `texts` into `to`. `source=None` lets Translator detect the language,
+        which is how a viewer's question in any language is read in English."""
+        if to == source:
             return texts
+        params = {"api-version": "3.0", "to": to, "textType": "html"}
+        if source:
+            params["from"] = source
         try:
             resp = await self._client.post(
                 f"{self.endpoint}/translator/text/v3.0/translate",
-                params={"api-version": "3.0", "to": to, "from": "en", "textType": "html"},
+                params=params,
                 headers={"Authorization": f"Bearer {await self._auth.bearer()}"},
                 json=[{"Text": _keep_markup(t, keep)} for t in texts],
                 timeout=self.timeout_s,

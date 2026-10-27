@@ -31,7 +31,9 @@ class FakeTranslator:
         self.mode = mode
         self.calls = 0
 
-    async def translate(self, texts: list[str], to: str, keep: list[str]) -> list[str]:
+    async def translate(
+        self, texts: list[str], to: str, keep: list[str], source: str | None = "en"
+    ) -> list[str]:
         self.calls += 1
         if self.mode == "down":
             raise ServiceUnavailable("translator: down")

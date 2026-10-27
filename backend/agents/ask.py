@@ -23,6 +23,7 @@ from backend.agents.knowledge import KnowledgeDoc, get_retriever
 from backend.agents.llm import AgentUnavailable
 from backend.agents.localiser import localise_lines
 from backend.agents.models import AskAnswer, AskDraft, AskPlan, Evidence, ToolCall
+from backend.agents.services import ServiceUnavailable
 from backend.agents.verifier import close, numbers_in
 from backend.app.overlay import Persona
 
@@ -291,6 +292,25 @@ async def _plan(ctx: MatchContext, question: str, clock: str, trail: list[str]) 
     return plan
 
 
+async def _in_english(ctx: MatchContext, question: str, lang: str, trail: list[str]) -> str:
+    """The question as the Scout, the search index and the Analyst read it: in English.
+
+    The Scout picks lookups far more reliably from English (an Arabic "who is pressing more?"
+    was once read as a question about fouls), and the league facts are indexed in English.
+    The viewer still sees their own words. If Translator is down, the original is used."""
+    if ctx.translator is None or (lang == "en" and question.isascii()):
+        return question
+    try:
+        got = await ctx.translator.translate([question], "en", [], source=None)
+    except ServiceUnavailable:
+        return question
+    english = got[0].strip() if got else ""
+    if not english or english == question:
+        return question
+    trail.append(f'Translator: read the question as "{english}"')
+    return english
+
+
 async def _background(ctx: MatchContext, question: str, trail: list[str]) -> list[str]:
     """League facts that help explain the answer: who a player is, how a club plays, what a
     metric means. Static knowledge with no results in it, so it cannot spoil the match.
@@ -418,7 +438,10 @@ async def _draft(
             return draft.answer, "verified"
         listed = ", ".join(bad)
         trail.append(f"Verifier rejected attempt {attempt}: {listed} not in the data")
-        payload["verifier_feedback"] = f"These numbers are not in the evidence: {listed}."
+        payload["verifier_feedback"] = (
+            f"These numbers are not in the evidence: {listed}. Remove them. To compare two "
+            "sides, give both numbers as they appear; never write the difference between them."
+        )
         payload["your_previous_answer"] = draft.answer
     return numbers_only(found), "numbers_only"
 
@@ -428,7 +451,8 @@ def _cache_key(ctx: MatchContext, question: str, t: float, persona: str, lang: s
     # Grounded answers are cached apart, so switching retrieval on never serves an old answer.
     grounded = "-k" if get_retriever() is not None else ""
     # Answers are shared within a 30-second slice of match time: the numbers barely move.
-    return cache_key(ctx.seed, f"ask-{digest}-{int(t // 30)}{grounded}", "ask", persona, lang)
+    # "ask2": answers from before questions were read in English are not served again.
+    return cache_key(ctx.seed, f"ask2-{digest}-{int(t // 30)}{grounded}", "ask", persona, lang)
 
 
 async def ask(ctx: MatchContext, question: str, t: float, persona: Persona, lang: str) -> AskAnswer:
@@ -451,7 +475,8 @@ async def ask(ctx: MatchContext, question: str, t: float, persona: Persona, lang
             status="declined",
             trail=["Safety gate stopped the question"],
         )
-    plan = await _plan(ctx, question, clock, trail)
+    question_en = await _in_english(ctx, question, lang, trail)
+    plan = await _plan(ctx, question_en, clock, trail)
     if not plan.on_topic:
         return AskAnswer(
             **base,
@@ -460,8 +485,8 @@ async def ask(ctx: MatchContext, question: str, t: float, persona: Persona, lang
             trail=trail,
         )
     found = run_calls(ctx, plan.calls or [ToolCall(tool="state_now")], t)
-    background = await _background(ctx, question, trail)
-    answer, status = await _draft(ctx, question, clock, persona, found, trail, background)
+    background = await _background(ctx, question_en, trail)
+    answer, status = await _draft(ctx, question_en, clock, persona, found, trail, background)
     if not await ctx.safety.is_safe(answer):
         answer, status = numbers_only(found), "numbers_only"
         trail.append("Safety gate replaced the wording with the numbers")

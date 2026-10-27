@@ -20,7 +20,9 @@ class TagTranslator:
     def __init__(self) -> None:
         self.calls = 0
 
-    async def translate(self, texts: list[str], to: str, keep: list[str]) -> list[str]:
+    async def translate(
+        self, texts: list[str], to: str, keep: list[str], source: str | None = "en"
+    ) -> list[str]:
         self.calls += 1
         return [f"[{to}] {t.replace('1', '9')}" for t in texts]
 
