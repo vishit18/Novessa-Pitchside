@@ -24,7 +24,7 @@
       "value": "${SERVICE_A2A_IMAGE_NAME=mcr.microsoft.com/azuredocs/containerapps-helloworld:latest}"
     },
     "searchEnabled": {
-      "value": "${SEARCH_ENABLED=false}"
+      "value": "${SEARCH_ENABLED=true}"
     },
     "searchDeveloperPrincipalId": {
       "value": "${SEARCH_DEVELOPER_PRINCIPAL_ID=}"

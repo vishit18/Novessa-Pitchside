@@ -66,6 +66,11 @@ var sharedEnv = {
   RATE_LIMIT: 'on'
   GUARDRAILS: 'true'
   AGENT_CACHE: 'on'
+  // Six agents run as versioned prompt agents in Foundry Agent Service (the Scout stays direct).
+  FOUNDRY_AGENT_SERVICE: 'true'
+  // Ask the Analyst is grounded in league facts from Azure AI Search.
+  SEARCH_ENABLED: searchEnabled
+  SEARCH_ENDPOINT: searchOn ? 'https://srch-${token}.search.windows.net' : ''
 }
 
 module monitoring 'modules/monitoring.bicep' = {
@@ -175,12 +180,14 @@ output MCP_URI string = services.outputs.mcpUri
 output A2A_URI string = services.outputs.a2aUri
 output WARM_JOB_NAME string = services.outputs.warmJobName
 
-// ---- Item 7: Azure AI Search (Person B). Off unless searchEnabled is set. -------------------
-// Free tier, keyless. After provisioning, run scripts/index_knowledge.py, then give the api
-// app SEARCH_ENABLED=true and SEARCH_ENDPOINT=<the SEARCH_ENDPOINT output> (docs/02).
-@description('Set to true to create the free AI Search service that grounds Ask the Analyst.')
+// ---- Azure AI Search: the free, keyless index that grounds Ask the Analyst. -----------------
+// After a fresh provision, run scripts/index_knowledge.py to fill the index (docs/02).
+@description('Set to false to leave out the free AI Search service that grounds Ask the Analyst.')
 @allowed(['true', 'false'])
-param searchEnabled string = 'false'
+param searchEnabled string = 'true'
+
+@description('Sweden Central had no free search capacity on 27 Oct, so search lives in North Europe.')
+param searchLocation string = 'northeurope'
 var searchOn = searchEnabled == 'true'
 
 @description('Object id of the person who runs scripts/index_knowledge.py (az ad signed-in-user show --query id).')
@@ -189,7 +196,7 @@ param searchDeveloperPrincipalId string = ''
 module search 'modules/search.bicep' = if (searchOn) {
   name: 'search'
   params: {
-    location: location
+    location: searchLocation
     token: token
     tags: tags
     appPrincipalId: platform.outputs.identityPrincipalId
