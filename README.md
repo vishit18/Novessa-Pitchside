@@ -151,6 +151,10 @@ flowchart LR
 
 The path through Event Hubs is the live one: the engine publishes, the gateway consumes, and `/watch?live=1` shows it. The broadcast you open by default is a replay, so anyone can scrub and seek: it reads the same events from a timeline the same state engine prepared in advance. Both paths produce identical overlays, and a test checks it. The numbers always come from the state engine. The agents only explain them.
 
+Every part that does the work, most work first, each marked by how far it is proven (the live version is on `/why`):
+
+![What does the work: sixteen parts from the match engine to Blob Storage, each marked as running every match, proven, partly wired or built but not switched on](docs/img/stack.png)
+
 | Microsoft technology | Where it is used |
 |---|---|
 | Microsoft Foundry | Two chat models: a small one for the high-volume agents (Producer, Narrator, Localiser, Scout), a reasoning one for the Analyst, Ask and recaps. Foundry's evaluators (`azure-ai-evaluation`) score the output in `scripts/eval_single_vs_multi.py` |
