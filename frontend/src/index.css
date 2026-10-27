@@ -13,7 +13,7 @@
 @import 'tailwindcss';
 
 /*
- * Matchday broadcast palette. docs/07_FRONTEND_DESIGN.md is the source of truth.
+ * Matchday broadcast palette.
  * Token names predate it: --color-amber is the accent, red on the page and yellow inside plates.
  */
 @theme {
