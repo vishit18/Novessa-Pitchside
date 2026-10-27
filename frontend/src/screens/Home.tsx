@@ -285,7 +285,7 @@ function WaysIn() {
           did I miss?” that never spoils what is still to come.
         </Way>
       </div>
-      <ul className="mt-6 grid gap-4 lg:grid-cols-3">
+      <ul className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <SmallWay title="Control room" onClick={() => go('/control')}>
           The agents at work: who is doing what, what the Verifier threw out, and what it cost.
         </SmallWay>
@@ -294,6 +294,10 @@ function WaysIn() {
         </SmallWay>
         <SmallWay title="Recaps" onClick={() => go('/recap')}>
           Half-time and full-time stories, per viewer and language, every number checked.
+        </SmallWay>
+        <SmallWay title="How it's built" onClick={() => navigate(withParams('/why'))}>
+          Why it matters, then every part that does the work, from Foundry to Event Hubs, and what
+          is proven.
         </SmallWay>
       </ul>
     </section>

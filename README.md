@@ -85,6 +85,7 @@ Places worth a look:
 | Recap | `/recap?match=derby_01&kind=full_time` | Half-time and full-time recaps in six languages. |
 | One number | pick "Just one number" in onboarding | Choose sprint speed, shot speed, pass difficulty or distance. The broadcast keeps that number on screen and shows only that, plus goals. |
 | Real footage | `/real` | The same overlays on a real amateur match, measured from video. Full screen keeps the tracking on the picture. |
+| How it's built | `/why` | Why it matters, then every Microsoft and Azure part that does the work, each marked as running every match, proven, partly wired, or built but not switched on. Also on the home page under Try it. |
 
 ## What it does
 
