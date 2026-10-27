@@ -170,6 +170,13 @@ def test_a_named_window_may_be_repeated_only_as_a_window() -> None:
     assert stray("Ashford took 5 shots.", allowed, win) == [5]
 
 
+def test_a_negative_value_may_be_written_with_or_without_its_sign() -> None:
+    allowed = [-44.0, 67.2]
+    assert stray("The momentum bar reads -44, Harrowgate's way.", allowed) == []
+    assert stray("Momentum is 44 in Harrowgate's favour.", allowed) == []
+    assert stray("Momentum is 45 in Harrowgate's favour.", allowed) == [45]
+
+
 @pytest.mark.parametrize(
     "answer",
     [

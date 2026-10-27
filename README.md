@@ -346,7 +346,7 @@ This is the Inclusiveness principle in practice. It covers deaf and hard-of-hear
 
 These are measured, not hoped for.
 
-- **Tests: 261** Python, **88** frontend unit, **16** browser end-to-end. Lint and types run in CI.
+- **Tests: 262** Python, **88** frontend unit, **16** browser end-to-end. Lint and types run in CI.
 - **Load:** **150** simulated viewers calling the live API's endpoints for five minutes: **32,120 requests, 0 errors, p95 11 ms**, scaled from 1 to 3 replicas and back. A second test, with all 150 arriving at once on one replica, also had **0 errors** ([`docs/LOAD_TEST.md`](docs/LOAD_TEST.md)).
 - **Newsroom against one prompt:** on the same 41 moments and evidence, a single prompt aired a story error in **10** (a fouler called the victim, a booking said to change tactics, feelings the data cannot show) and an unsupported number in **3**. The newsroom aired **0 and 0**, after sending 12 back ([`docs/EVALUATION.md`](docs/EVALUATION.md)).
 - **Safety: 14 of 14** red-team attacks held with guardrails on ([`docs/REDTEAM.md`](docs/REDTEAM.md)).
@@ -390,7 +390,7 @@ The detector is RT-DETR (Apache 2.0). We do not use Ultralytics YOLO because of 
 | `data/` | The league, three demo matches and the dataset datasheet ([`data/README.md`](data/README.md)) |
 | `docs/` | Design docs, Azure setup, calibration report, decisions (`adr/`), and asset licences |
 
-Run the checks with `uv run pytest` (about five minutes; 261 pass and one skips), `uv run ruff check .` and `uv run python -m mypy .`, and in `frontend/` with `npm test` and `npm run lint`. The browser tests need Chromium once: run `npx playwright install chromium` in `frontend/`, then `npm run e2e`. It starts the gateway and the app itself, or reuses them if they are already running.
+Run the checks with `uv run pytest` (about five minutes; 262 pass and one skips), `uv run ruff check .` and `uv run python -m mypy .`, and in `frontend/` with `npm test` and `npm run lint`. The browser tests need Chromium once: run `npx playwright install chromium` in `frontend/`, then `npm run e2e`. It starts the gateway and the app itself, or reuses them if they are already running.
 
 ## How it answers the brief
 

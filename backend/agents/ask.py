@@ -362,8 +362,12 @@ def stray(
     """Numbers in the answer that are not in the evidence. A named window passes when the answer
     uses it as a window ("in the last 10 minutes")."""
     used = {float(n) for n in WINDOW.findall(answer)} & (window_minutes or set())
+    # Signed evidence (momentum -44) is written "-44" or "44 in their favour"; the reader drops
+    # the minus, so the size of a signed value counts as the value.
     return [
-        n for n in numbers_in(answer) if n not in used and not any(close(n, a) for a in allowed)
+        n
+        for n in numbers_in(answer)
+        if n not in used and not any(close(n, a) or close(n, -a) for a in allowed)
     ]
 
 
