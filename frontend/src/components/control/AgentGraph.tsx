@@ -300,6 +300,8 @@ interface CardProps {
 
 function NodeCard({ spec, health, lit, tally, onKill, step, compact }: CardProps) {
   const state = stateOf(spec, health, tally)
+  // A replay of a warmed match: this agent's verified answers were saved before kick-off.
+  const saved = spec.kind === 'model' && state === 'idle' && tally.proven > 0
   const down = state === 'killed' || state === 'breaker'
   const left = health
     ? Math.ceil(state === 'killed' ? health.killed_for_s : health.breaker_for_s)
@@ -348,12 +350,19 @@ function NodeCard({ spec, health, lit, tally, onKill, step, compact }: CardProps
             ? `${STATE_LABEL[state]}, ${left} s left`
             : lit
               ? 'Working now'
-              : state === 'idle' && tally.proven > 0
-                ? 'Answered from the cache'
+              : saved
+                ? 'Worked out before kick-off'
                 : STATE_LABEL[state]}
         </p>
 
-        <NodeStats spec={spec} health={health} tally={tally} compact={compact} />
+        {saved ? (
+          <p className="relative text-[13px] leading-snug text-muted">
+            Its verified answers are saved in Cosmos DB, so this replay reuses them. Ask something
+            new to see it work now.
+          </p>
+        ) : (
+          <NodeStats spec={spec} health={health} tally={tally} compact={compact} />
+        )}
 
         {spec.breakable && (
           <div className="mt-auto">

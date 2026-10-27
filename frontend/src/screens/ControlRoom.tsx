@@ -63,8 +63,9 @@ export function ControlRoom({ query }: { query: URLSearchParams }) {
             Control room
           </h1>
           <p className="mt-2 max-w-[70ch] text-[15px] text-muted">
-            The agent team behind every broadcast, live. Switch any agent off to watch the others
-            recover.{' '}
+            The agent team behind every broadcast. A demo match is worked out before kick-off and
+            saved, so a replay costs nothing; a new question or a switched-off agent runs them now.
+            Switch any agent off to watch the others recover.{' '}
             <a href="#feed-h" className="text-amber underline underline-offset-4">
               See the overlay feed a graphics engine receives
             </a>
