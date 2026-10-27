@@ -6,6 +6,8 @@ import json
 from pathlib import Path
 from typing import Any
 
+import pytest
+
 from backend.agents.ask import (
     Lookups,
     allowed_numbers,
@@ -165,6 +167,24 @@ def test_a_named_window_may_be_repeated_only_as_a_window() -> None:
     win = windows(found, "")
     assert stray("Ashford made 41 passes in the last 5 minutes.", allowed, win) == []
     assert stray("Ashford took 5 shots.", allowed, win) == [5]
+
+
+@pytest.mark.parametrize(
+    "answer",
+    [
+        "Ashford dio 41 pases en los últimos 5 minutos.",
+        "Ashford a fait 41 passes lors des 5 dernières minutes.",
+        "Ashford fez 41 passes nos últimos 5 minutos.",
+        "أشفورد قام بـ 41 تمريرة في آخر 5 دقائق.",
+        "पिछले 5 मिनट में एशफोर्ड ने 41 पास किए।",
+    ],
+)
+def test_a_window_is_recognised_in_every_language(answer: str) -> None:
+    found = _rows()
+    allowed = allowed_numbers(found, "55:00", "")
+    assert stray(answer, allowed, windows(found, "")) == []
+    # The window excuses nothing else: a made-up count is still caught.
+    assert stray(answer.replace("41", "99", 1), allowed, windows(found, "")) == [99]
 
 
 def test_scorelines_are_checked_as_pairs() -> None:

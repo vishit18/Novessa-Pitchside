@@ -305,8 +305,14 @@ async def _background(ctx: MatchContext, question: str, trail: list[str]) -> lis
 
 
 # "last 5 minutes", "10-minute": a time window says nothing about the match, so a window the
-# evidence or the viewer named may be repeated, but only as a window.
-WINDOW = re.compile(r"(\d+(?:\.\d+)?)[\s-]*min(?:ute)?s?\b", re.IGNORECASE)
+# evidence or the viewer named may be repeated, but only as a window. Answers are written in the
+# viewer's language, so this knows the word for minutes in all six, with room for one word in
+# between ("5 dernières minutes").
+WINDOW = re.compile(
+    r"(\d+(?:\.\d+)?)[\s-]*(?:[^\W\d_]+\s+)?"
+    r"(?:(?:min(?:ute|uto)?s?)(?![^\W\d_])|دقائق|دقيقة|मिनट)",
+    re.IGNORECASE,
+)
 # 2-1, 3-0: a scoreline is checked as a pair, not as two numbers that each appear somewhere.
 SCORELINE = re.compile(r"(?<![\d.:])(\d{1,2})\s*[-\N{EN DASH}]\s*(\d{1,2})(?![\d.:])")
 
